@@ -9,6 +9,9 @@ function Lobby() {
   const [game, setGame] = useState(null)
   const [players, setPlayers] = useState([])
   const [loading, setLoading] = useState(false)
+  const [showJoinForm, setShowJoinForm] = useState(false)
+  const [playerName, setPlayerName] = useState('')
+  const [companyName, setCompanyName] = useState('')
 
   useEffect(() => {
     fetchGameData()
@@ -23,6 +26,25 @@ function Lobby() {
       setPlayers(res.data.players)
     } catch (error) {
       console.error('Error fetching game:', error)
+    }
+  }
+
+  const joinGame = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+    try {
+      await axios.post('/api/player/join', {
+        gameId,
+        playerName: playerName || 'Player',
+        companyName: companyName || 'Company'
+      })
+      setShowJoinForm(false)
+      fetchGameData()
+    } catch (error) {
+      console.error('Error joining game:', error)
+      alert('Failed to join game')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -110,6 +132,64 @@ function Lobby() {
           <p className="text-gray-400 mb-2">Share this link to invite players:</p>
           <code className="bg-dark-bg px-4 py-2 rounded block">{window.location.origin}/lobby/{gameId}</code>
         </div>
+
+        {/* Join Game Form */}
+        {!showJoinForm ? (
+          <div className="flex justify-center">
+            <button
+              onClick={() => setShowJoinForm(true)}
+              className="btn-primary px-12 py-4 rounded-lg font-semibold text-xl"
+            >
+              🎮 Join This Game
+            </button>
+          </div>
+        ) : (
+          <div className="glass rounded-xl p-8 card-glow">
+            <h2 className="text-3xl font-bold mb-6 text-center">Join Game</h2>
+            <form onSubmit={joinGame} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Your Name</label>
+                <input
+                  type="text"
+                  value={playerName}
+                  onChange={(e) => setPlayerName(e.target.value)}
+                  placeholder="CEO Name"
+                  className="w-full px-4 py-3 rounded-lg"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">Company Name</label>
+                <input
+                  type="text"
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
+                  placeholder="Your Company"
+                  className="w-full px-4 py-3 rounded-lg"
+                  required
+                />
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="btn-primary flex-1 py-3 rounded-lg font-semibold text-lg disabled:opacity-50"
+                >
+                  {loading ? 'Joining...' : '✅ Join Game'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowJoinForm(false)}
+                  className="px-6 py-3 rounded-lg border border-gray-600 hover:border-gray-500"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
       </div>
     </div>
   )
