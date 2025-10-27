@@ -1,0 +1,72 @@
+================================================================================
+  DEPLOY IN 5 MINUTES - EXACT STEPS
+================================================================================
+
+1. PUSH TO GITHUB
+   ===============
+   
+   EASIEST WAY:
+   - Go to https://github.com/hakoke/Capital-Clash
+   - Click "uploading an existing file"
+   - Drag ALL files from C:\Users\ynkk4\OneDrive\Desktop\Game
+   - Click "Commit changes"
+   
+   DONE!
+
+2. DEPLOY BACKEND TO RAILWAY
+   ==========================
+   
+   a) Go to: https://railway.app/dashboard
+   b) Click "New Project" → "Deploy from GitHub repo"
+   c) Select "Capital-Clash" repository
+   d) In Settings → Root Directory: Set to "backend"
+   e) Go to Variables → Add ALL from RAILWAY_VARIABLES.txt
+   f) Railway will auto-deploy
+   
+   Wait for deployment to finish. Copy the URL it gives you.
+
+3. SETUP DATABASE
+   ===============
+   
+   Your database is already running at:
+   postgresql://postgres:AYhhQrfUuwqFrfIFBMPuiEjniySfuYIr@shortline.proxy.rlwy.net:40619/railway
+   
+   Run this SQL file on it:
+   backend/database/schema.sql
+   
+   Use any PostgreSQL tool (pgAdmin, TablePlus, or Railway terminal)
+
+4. DEPLOY FRONTEND TO VERCEL
+   =========================
+   
+   a) Go to: https://vercel.com/
+   b) Sign up/login
+   c) Click "Add New Project"
+   d) Import "Capital-Clash" from GitHub
+   e) Settings:
+      - Root Directory: frontend
+      - Framework: Vite
+      - Build Command: npm run build
+   f) Environment Variables → Add:
+      VITE_API_URL=<your-railway-backend-url>
+   g) Click "Deploy"
+   
+   Copy the URL Vercel gives you.
+
+5. UPDATE CORS
+   ===========
+   
+   Go back to Railway → Your Project → Variables
+   Update: CORS_ORIGIN=<your-vercel-url>
+   
+   Save and redeploy.
+
+6. DONE! 🎉
+   =======
+   
+   Test your game at your Vercel URL!
+   
+================================================================================
+  FOR DETAILED INSTRUCTIONS: Read DEPLOYMENT_GUIDE.md
+================================================================================
+

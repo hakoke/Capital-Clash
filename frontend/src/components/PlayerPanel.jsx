@@ -1,0 +1,96 @@
+import { TrendingUp, Building2, Users, Target } from 'lucide-react'
+
+function PlayerPanel({ player, players, game }) {
+  const sortedPlayers = [...players].sort((a, b) => parseFloat(b.capital) - parseFloat(a.capital))
+  const rank = sortedPlayers.findIndex(p => p.id === player.id) + 1
+
+  return (
+    <div className="space-y-4">
+      {/* Current Player Card */}
+      <div className="glass rounded-xl p-6 card-glow">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-2xl font-bold">{player.name}</h2>
+            <p className="text-gray-400">{player.company_name}</p>
+          </div>
+          <div className="text-4xl">👑</div>
+        </div>
+
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-neon-blue" />
+              <span className="text-gray-400">Capital</span>
+            </div>
+            <span className="text-2xl font-bold text-neon-blue">
+              ${parseInt(player.capital).toLocaleString()}
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Target className="w-5 h-5 text-neon-purple" />
+              <span className="text-gray-400">Reputation</span>
+            </div>
+            <span className="text-xl font-bold text-neon-purple">
+              {player.reputation}
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Users className="w-5 h-5 text-neon-pink" />
+              <span className="text-gray-400">Rank</span>
+            </div>
+            <span className="text-2xl font-bold text-neon-pink">
+              #{rank}
+            </span>
+          </div>
+        </div>
+
+        <div className="mt-4 pt-4 border-t border-gray-700">
+          <div className="flex justify-between text-sm text-gray-400">
+            <span>Round {game.current_round} / {game.max_rounds}</span>
+            <span className="capitalize">{game.phase}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Leaderboard */}
+      <div className="glass rounded-xl p-6 card-glow">
+        <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+          <TrendingUp className="w-5 h-5 text-neon-blue" />
+          Leaderboard
+        </h3>
+        <div className="space-y-2">
+          {sortedPlayers.map((p, index) => (
+            <div
+              key={p.id}
+              className={`rounded-lg p-3 ${
+                p.id === player.id 
+                  ? 'bg-neon-blue bg-opacity-20 border border-neon-blue' 
+                  : 'bg-card-bg'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl font-bold">#{index + 1}</span>
+                  <div>
+                    <p className="font-semibold">{p.name}</p>
+                    <p className="text-xs text-gray-400">{p.company_name}</p>
+                  </div>
+                </div>
+                <span className="text-neon-blue font-bold">
+                  ${parseInt(p.capital).toLocaleString()}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default PlayerPanel
+

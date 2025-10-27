@@ -1,0 +1,44 @@
+================================================================================
+  HOW TO PUSH TO GITHUB - EXACT STEPS
+================================================================================
+
+Your repository is at: https://github.com/hakoke/Capital-Clash
+
+================================================================================
+  OPTION 1: Web Upload (EASIEST - 2 minutes)
+================================================================================
+
+1. Go to: https://github.com/hakoke/Capital-Clash
+2. Click: "uploading an existing file"
+3. Drag: ALL files from the folder that just opened
+4. Click: "Commit changes"
+5. DONE!
+
+Your code is now on GitHub! ✅
+
+================================================================================
+  OPTION 2: Git Commands (5 minutes)
+================================================================================
+
+Open PowerShell in your Game folder and run:
+
+1. Initialize git:
+   git init
+
+2. Add all files:
+   git add .
+
+3. Commit:
+   git commit -m "Initial commit: Capital Clash game"
+
+4. Add remote (replace 'YourUsername' with your GitHub username):
+   git remote add origin https://github.com/hakoke/Capital-Clash.git
+
+5. Push:
+   git branch -M main
+   git push -u origin main
+
+================================================================================
+
+After pushing, go to Railway and deploy! 🚀
+

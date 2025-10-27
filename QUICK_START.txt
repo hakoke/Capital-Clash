@@ -1,0 +1,39 @@
+================================================================================
+  CAPITAL CLASH - QUICK START GUIDE
+================================================================================
+
+🚀 GET YOUR GAME RUNNING IN 5 MINUTES
+
+STEP 1: Create backend/.env file with this content:
+
+DATABASE_URL=postgresql://postgres:AYhhQrfUuwqFrfIFBMPuiEjniySfuYIr@shortline.proxy.rlwy.net:40619/railway
+OPENAI_API_KEY=your_openai_api_key_here
+PORT=3001
+NODE_ENV=development
+JWT_SECRET=capital_clash_secret_key_2024_super_secure_random_string
+CORS_ORIGIN=http://localhost:3000
+SOCKET_IO_PING_TIMEOUT=60000
+SOCKET_IO_PING_INTERVAL=25000
+MAX_PLAYERS_PER_GAME=6
+MIN_PLAYERS_PER_GAME=2
+TOTAL_ROUNDS=8
+STARTING_CAPITAL=1000000
+
+STEP 2: Install dependencies
+  cd backend && npm install
+  cd ../frontend && npm install
+
+STEP 3: Setup database
+  cd backend && npm run db:setup
+
+STEP 4: Start servers (2 terminals)
+  Terminal 1: cd backend && npm run dev
+  Terminal 2: cd frontend && npm run dev
+
+STEP 5: Play!
+  Open http://localhost:3000
+
+================================================================================
+For detailed instructions, see START_HERE.md or PROJECT_COMPLETE.md
+================================================================================
+

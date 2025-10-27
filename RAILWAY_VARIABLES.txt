@@ -1,0 +1,37 @@
+================================================================================
+  RAILWAY ENVIRONMENT VARIABLES - COPY AND PASTE THIS!
+================================================================================
+
+Go to Railway Dashboard → Your Project → Variables → Add these:
+
+DATABASE_URL=postgresql://postgres:AYhhQrfUuwqFrfIFBMPuiEjniySfuYIr@shortline.proxy.rlwy.net:40619/railway
+
+OPENAI_API_KEY=your_openai_api_key_here
+
+PORT=3001
+
+NODE_ENV=production
+
+JWT_SECRET=capital_clash_secret_key_2024_super_secure_random_string
+
+CORS_ORIGIN=https://your-frontend.vercel.app
+
+SOCKET_IO_PING_TIMEOUT=60000
+
+SOCKET_IO_PING_INTERVAL=25000
+
+MAX_PLAYERS_PER_GAME=6
+
+MIN_PLAYERS_PER_GAME=2
+
+TOTAL_ROUNDS=8
+
+STARTING_CAPITAL=1000000
+
+================================================================================
+  NOTES:
+  - Replace "https://your-frontend.vercel.app" with your actual Vercel URL
+  - All values are already set with your credentials
+  - Just copy-paste into Railway dashboard
+================================================================================
+
