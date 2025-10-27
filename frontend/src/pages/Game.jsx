@@ -29,8 +29,15 @@ function Game() {
       setTiles(res.data.tiles)
       setDistricts(res.data.districts)
       
-      // Set first player as current (in real game, this would be determined by turn)
-      if (res.data.players.length > 0 && !currentPlayer) {
+      // Get current player from localStorage
+      const playerId = localStorage.getItem(`player_${gameId}`)
+      if (playerId) {
+        const player = res.data.players.find(p => p.id === playerId)
+        if (player) {
+          setCurrentPlayer(player)
+        }
+      } else if (res.data.players.length > 0) {
+        // Fallback to first player if no localStorage
         setCurrentPlayer(res.data.players[0])
       }
 
