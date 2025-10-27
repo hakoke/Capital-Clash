@@ -27,55 +27,55 @@ function ActionPanel({ player, availableTiles, onAction, onAISimulation }) {
 
   return (
     <div className="glass rounded-xl p-6 card-glow space-y-4">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-2xl font-bold">Your Actions</h3>
-        <span className="text-sm text-gray-400">Turn of {player.name}</span>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-2xl font-bold">Actions</h3>
+        <span className="text-sm text-gray-400">Turn: {player.name}</span>
       </div>
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-2 gap-3 mb-6">
+      {/* Quick Actions - More Compact */}
+      <div className="flex gap-3 mb-4">
         <button
           onClick={() => setShowLaunchCompany(true)}
-          className="bg-card-bg p-4 rounded-lg border border-gray-600 hover:border-neon-purple transition-all text-left"
+          className="flex-1 bg-card-bg p-3 rounded-lg border border-gray-600 hover:border-neon-purple transition-all text-center"
         >
-          <Rocket className="w-6 h-6 text-neon-purple mb-2" />
-          <p className="font-semibold">Launch Company</p>
-          <p className="text-xs text-gray-400">Start new business</p>
+          <Rocket className="w-5 h-5 text-neon-purple mx-auto mb-1" />
+          <p className="font-semibold text-sm">Launch</p>
         </button>
 
         <button
           onClick={onAISimulation}
-          className="bg-card-bg p-4 rounded-lg border border-gray-600 hover:border-neon-blue transition-all text-left"
+          className="flex-1 bg-card-bg p-3 rounded-lg border border-gray-600 hover:border-neon-blue transition-all text-center"
         >
-          <Zap className="w-6 h-6 text-neon-blue mb-2" />
-          <p className="font-semibold">AI Simulate</p>
-          <p className="text-xs text-gray-400">Generate events</p>
+          <Zap className="w-5 h-5 text-neon-blue mx-auto mb-1" />
+          <p className="font-semibold text-sm">Simulate</p>
         </button>
       </div>
 
-      {/* Available Properties */}
+      {/* Available Properties - Compact Card Grid */}
       {availableTiles.length > 0 && (
         <div className="border-t border-gray-700 pt-4">
-          <h4 className="font-semibold mb-3 flex items-center gap-2">
-            <ShoppingCart className="w-5 h-5 text-neon-blue" />
-            Available Properties
+          <h4 className="font-semibold mb-3 text-sm flex items-center gap-2 text-gray-300">
+            <ShoppingCart className="w-4 h-4 text-neon-blue" />
+            Available ({availableTiles.length})
           </h4>
-          <div className="space-y-2 max-h-48 overflow-y-auto">
-            {availableTiles.slice(0, 5).map((tile) => (
+          <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto">
+            {availableTiles.slice(0, 8).map((tile) => (
               <div
                 key={tile.id}
-                className="bg-card-bg p-3 rounded-lg text-sm flex justify-between items-center hover:border hover:border-neon-blue transition-all"
+                className="bg-card-bg p-2 rounded-lg border border-gray-700 hover:border-neon-blue transition-all"
               >
-                <div>
-                  <p className="font-semibold">{tile.name}</p>
-                  <p className="text-xs text-gray-400">Plot</p>
-                </div>
-                <p className="text-neon-blue font-bold">
+                <p className="font-semibold text-xs mb-1 truncate">{tile.name}</p>
+                <p className="text-neon-blue font-bold text-sm">
                   ${parseInt(tile.purchase_price).toLocaleString()}
                 </p>
               </div>
             ))}
           </div>
+          {availableTiles.length > 8 && (
+            <p className="text-xs text-gray-500 text-center mt-2">
+              +{availableTiles.length - 8} more (click tiles on board)
+            </p>
+          )}
         </div>
       )}
 

@@ -21,6 +21,13 @@ function Lobby() {
     return () => clearInterval(interval)
   }, [])
 
+  // Redirect to game when game status changes to 'active'
+  useEffect(() => {
+    if (game && game.status === 'active' && isPlayerInGame) {
+      navigate(`/game/${gameId}`)
+    }
+  }, [game?.status, isPlayerInGame, gameId])
+
   const fetchGameData = async () => {
     try {
       const res = await axios.get(`/api/game/${gameId}`)

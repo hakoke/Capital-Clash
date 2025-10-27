@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { MapPin, Building } from 'lucide-react'
+import { MapPin, Building, X } from 'lucide-react'
 
 function GameBoard({ tiles, districts, players, currentPlayer, onBuyTile }) {
   const [selectedTile, setSelectedTile] = useState(null)
@@ -97,28 +97,76 @@ function GameBoard({ tiles, districts, players, currentPlayer, onBuyTile }) {
         })}
       </div>
 
-      {/* Action Confirmation */}
+      {/* Tile Purchase Modal */}
       {selectedTile && (
-        <div className="mt-6 glass rounded-lg p-4 border border-neon-blue">
-          <p className="text-gray-300 mb-4">
-            Buy <span className="font-bold text-neon-blue">{selectedTile.name}</span> for ${parseInt(selectedTile.purchase_price).toLocaleString()}?
-          </p>
-          <div className="flex gap-3">
-            <button
-              onClick={() => {
-                onBuyTile(selectedTile.id)
-                setSelectedTile(null)
-              }}
-              className="btn-primary px-6 py-2 rounded-lg font-semibold"
-            >
-              Confirm Purchase
-            </button>
-            <button
-              onClick={() => setSelectedTile(null)}
-              className="px-6 py-2 rounded-lg border border-gray-600 hover:border-gray-500"
-            >
-              Cancel
-            </button>
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4" onClick={() => setSelectedTile(null)}>
+          <div className="glass rounded-xl p-8 max-w-lg w-full border-2 border-neon-blue shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            {/* Close Button */}
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-3xl font-bold">Purchase Property</h3>
+              <button
+                onClick={() => setSelectedTile(null)}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            {/* Property Details */}
+            <div className="space-y-4 mb-6">
+              <div className="bg-card-bg rounded-lg p-4 border border-neon-blue">
+                <h4 className="text-xl font-bold text-neon-blue mb-2">{selectedTile.name}</h4>
+                <p className="text-gray-400 text-sm mb-3">{selectedTile.district_name || 'District Property'}</p>
+                
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300">Purchase Price:</span>
+                    <span className="text-2xl font-bold text-neon-blue">
+                      ${parseInt(selectedTile.purchase_price).toLocaleString()}
+                    </span>
+                  </div>
+                  
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300">Your Capital:</span>
+                    <span className={`text-lg font-semibold ${
+                      parseFloat(currentPlayer?.capital || 0) >= parseFloat(selectedTile.purchase_price)
+                        ? 'text-green-400'
+                        : 'text-red-400'
+                    }`}>
+                      ${parseInt(currentPlayer?.capital || 0).toLocaleString()}
+                    </span>
+                  </div>
+
+                  {parseFloat(currentPlayer?.capital || 0) >= parseFloat(selectedTile.purchase_price) && (
+                    <div className="mt-4 p-3 bg-green-500 bg-opacity-10 border border-green-500 rounded-lg">
+                      <p className="text-green-400 text-sm">✓ You can afford this property</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  if (parseFloat(currentPlayer?.capital || 0) >= parseFloat(selectedTile.purchase_price)) {
+                    onBuyTile(selectedTile.id)
+                    setSelectedTile(null)
+                  }
+                }}
+                disabled={parseFloat(currentPlayer?.capital || 0) < parseFloat(selectedTile.purchase_price)}
+                className="btn-primary flex-1 py-3 rounded-lg font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Confirm Purchase
+              </button>
+              <button
+                onClick={() => setSelectedTile(null)}
+                className="px-6 py-3 rounded-lg border border-gray-600 hover:border-gray-500 font-semibold"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}
