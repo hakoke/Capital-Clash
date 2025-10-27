@@ -382,7 +382,7 @@ Return as JSON:
     try {
       this.log('OPENAI', 'Sending custom action prompt to GPT-4');
       const completion = await openai.chat.completions.create({
-        model: "gpt-4",
+        model: "gpt-4o", // Use gpt-4o which supports JSON mode
         messages: [{ role: "user", content: prompt }],
         temperature: 0.9, // Very creative for dramatic events
         max_tokens: 1500,

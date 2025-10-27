@@ -58,22 +58,22 @@ function GameBoard({ tiles, districts, players, currentPlayer, onBuyTile }) {
         />
       )}
       
-      <div className="glass rounded-xl p-4 card-glow">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-2xl font-display font-bold">🎲 Board</h2>
+      <div className="glass rounded-xl p-6 card-glow">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-2xl font-display font-bold">🏙️ Capital Clash Board</h2>
           <div className="flex items-center gap-2 text-neon-blue">
             <MapPin className="w-4 h-4" />
-            <span className="text-xs">Click to buy</span>
+            <span className="text-xs">Click properties to buy</span>
           </div>
         </div>
 
-      {/* TRUE MONOPOLY BOARD - Properties around perimeter */}
-      <div className="relative bg-gradient-to-br from-neutral-800 via-gray-900 to-neutral-800 rounded-xl p-3 border-2 border-amber-600 shadow-xl">
+      {/* MONOPOLY-STYLE BOARD - Perimeter Layout */}
+      <div className="relative bg-gradient-to-br from-amber-50 via-yellow-50 to-amber-100 rounded-xl p-4 border-4 border-amber-800 shadow-2xl">
         
-        {/* Compact Grid - All Properties Visible */}
-        <div className="grid grid-cols-8 gap-2">
-          {arrangedDistricts.slice(0, 6).flatMap((district) =>
-            district.tiles.slice(0, 4).map((tile) => (
+        {/* Board Perimeter - All Properties Visible */}
+        <div className="grid grid-cols-6 gap-3">
+          {arrangedDistricts.slice(0, 6).map((district, districtIdx) =>
+            district.tiles.slice(0, 4).map((tile, tileIdx) => (
               <PropertyTile
                 key={tile.id}
                 tile={tile}
@@ -94,21 +94,19 @@ function GameBoard({ tiles, districts, players, currentPlayer, onBuyTile }) {
 
       </div>
 
-      {/* Legend - Compact */}
-      <div className="mt-2 p-2 bg-card-bg rounded-lg border border-gray-700">
-        <div className="flex flex-wrap items-center justify-center gap-4 text-xs font-semibold">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-12 border-2 border-gray-500 rounded bg-card-bg"></div>
-            <span className="text-gray-300">Buy</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-12 border-4 border-purple-400 rounded bg-gray-900"></div>
-            <span className="text-gray-300">Owned</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-12 border-2 border-gray-700 rounded opacity-50"></div>
-            <span className="text-gray-400">Expensive</span>
-          </div>
+      {/* Legend */}
+      <div className="mt-3 flex flex-wrap items-center justify-center gap-4 text-xs font-semibold p-3 bg-card-bg rounded-lg border border-gray-700">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-8 border-2 border-gray-500 rounded bg-card-bg"></div>
+          <span className="text-gray-300">Available</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-8 border-4 border-purple-400 rounded bg-gray-900"></div>
+          <span className="text-gray-300">Owned</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-4 h-4 rounded-full bg-blue-500"></div>
+          <span className="text-gray-300">Owner Avatar</span>
         </div>
       </div>
     </div>
@@ -142,7 +140,7 @@ function PropertyTile({ tile, district, isOwned, ownerColor, ownerName, ownerIni
           onConfirm(tile.id, `Buy ${displayName} for $${parseInt(tile.purchase_price).toLocaleString()}?`)
         }
       }}
-      className={`relative ${tileColor} rounded border-2 min-h-[50px] p-1 ${
+      className={`relative ${tileColor} rounded border-2 h-20 flex flex-col justify-between p-2 ${
         isOwned 
           ? `border-4 ${ownerColor} opacity-90` 
           : isAffordable 
@@ -151,10 +149,10 @@ function PropertyTile({ tile, district, isOwned, ownerColor, ownerName, ownerIni
       }`}
       title={isOwned ? `Owned by ${ownerName}` : `${displayName} - $${parseInt(tile.purchase_price).toLocaleString()}`}
     >
-      <div className="text-white text-[9px] font-bold truncate">
+      <div className="text-white text-[10px] font-bold text-center px-1 leading-tight">
         {displayName}
       </div>
-      <div className="text-white text-[8px] font-bold">
+      <div className="text-white text-[8px] font-bold text-center mt-0.5">
         ${parseInt(tile.purchase_price).toLocaleString().slice(0, -3)}k
       </div>
       {isOwned && (

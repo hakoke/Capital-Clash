@@ -35,13 +35,14 @@ function ChatPanel({ gameId, playerId, onNotification }) {
   const sendMessage = async (e) => {
     e.preventDefault()
     if (!inputMessage.trim()) return
+    if (chatMode === 'ai_action') return // Don't send regular chat in AI mode
 
     try {
       await axios.post('/api/chat/message', {
         gameId,
         playerId,
         message: inputMessage,
-        messageType: chatMode === 'ai_action' ? 'action' : 'chat'
+        messageType: 'chat'
       })
       
       // Add message to local state immediately
@@ -49,7 +50,7 @@ function ChatPanel({ gameId, playerId, onNotification }) {
       const newMessage = {
         playerName,
         message: inputMessage,
-        messageType: chatMode === 'ai_action' ? 'action' : 'chat',
+        messageType: 'chat',
         timestamp: new Date().toISOString()
       }
       setMessages([...messages, newMessage])
@@ -66,18 +67,11 @@ function ChatPanel({ gameId, playerId, onNotification }) {
     }
   }
 
-  const sendAIAction = async (e) => {
-    if (e) e.preventDefault()
+  const sendAIAction = async () => {
     if (!inputMessage.trim()) return
+    
     try {
-      // Send as custom action
-      await axios.post(`/api/player-actions/${playerId}/custom-action`, {
-        actionType: 'player_action',
-        actionDescription: inputMessage,
-        details: {}
-      })
-      
-      // Add message to local state
+      // Add to messages first for instant feedback
       const playerName = localStorage.getItem(`playerName_${gameId}`) || 'You'
       const newMessage = {
         playerName,
@@ -88,13 +82,23 @@ function ChatPanel({ gameId, playerId, onNotification }) {
       setMessages([...messages, newMessage])
       
       setInputMessage('')
-      if (onNotification) {
-        onNotification('✓ AI received your action!', 'success')
+      
+      // Send as custom action to backend
+      const res = await axios.post(`/api/player-actions/${playerId}/custom-action`, {
+        actionType: 'player_action',
+        actionDescription: inputMessage,
+        details: {}
+      })
+      
+      if (res.data.success) {
+        if (onNotification) {
+          onNotification('✓ Action processed!', 'success')
+        }
       }
     } catch (error) {
       console.error('Error sending AI action:', error)
       if (onNotification) {
-        onNotification('Failed to send action: ' + (error.response?.data?.error || error.message), 'error')
+        onNotification('Action failed: ' + (error.response?.data?.error || error.message), 'error')
       }
     }
   }
@@ -134,13 +138,10 @@ function ChatPanel({ gameId, playerId, onNotification }) {
             🤖 <strong>AI Mode:</strong> The AI will execute your commands and affect the game!
           </p>
           <div className="text-xs space-y-1">
-            <strong>Company Actions:</strong>
-            <br />• "Sell my company NovaTech" → AI removes it, refunds you
-            <br />• "Invest $200k in SolarCorp" → Increases company value
-            <br />• "Launch a tech startup in AI Data Core" → Creates new company
-            <br /><strong>Other Actions:</strong>
-            <br />• "Sabotage Player X's reputation"
-            <br />• "Bribe the mayor to get district bonuses"
+            <strong>Example Actions:</strong>
+            <br />• "Invest $200k in my company" → Increases company value
+            <br />• "Launch a new tech startup" → Creates new company
+            <br />• "Run a PR campaign" → Boosts reputation
             <br />• Any creative action you can imagine!
           </div>
         </div>
@@ -178,7 +179,14 @@ function ChatPanel({ gameId, playerId, onNotification }) {
         <div ref={messagesEndRef} />
       </div>
 
-      <form onSubmit={chatMode === 'ai_action' ? (e) => { e.preventDefault(); sendAIAction(); } : sendMessage} className="flex gap-2">
+      <form onSubmit={(e) => {
+        e.preventDefault()
+        if (chatMode === 'ai_action') {
+          sendAIAction()
+        } else {
+          sendMessage(e)
+        }
+      }} className="flex gap-2">
         <input
           type="text"
           value={inputMessage}
