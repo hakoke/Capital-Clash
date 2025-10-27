@@ -6,47 +6,58 @@ function GameBoard({ tiles, districts, players, currentPlayer, onBuyTile }) {
 
   const getDistrictColor = (districtType) => {
     const colors = {
-      tech_park: 'from-blue-500 to-cyan-500',
-      downtown: 'from-yellow-500 to-orange-500',
-      industrial: 'from-gray-500 to-slate-500',
-      green_valley: 'from-green-500 to-emerald-500',
-      luxury_mile: 'from-pink-500 to-rose-500',
-      harborfront: 'from-blue-400 to-teal-500'
+      tech_park: 'bg-blue-500',
+      downtown: 'bg-yellow-500',
+      industrial: 'bg-gray-500',
+      green_valley: 'bg-green-500',
+      luxury_mile: 'bg-pink-500',
+      harborfront: 'bg-teal-500'
     }
-    return colors[districtType] || 'from-purple-500 to-indigo-500'
+    return colors[districtType] || 'bg-purple-500'
   }
 
   const getPlayerName = (ownerId) => {
     return players.find(p => p.id === ownerId)?.name || ''
   }
 
+  const getOwnerColor = (ownerId) => {
+    const player = players.find(p => p.id === ownerId)
+    if (!player) return 'border-gray-600'
+    const colors = ['border-blue-500', 'border-green-500', 'border-yellow-500', 'border-pink-500', 'border-cyan-500', 'border-purple-500']
+    return colors[player.order_in_game % colors.length] || 'border-gray-600'
+  }
+
+  // Arrange districts
+  const arrangedDistricts = districts.map((district) => ({
+    ...district,
+    tiles: tiles.filter(t => t.district_id === district.id).sort((a, b) => a.order_in_district - b.order_in_district)
+  }))
+
   return (
     <div className="glass rounded-xl p-6 card-glow">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-3xl font-display font-bold">Neo-Arcadia</h2>
+        <h2 className="text-3xl font-display font-bold">🏙️ Neo-Arcadia Board</h2>
         <div className="flex items-center gap-2 text-neon-blue">
           <MapPin className="w-5 h-5" />
-          <span>Game Board</span>
+          <span className="text-sm">Click properties to purchase</span>
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
-        {districts.map((district) => {
-          const districtTiles = tiles.filter(t => t.district_id === district.id)
-          
-          return (
+      {/* Simplified Scrollable Board - NO CROWDING */}
+      <div className="max-h-[600px] overflow-y-auto bg-gradient-to-br from-gray-900 to-black rounded-xl p-4 border-2 border-gray-700 custom-scrollbar">
+        <div className="space-y-4">
+          {arrangedDistricts.map((district) => (
             <div key={district.id} className="space-y-2">
-              {/* District Header */}
-              <div className={`bg-gradient-to-r ${getDistrictColor(district.type)} rounded-lg p-4 text-center`}>
-                <h3 className="font-bold text-white">{district.name}</h3>
-                <p className="text-xs text-white opacity-80">{district.type.replace('_', ' ')}</p>
+              {/* District Header - LARGE and CLEAR */}
+              <div className={`${getDistrictColor(district.type)} rounded-lg p-3 text-center shadow-lg`}>
+                <h3 className="text-lg font-bold text-white">{district.name}</h3>
+                <p className="text-xs text-white opacity-90">{district.type.replace('_', ' ').toUpperCase()}</p>
               </div>
 
-              {/* Tiles in District */}
-              <div className="space-y-2">
-                {districtTiles.map((tile) => {
+              {/* Properties - LARGE CARDS, EASY TO CLICK */}
+              <div className="grid grid-cols-3 gap-3">
+                {district.tiles.map((tile) => {
                   const isOwned = !!tile.owner_id
-                  const isSelected = selectedTile?.id === tile.id
                   const isAffordable = parseFloat(currentPlayer?.capital || 0) >= parseFloat(tile.purchase_price)
                   
                   return (
@@ -54,38 +65,41 @@ function GameBoard({ tiles, districts, players, currentPlayer, onBuyTile }) {
                       key={tile.id}
                       onClick={() => {
                         if (!isOwned && isAffordable) {
-                          setSelectedTile(tile)
+                          setSelectedTile({ ...tile, district_name: district.name })
                         }
                       }}
-                      className={`rounded-lg p-3 tile ${
+                      className={`relative rounded-lg border-2 transition-all min-h-[120px] p-4 ${
                         isOwned 
-                          ? 'bg-card-bg border-2 border-neon-purple' 
+                          ? `${getOwnerColor(tile.owner_id)} border-4 bg-gray-900 opacity-95` 
                           : isAffordable 
-                            ? isSelected
-                              ? 'bg-neon-blue bg-opacity-20 border-2 border-neon-blue cursor-pointer'
-                              : 'bg-card-bg border border-gray-600 hover:border-neon-blue cursor-pointer'
-                            : 'bg-card-bg border border-gray-700 opacity-50 cursor-not-allowed'
-                      }`}
+                            ? 'border-gray-600 hover:border-neon-blue hover:shadow-2xl cursor-pointer bg-card-bg hover:bg-opacity-90'
+                            : 'border-gray-700 opacity-50 cursor-not-allowed bg-gray-800'
+                      } ${!isOwned && isAffordable ? 'hover:scale-105' : ''} group`}
+                      title={isOwned ? `Owned by ${getPlayerName(tile.owner_id)}` : `${tile.name} - Click to buy`}
                     >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-semibold">{tile.name}</span>
-                        {isOwned && <Building className="w-4 h-4 text-neon-purple" />}
-                      </div>
-                      
-                      <div className="space-y-1">
-                        <div className="flex justify-between text-xs">
-                          <span className="text-gray-400">Value:</span>
-                          <span className="text-neon-blue">${parseInt(tile.purchase_price).toLocaleString()}</span>
+                      <div className="space-y-2">
+                        <p className="font-bold text-white text-base leading-tight">
+                          {tile.name.split(' - ')[1] || tile.name}
+                        </p>
+                        <div className="flex items-center justify-between">
+                          <p className="text-xl font-bold text-neon-blue">
+                            ${parseInt(tile.purchase_price).toLocaleString()}
+                          </p>
+                          {isOwned && (
+                            <div className="bg-purple-500 rounded-full p-2">
+                              <Building className="w-5 h-5 text-white" />
+                            </div>
+                          )}
                         </div>
-                        
-                        {isOwned ? (
-                          <div className="text-xs text-neon-purple mt-1">
+                        {isOwned && (
+                          <p className="text-xs text-gray-400 mt-1">
                             Owned by {getPlayerName(tile.owner_id)}
-                          </div>
-                        ) : (
-                          <div className="text-xs text-green-400 mt-1">
-                            Available to buy
-                          </div>
+                          </p>
+                        )}
+                        {!isOwned && isAffordable && (
+                          <p className="text-xs text-green-400 font-semibold">
+                            ✓ Available
+                          </p>
                         )}
                       </div>
                     </div>
@@ -93,42 +107,55 @@ function GameBoard({ tiles, districts, players, currentPlayer, onBuyTile }) {
                 })}
               </div>
             </div>
-          )
-        })}
+          ))}
+        </div>
       </div>
 
-      {/* Tile Purchase Modal */}
+      {/* Legend - CLEAR and OBVIOUS */}
+      <div className="mt-4 p-4 bg-card-bg rounded-lg border-2 border-gray-700">
+        <div className="flex flex-wrap items-center justify-center gap-6 text-sm font-semibold">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-16 border-2 border-gray-500 rounded-lg bg-card-bg hover:shadow-lg"></div>
+            <span className="text-gray-300">Click to buy</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-16 border-4 border-purple-500 rounded-lg bg-gray-900"></div>
+            <span className="text-gray-300">Owned (colored border)</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-16 border-2 border-gray-700 rounded-lg opacity-50 bg-gray-800"></div>
+            <span className="text-gray-400">Too expensive</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Purchase Modal - CENTERED and PERFECT */}
       {selectedTile && (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4" onClick={() => setSelectedTile(null)}>
           <div className="glass rounded-xl p-8 max-w-lg w-full border-2 border-neon-blue shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            {/* Close Button */}
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-3xl font-bold">Purchase Property</h3>
-              <button
-                onClick={() => setSelectedTile(null)}
-                className="text-gray-400 hover:text-white transition-colors"
-              >
+              <button onClick={() => setSelectedTile(null)} className="text-gray-400 hover:text-white transition-colors">
                 <X className="w-6 h-6" />
               </button>
             </div>
 
-            {/* Property Details */}
             <div className="space-y-4 mb-6">
-              <div className="bg-card-bg rounded-lg p-4 border border-neon-blue">
-                <h4 className="text-xl font-bold text-neon-blue mb-2">{selectedTile.name}</h4>
-                <p className="text-gray-400 text-sm mb-3">{selectedTile.district_name || 'District Property'}</p>
+              <div className="bg-card-bg rounded-lg p-6 border-2 border-neon-blue">
+                <h4 className="text-2xl font-bold text-neon-blue mb-2">{selectedTile.name}</h4>
+                <p className="text-gray-400 text-sm mb-4">{selectedTile.district_name || 'District Property'}</p>
                 
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-300">Purchase Price:</span>
-                    <span className="text-2xl font-bold text-neon-blue">
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center p-3 bg-gray-800 rounded-lg">
+                    <span className="text-gray-300 font-semibold">Purchase Price:</span>
+                    <span className="text-3xl font-bold text-neon-blue">
                       ${parseInt(selectedTile.purchase_price).toLocaleString()}
                     </span>
                   </div>
                   
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-300">Your Capital:</span>
-                    <span className={`text-lg font-semibold ${
+                  <div className="flex justify-between items-center p-3 bg-gray-800 rounded-lg">
+                    <span className="text-gray-300 font-semibold">Your Capital:</span>
+                    <span className={`text-2xl font-bold ${
                       parseFloat(currentPlayer?.capital || 0) >= parseFloat(selectedTile.purchase_price)
                         ? 'text-green-400'
                         : 'text-red-400'
@@ -138,15 +165,14 @@ function GameBoard({ tiles, districts, players, currentPlayer, onBuyTile }) {
                   </div>
 
                   {parseFloat(currentPlayer?.capital || 0) >= parseFloat(selectedTile.purchase_price) && (
-                    <div className="mt-4 p-3 bg-green-500 bg-opacity-10 border border-green-500 rounded-lg">
-                      <p className="text-green-400 text-sm">✓ You can afford this property</p>
+                    <div className="mt-4 p-4 bg-green-500 bg-opacity-10 border-2 border-green-500 rounded-lg">
+                      <p className="text-green-400 font-semibold text-center">✓ You can afford this property!</p>
                     </div>
                   )}
                 </div>
               </div>
             </div>
 
-            {/* Action Buttons */}
             <div className="flex gap-3">
               <button
                 onClick={() => {
@@ -156,13 +182,13 @@ function GameBoard({ tiles, districts, players, currentPlayer, onBuyTile }) {
                   }
                 }}
                 disabled={parseFloat(currentPlayer?.capital || 0) < parseFloat(selectedTile.purchase_price)}
-                className="btn-primary flex-1 py-3 rounded-lg font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn-primary flex-1 py-4 rounded-lg font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-105"
               >
-                Confirm Purchase
+                💰 Confirm Purchase
               </button>
               <button
                 onClick={() => setSelectedTile(null)}
-                className="px-6 py-3 rounded-lg border border-gray-600 hover:border-gray-500 font-semibold"
+                className="px-8 py-4 rounded-lg border-2 border-gray-600 hover:border-gray-500 font-bold transition-all hover:scale-105"
               >
                 Cancel
               </button>
@@ -175,4 +201,3 @@ function GameBoard({ tiles, districts, players, currentPlayer, onBuyTile }) {
 }
 
 export default GameBoard
-
