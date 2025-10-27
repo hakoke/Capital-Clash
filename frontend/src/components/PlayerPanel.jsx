@@ -1,8 +1,9 @@
 import { TrendingUp, Building2, Users, Target } from 'lucide-react'
 
-function PlayerPanel({ player, players, game }) {
+function PlayerPanel({ player, players, game, currentTurnPlayer }) {
   const sortedPlayers = [...players].sort((a, b) => parseFloat(b.capital) - parseFloat(a.capital))
   const rank = sortedPlayers.findIndex(p => p.id === player.id) + 1
+  const isMyTurn = currentTurnPlayer && player.id === currentTurnPlayer.id
 
   return (
     <div className="space-y-4">
@@ -48,11 +49,21 @@ function PlayerPanel({ player, players, game }) {
           </div>
         </div>
 
-        <div className="mt-4 pt-4 border-t border-gray-700">
+        <div className="mt-4 pt-4 border-t border-gray-700 space-y-2">
           <div className="flex justify-between text-sm text-gray-400">
             <span>Round {game.current_round} / {game.max_rounds}</span>
             <span className="capitalize">{game.phase}</span>
           </div>
+          
+          {currentTurnPlayer && (
+            <div className={`rounded-lg p-2 text-center font-semibold ${
+              isMyTurn 
+                ? 'bg-green-500 bg-opacity-20 border-2 border-green-500 text-green-400' 
+                : 'bg-gray-800 border border-gray-700 text-gray-400'
+            }`}>
+              {isMyTurn ? '✓ Your Turn' : `${currentTurnPlayer.name}'s Turn`}
+            </div>
+          )}
         </div>
       </div>
 

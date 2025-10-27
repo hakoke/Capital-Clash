@@ -5,6 +5,7 @@ import GameBoard from '../components/GameBoard'
 import PlayerPanel from '../components/PlayerPanel'
 import NewsPanel from '../components/NewsPanel'
 import ActionPanel from '../components/ActionPanel'
+import ChatPanel from '../components/ChatPanel'
 
 function Game() {
   const { gameId } = useParams()
@@ -14,6 +15,7 @@ function Game() {
   const [districts, setDistricts] = useState([])
   const [currentPlayer, setCurrentPlayer] = useState(null)
   const [news, setNews] = useState([])
+  const [currentTurnPlayer, setCurrentTurnPlayer] = useState(null)
 
   useEffect(() => {
     fetchGameData()
@@ -39,6 +41,12 @@ function Game() {
       } else if (res.data.players.length > 0) {
         // Fallback to first player if no localStorage
         setCurrentPlayer(res.data.players[0])
+      }
+
+      // Determine current turn
+      if (res.data.game.current_player_turn) {
+        const turnPlayer = res.data.players.find(p => p.order_in_game === res.data.game.current_player_turn)
+        setCurrentTurnPlayer(turnPlayer)
       }
 
       // Fetch news
@@ -88,6 +96,23 @@ function Game() {
     }
   }
 
+  const handleEndRound = async () => {
+    try {
+      // End the current round
+      await axios.post(`/api/game/${gameId}/end-round`)
+      
+      // Auto-trigger AI simulation after a moment
+      setTimeout(async () => {
+        await handleAISimulation()
+      }, 1000)
+      
+      fetchGameData()
+    } catch (error) {
+      console.error('Error ending round:', error)
+      alert('Failed to end round: ' + (error.response?.data?.error || error.message))
+    }
+  }
+
   if (!game || !currentPlayer) {
     return <div className="min-h-screen flex items-center justify-center"><div className="text-xl">Loading game...</div></div>
   }
@@ -111,16 +136,21 @@ function Game() {
             availableTiles={tiles.filter(t => !t.owner_id)}
             onAction={handleAction}
             onAISimulation={handleAISimulation}
+            game={game}
+            onEndRound={handleEndRound}
           />
         </div>
 
-        {/* Right Column - Player Info & News */}
+        {/* Right Column - Player Info, Chat, News */}
         <div className="space-y-4">
           <PlayerPanel 
             player={currentPlayer}
             players={players}
             game={game}
+            currentTurnPlayer={currentTurnPlayer}
           />
+
+          <ChatPanel gameId={gameId} playerId={currentPlayer?.id} />
 
           <NewsPanel news={news} />
         </div>

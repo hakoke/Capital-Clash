@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { ShoppingCart, Building2, Zap, Rocket } from 'lucide-react'
+import { ShoppingCart, Building2, Rocket } from 'lucide-react'
 
-function ActionPanel({ player, availableTiles, onAction, onAISimulation }) {
+function ActionPanel({ player, availableTiles, onAction, onAISimulation, game, onEndRound }) {
   const [showLaunchCompany, setShowLaunchCompany] = useState(false)
   const [companyName, setCompanyName] = useState('')
   const [industry, setIndustry] = useState('ai')
@@ -32,24 +32,45 @@ function ActionPanel({ player, availableTiles, onAction, onAISimulation }) {
         <span className="text-sm text-gray-400">Turn: {player.name}</span>
       </div>
 
-      {/* Quick Actions - More Compact */}
+      {/* Quick Actions */}
       <div className="flex gap-3 mb-4">
         <button
           onClick={() => setShowLaunchCompany(true)}
-          className="flex-1 bg-card-bg p-3 rounded-lg border border-gray-600 hover:border-neon-purple transition-all text-center"
+          className="flex-1 bg-card-bg p-4 rounded-lg border border-gray-600 hover:border-neon-purple transition-all"
         >
-          <Rocket className="w-5 h-5 text-neon-purple mx-auto mb-1" />
-          <p className="font-semibold text-sm">Launch</p>
-        </button>
-
-        <button
-          onClick={onAISimulation}
-          className="flex-1 bg-card-bg p-3 rounded-lg border border-gray-600 hover:border-neon-blue transition-all text-center"
-        >
-          <Zap className="w-5 h-5 text-neon-blue mx-auto mb-1" />
-          <p className="font-semibold text-sm">Simulate</p>
+          <Rocket className="w-6 h-6 text-neon-purple mx-auto mb-2" />
+          <p className="font-semibold">Launch Company</p>
+          <p className="text-xs text-gray-400">Start new business</p>
         </button>
       </div>
+
+      {/* Round Phase Info */}
+      {game?.phase === 'player_phase' && (
+        <div className="bg-green-500 bg-opacity-10 border border-green-500 rounded-lg p-3 mb-4">
+          <p className="text-sm text-green-400 font-semibold">
+            ✓ Players can take actions now
+          </p>
+        </div>
+      )}
+      
+      {game?.phase === 'ai_phase' && (
+        <div className="bg-neon-purple bg-opacity-10 border border-neon-purple rounded-lg p-3 mb-4">
+          <p className="text-sm text-neon-purple font-semibold">
+            🤖 AI is simulating the round...
+          </p>
+        </div>
+      )}
+
+      {/* End Round Button */}
+      {game?.phase === 'player_phase' && player.order_in_game === game.current_player_turn && (
+        <button
+          onClick={onEndRound}
+          className="w-full btn-primary py-4 rounded-lg font-bold text-lg mb-4 transition-all hover:scale-105 flex items-center justify-center gap-2"
+        >
+          <span>⏭️</span>
+          End My Turn / Advance Round
+        </button>
+      )}
 
       {/* Available Properties - Compact Card Grid */}
       {availableTiles.length > 0 && (

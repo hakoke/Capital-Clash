@@ -58,15 +58,29 @@ class AIService {
     gameState.ownedTiles = gameState.ownedTiles || [];
     ownedTilesCount = gameState.ownedTiles.length;
     
+    // Count active companies
+    gameState.companies = gameState.companies || [];
+    activeCompanies = gameState.companies.filter(c => c.status === 'active').length;
+    
     // Analyze district values
     const districtValues = gameState.districts.map(d => parseFloat(d.market_value || 0));
     const avgDistrictValue = districtValues.reduce((a, b) => a + b, 0) / districtValues.length;
+    
+    // Calculate total company valuations
+    let totalCompanyValue = 0;
+    gameState.companies.forEach(c => {
+      if (c.status === 'active') {
+        totalCompanyValue += parseFloat(c.valuation || 0);
+      }
+    });
     
     return {
       totalCapital: totalPlayerCapital,
       ownedTiles: ownedTilesCount,
       averageDistrictValue: avgDistrictValue,
       playerCount: gameState.players.length,
+      activeCompanies: activeCompanies,
+      totalCompanyValue: totalCompanyValue,
       marketHealth: avgDistrictValue > 0 ? 'booming' : (avgDistrictValue > -100000 ? 'stable' : 'recession')
     };
   }
@@ -91,12 +105,15 @@ CURRENT ACTUAL GAME STATE (use this data!):
 - Total Player Capital: $${marketAnalysis.totalCapital.toLocaleString()}
 - Owned Tiles: ${marketAnalysis.ownedTiles}
 - Average District Value: $${marketAnalysis.averageDistrictValue.toLocaleString()}
+- Active Companies: ${marketAnalysis.activeCompanies}
+- Total Company Valuations: $${marketAnalysis.totalCompanyValue.toLocaleString()}
 - Active Players: ${gameState.players.map(p => {
   const capital = parseFloat(p.capital || 0);
   const rep = parseInt(p.reputation || 0);
   return `${p.name} (${p.companyName || 'Unknown'}, Capital: $${capital.toLocaleString()}, Rep: ${rep})`;
 }).join(', ')}
 - Districts: ${gameState.districts.map(d => `${d.name} (${d.type}, Value: $${parseFloat(d.market_value || 0).toLocaleString()})`).join(', ')}
+- Active Companies: ${(gameState.companies || []).filter(c => c.status === 'active').map(c => `${c.name} (${c.industry}, Value: $${parseFloat(c.valuation).toLocaleString()})`).join(', ')}
 
 IMPORTANT: Make decisions based on actual game state:
 1. If market is booming (high district values), consider what would cause a correction
@@ -121,8 +138,22 @@ Return as JSON:
   },
   "marketChanges": {
     "district_name": 10
+  },
+  "companyImpacts": {
+    "company_name": {
+      "valuationChange": 50000,
+      "status": "active | bankrupt | acquired",
+      "reason": "Why this happened to this company"
+    }
   }
 }
+
+CRITICAL: Companies MUST be affected by market events! Consider:
+- Market crashes should hurt ALL companies
+- Industry-specific events affect specific company types
+- Successful companies might go bankrupt if market crashes
+- Some companies might thrive during recessions
+- Random events can make specific companies succeed or fail
 
 IMPORTANT: This is a fantasy game - be creative and dramatic! Entertain any storyline the players create.`;
 
@@ -267,49 +298,85 @@ Return as JSON:
    * Generate AI response to custom player actions
    * This creates dynamic events based on player-to-player interactions
    */
-  async generateCustomEventResponse(actionRecord, player, targetPlayer = null) {
+  async generateCustomEventResponse(actionRecord, player, targetPlayer = null, gameState = null) {
     this.log('CUSTOM', `Generating AI response to ${actionRecord.actionType}`);
     
-    const prompt = `You are the game master for Capital Clash. A player just performed a custom action in the game.
+    // Build comprehensive game context
+    let gameContext = '';
+    if (gameState) {
+      gameContext = `
+FULL GAME STATE - YOU SEE EVERYTHING:
 
-ACTION DETAILS:
+PLAYERS:
+${gameState.players.map(p => `- ${p.name} (${p.company_name}): $${parseFloat(p.capital).toLocaleString()}, Rep: ${p.reputation}, Rank: #${p.order_in_game}`).join('\n')}
+
+PLAYER'S ASSETS:
+- Capital: $${parseFloat(player.capital).toLocaleString()}
+- Reputation: ${player.reputation}
+- Owned Properties: ${gameState.tiles.filter(t => t.owner_id === player.id).map(t => t.name).join(', ') || 'None'}
+- Companies: ${gameState.companies.filter(c => c.player_id === player.id).map(c => `${c.name} ($${parseFloat(c.valuation).toLocaleString()})`).join(', ') || 'None'}
+
+MARKET CONDITIONS:
+- Districts: ${gameState.districts.map(d => `${d.name}: ${d.economic_condition}, Value: $${parseFloat(d.market_value).toLocaleString()}`).join('\n')}
+- Average District Value: $${(gameState.districts.reduce((a, b) => a + parseFloat(b.market_value || 0), 0) / gameState.districts.length).toLocaleString()}
+- All Companies: ${gameState.companies.filter(c => c.status === 'active').map(c => `${c.name}: $${parseFloat(c.valuation).toLocaleString()}`).join(', ') || 'None'}
+`;
+    }
+    
+    const prompt = `You are the LIVING AI GAME MASTER for Capital Clash - you see and control EVERYTHING in this city simulation.
+
+CURRENT ACTION:
 - Player: ${player.name} (${player.company_name || 'Unknown Company'})
-- Action: ${actionRecord.actionDescription || actionRecord.actionType}
-- Details: ${JSON.stringify(actionRecord.details || {})}
-${targetPlayer ? `- Target Player: ${targetPlayer.name}\n` : ''}
+- What they said: "${actionRecord.actionDescription || actionRecord.actionType}"
+${targetPlayer ? `- Target: ${targetPlayer.name}\n` : ''}
+${gameContext}
 
-Generate a DRAMATIC and ENGAGING response to this action. This could include:
+YOUR JOB AS AI GAME MASTER:
+1. Understand what the player wants to do
+2. Calculate REAL costs based on current market conditions
+3. Check if player can afford it
+4. If expensive, ask for confirmation (include "needsConfirmation": true)
+5. Execute the action if they can afford it
+6. Create dramatic consequences and storylines
 
-1. A dramatic event that follows from this action
-2. Impact on players (capital, reputation, status)
-3. Market/district reactions
-4. Storyline consequences
-5. Public perception changes
+EXAMPLES OF WHAT TO EXECUTE:
 
-BE CREATIVE! This is a fantasy game - anything can happen. Entertain the storyline they've created.
+Property Creation:
+- "Open a brothel in Luxury Mile" → Return: {"type": "propertyAction", "action": "create", "propertyType": "brothel", "district": "Luxury Mile", "amount": 300000}
+- "Build a casino downtown" → Return: {"type": "propertyAction", "action": "create", "propertyType": "casino", "district": "Downtown", "amount": 400000}
+- "Create a factory in Industrial" → Return: {"type": "propertyAction", "action": "create", "propertyType": "factory", "district": "Industrial", "amount": 200000}
+
+Company Management:
+- "Launch a tech startup in Tech Park" → Return: {"type": "companyAction", "action": "launch", "targetCompany": "Tech Startup", "industry": "ai", "amount": 250000, "district": "Tech Park"}
+- "Invest $500k in SolarCorp" → Return: {"type": "companyAction", "action": "invest", "targetCompany": "SolarCorp", "amount": 500000}
+- "Sell my company NovaTech" → Return: {"type": "companyAction", "action": "remove", "targetCompany": "NovaTech"}
+
+Other Actions:
+- "Bribe the mayor" → Return: {"type": "playerCapital", "playerName": "player", "change": -100000}, {"type": "playerReputation", "playerName": "player", "change": -10}
+- "Run a PR campaign" → Return: {"type": "playerReputation", "playerName": "player", "change": 5}
+- "Sabotage Player X" → Return: capital/reputation changes for both players
+
+COST CALCULATION (use current market conditions):
+- Luxury districts = 50% more expensive
+- Industrial = 30% cheaper
+- Market boom = +25% to all costs
+- Market recession = -20% discount
+- Check player's actual capital before allowing action
 
 Return as JSON:
 {
-  "eventTitle": "Dramatic headline",
-  "eventDescription": "What happened in response",
-  "consequences": {
-    "actionPlayer": {
-      "capitalChange": 0,
-      "reputationChange": 0,
-      "statusEffects": []
-    },
-    "targetPlayer": {
-      "capitalChange": 0,
-      "reputationChange": 0,
-      "statusEffects": []
-    }
-  },
-  "marketReactions": {},
-  "storyline": "Additional dramatic storytelling",
-  "playerMessages": {
-    "actionPlayer": "What happened to you",
-    "targetPlayer": "What happened to the target"
-  }
+  "eventTitle": "Headline",
+  "eventDescription": "What happens",
+  "needsConfirmation": false,
+  "estimatedCost": 0,
+  "playerMessage": "Message explaining what will happen",
+  "executeCommands": [
+    {"type": "playerCapital", "playerName": "name", "change": -100000},
+    {"type": "playerReputation", "playerName": "name", "change": 5},
+    {"type": "companyAction", "action": "launch|invest|remove", "targetCompany": "name", "industry": "type", "amount": 200000},
+    {"type": "propertyAction", "action": "create|invest", "propertyType": "type", "district": "name", "amount": 300000}
+  ],
+  "storyline": "Dramatic narrative"
 }`;
 
     try {
@@ -335,6 +402,72 @@ Return as JSON:
         marketReactions: {},
         storyline: "Action has been recorded",
         playerMessages: {}
+      };
+    }
+  }
+
+  /**
+   * Generate random AI events (living city)
+   */
+  async generateRandomEvent(gameState) {
+    this.log('RANDOM', 'Generating random AI event');
+    
+    const marketAnalysis = this.analyzeMarketHealth(gameState);
+    
+    const prompt = `You are a LIVING AI GAME MASTER. Random events happen in this city simulation.
+
+CURRENT STATE:
+- Market: ${marketAnalysis.marketHealth}
+- Total Capital: $${marketAnalysis.totalCapital.toLocaleString()}
+- Active Companies: ${marketAnalysis.activeCompanies}
+- Player Count: ${gameState.players.length}
+
+Generate a RANDOM, DRAMATIC event that happens in the city RIGHT NOW. This could be:
+- Random investor wants to back someone
+- Market crash in a district
+- Celebrity endorsement opportunity
+- Regulation change
+- Criminal activity
+- Infrastructure development
+- Natural disaster
+- Economic boom
+- ANYTHING interesting!
+
+Make it affect players based on their actual situations. Be creative and dramatic!
+
+Return as JSON:
+{
+  "title": "Dramatic headline",
+  "description": "What happened in the city",
+  "eventType": "investment_opportunity | market_crash | regulation | scandal",
+  "playerImpacts": {
+    "player_name": {
+      "capitalChange": 100000,
+      "reputationChange": 5,
+      "reason": "Why they're affected"
+    }
+  }
+}`;
+
+    try {
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4",
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.95, // Very random and creative
+        max_tokens: 1000,
+        response_format: { type: "json_object" }
+      });
+
+      const response = JSON.parse(completion.choices[0].message.content);
+      this.log('RANDOM', 'Random event generated', response);
+      return response;
+    } catch (error) {
+      console.error('Error generating random event:', error);
+      return {
+        title: "City News",
+        description: "Business continues as usual in Neo-Arcadia.",
+        eventType: "news",
+        playerImpacts: {}
       };
     }
   }
