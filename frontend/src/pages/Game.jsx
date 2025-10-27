@@ -53,28 +53,38 @@ function Game() {
     try {
       switch (actionType) {
         case 'buy_tile':
-          await axios.post(`/api/player/${currentPlayer.id}/buy-tile`, { tileId: data.tileId })
+          const buyRes = await axios.post(`/api/player/${currentPlayer.id}/buy-tile`, { tileId: data.tileId })
+          if (buyRes.data.success) {
+            alert('✓ Property purchased successfully!')
+            fetchGameData()
+          }
           break
         case 'launch_company':
-          await axios.post(`/api/player/${currentPlayer.id}/launch-company`, data)
+          const launchRes = await axios.post(`/api/player/${currentPlayer.id}/launch-company`, data)
+          if (launchRes.data.success) {
+            alert(`✓ ${data.name} launched successfully!`)
+            fetchGameData()
+          }
           break
         default:
           console.log('Action not implemented:', actionType)
       }
-      fetchGameData()
     } catch (error) {
       console.error('Error performing action:', error)
-      alert('Action failed: ' + (error.response?.data?.error || error.message))
+      alert('✗ Action failed: ' + (error.response?.data?.error || error.message))
     }
   }
 
   const handleAISimulation = async () => {
     try {
+      alert('🤖 Starting AI simulation...')
       const res = await axios.post(`/api/ai/simulate-round/${gameId}`)
       console.log('AI Simulation result:', res.data)
+      alert('✓ AI simulation complete!')
       fetchGameData()
     } catch (error) {
       console.error('Error simulating round:', error)
+      alert('✗ Simulation failed: ' + (error.response?.data?.error || error.message))
     }
   }
 
