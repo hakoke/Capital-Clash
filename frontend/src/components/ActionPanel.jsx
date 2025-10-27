@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { ShoppingCart, Building2, Rocket } from 'lucide-react'
 
-function ActionPanel({ player, availableTiles, onAction, onAISimulation, game, onEndRound }) {
+function ActionPanel({ player, availableTiles, onAction, onAISimulation, game, onEndRound, onNotification }) {
   const [showLaunchCompany, setShowLaunchCompany] = useState(false)
   const [companyName, setCompanyName] = useState('')
   const [industry, setIndustry] = useState('ai')
@@ -61,15 +61,17 @@ function ActionPanel({ player, availableTiles, onAction, onAISimulation, game, o
         </div>
       )}
 
-      {/* End Round Button */}
+      {/* End Round Button - Fixed at bottom of viewport */}
       {game?.phase === 'player_phase' && player.order_in_game === game.current_player_turn && (
-        <button
-          onClick={onEndRound}
-          className="w-full btn-primary py-4 rounded-lg font-bold text-lg mb-4 transition-all hover:scale-105 flex items-center justify-center gap-2"
-        >
-          <span>⏭️</span>
-          End My Turn / Advance Round
-        </button>
+        <div className="fixed bottom-8 right-8 z-50 animate-fade-in">
+          <button
+            onClick={onEndRound}
+            className="btn-primary py-4 px-8 rounded-lg font-bold text-lg transition-all hover:scale-105 flex items-center justify-center gap-2 shadow-2xl"
+          >
+            <span>⏭️</span>
+            End My Turn
+          </button>
+        </div>
       )}
 
       {/* Available Properties - Compact Card Grid */}

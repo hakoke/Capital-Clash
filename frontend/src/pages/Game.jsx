@@ -6,6 +6,7 @@ import PlayerPanel from '../components/PlayerPanel'
 import NewsPanel from '../components/NewsPanel'
 import ActionPanel from '../components/ActionPanel'
 import ChatPanel from '../components/ChatPanel'
+import Notification from '../components/Notification'
 
 function Game() {
   const { gameId } = useParams()
@@ -16,6 +17,7 @@ function Game() {
   const [currentPlayer, setCurrentPlayer] = useState(null)
   const [news, setNews] = useState([])
   const [currentTurnPlayer, setCurrentTurnPlayer] = useState(null)
+  const [notification, setNotification] = useState(null)
 
   useEffect(() => {
     fetchGameData()
@@ -57,20 +59,24 @@ function Game() {
     }
   }
 
+  const showNotification = (message, type = 'success') => {
+    setNotification({ message, type })
+  }
+
   const handleAction = async (actionType, data) => {
     try {
       switch (actionType) {
         case 'buy_tile':
           const buyRes = await axios.post(`/api/player/${currentPlayer.id}/buy-tile`, { tileId: data.tileId })
           if (buyRes.data.success) {
-            alert('✓ Property purchased successfully!')
+            showNotification('✓ Property purchased successfully!', 'success')
             fetchGameData()
           }
           break
         case 'launch_company':
           const launchRes = await axios.post(`/api/player/${currentPlayer.id}/launch-company`, data)
           if (launchRes.data.success) {
-            alert(`✓ ${data.name} launched successfully!`)
+            showNotification(`✓ ${data.name} launched successfully!`, 'success')
             fetchGameData()
           }
           break
@@ -79,37 +85,38 @@ function Game() {
       }
     } catch (error) {
       console.error('Error performing action:', error)
-      alert('✗ Action failed: ' + (error.response?.data?.error || error.message))
+      showNotification('✗ Action failed: ' + (error.response?.data?.error || error.message), 'error')
     }
   }
 
   const handleAISimulation = async () => {
     try {
-      alert('🤖 Starting AI simulation...')
+      showNotification('🤖 Starting AI simulation...', 'info')
       const res = await axios.post(`/api/ai/simulate-round/${gameId}`)
       console.log('AI Simulation result:', res.data)
-      alert('✓ AI simulation complete!')
+      showNotification('✓ AI simulation complete!', 'success')
       fetchGameData()
     } catch (error) {
       console.error('Error simulating round:', error)
-      alert('✗ Simulation failed: ' + (error.response?.data?.error || error.message))
+      showNotification('✗ Simulation failed: ' + (error.response?.data?.error || error.message), 'error')
     }
   }
 
   const handleEndRound = async () => {
     try {
-      // End the current round
-      await axios.post(`/api/game/${gameId}/end-round`)
+      showNotification('⏭️ Ending turn...', 'info')
       
-      // Auto-trigger AI simulation after a moment
-      setTimeout(async () => {
-        await handleAISimulation()
-      }, 1000)
+      // Advance to next player's turn instead of ending the round
+      const res = await axios.post(`/api/game/${gameId}/advance-turn`)
+      
+      if (res.data.success) {
+        showNotification('✓ Turn advanced to ' + res.data.currentPlayer, 'success')
+      }
       
       fetchGameData()
     } catch (error) {
-      console.error('Error ending round:', error)
-      alert('Failed to end round: ' + (error.response?.data?.error || error.message))
+      console.error('Error ending turn:', error)
+      showNotification('Failed to end turn: ' + (error.response?.data?.error || error.message), 'error')
     }
   }
 
@@ -119,6 +126,14 @@ function Game() {
 
   return (
     <div className="min-h-screen p-4">
+      {notification && (
+        <Notification 
+          message={notification.message} 
+          type={notification.type}
+          onClose={() => setNotification(null)}
+        />
+      )}
+      
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Left Column - Game Board */}
         <div className="lg:col-span-2 space-y-4">
@@ -138,6 +153,7 @@ function Game() {
             onAISimulation={handleAISimulation}
             game={game}
             onEndRound={handleEndRound}
+            onNotification={showNotification}
           />
         </div>
 
@@ -150,7 +166,7 @@ function Game() {
             currentTurnPlayer={currentTurnPlayer}
           />
 
-          <ChatPanel gameId={gameId} playerId={currentPlayer?.id} />
+          <ChatPanel gameId={gameId} playerId={currentPlayer?.id} onNotification={showNotification} />
 
           <NewsPanel news={news} />
         </div>

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Send, MessageCircle, Bot } from 'lucide-react'
 import axios from 'axios'
 
-function ChatPanel({ gameId, playerId }) {
+function ChatPanel({ gameId, playerId, onNotification }) {
   const [messages, setMessages] = useState([])
   const [inputMessage, setInputMessage] = useState('')
   const [chatMode, setChatMode] = useState('chat') // 'chat' or 'ai_action'
@@ -43,14 +43,31 @@ function ChatPanel({ gameId, playerId }) {
         message: inputMessage,
         messageType: chatMode === 'ai_action' ? 'action' : 'chat'
       })
+      
+      // Add message to local state immediately
+      const playerName = localStorage.getItem(`playerName_${gameId}`) || 'You'
+      const newMessage = {
+        playerName,
+        message: inputMessage,
+        messageType: chatMode === 'ai_action' ? 'action' : 'chat',
+        timestamp: new Date().toISOString()
+      }
+      setMessages([...messages, newMessage])
+      
       setInputMessage('')
+      if (onNotification) {
+        onNotification('✓ Message sent!', 'success')
+      }
     } catch (error) {
       console.error('Error sending message:', error)
-      alert('Failed to send message')
+      if (onNotification) {
+        onNotification('Failed to send message', 'error')
+      }
     }
   }
 
-  const sendAIAction = async () => {
+  const sendAIAction = async (e) => {
+    if (e) e.preventDefault()
     if (!inputMessage.trim()) return
     try {
       // Send as custom action
@@ -59,11 +76,26 @@ function ChatPanel({ gameId, playerId }) {
         actionDescription: inputMessage,
         details: {}
       })
+      
+      // Add message to local state
+      const playerName = localStorage.getItem(`playerName_${gameId}`) || 'You'
+      const newMessage = {
+        playerName,
+        message: inputMessage,
+        messageType: 'action',
+        timestamp: new Date().toISOString()
+      }
+      setMessages([...messages, newMessage])
+      
       setInputMessage('')
-      alert('✓ AI received your action!')
+      if (onNotification) {
+        onNotification('✓ AI received your action!', 'success')
+      }
     } catch (error) {
       console.error('Error sending AI action:', error)
-      alert('Failed to send action: ' + (error.response?.data?.error || error.message))
+      if (onNotification) {
+        onNotification('Failed to send action: ' + (error.response?.data?.error || error.message), 'error')
+      }
     }
   }
 
@@ -146,7 +178,7 @@ function ChatPanel({ gameId, playerId }) {
         <div ref={messagesEndRef} />
       </div>
 
-      <form onSubmit={chatMode === 'ai_action' ? sendAIAction : sendMessage} className="flex gap-2">
+      <form onSubmit={chatMode === 'ai_action' ? (e) => { e.preventDefault(); sendAIAction(); } : sendMessage} className="flex gap-2">
         <input
           type="text"
           value={inputMessage}

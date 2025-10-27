@@ -1,6 +1,9 @@
+import { useState } from 'react'
 import { MapPin, Building } from 'lucide-react'
+import ConfirmDialog from './ConfirmDialog'
 
 function GameBoard({ tiles, districts, players, currentPlayer, onBuyTile }) {
+  const [confirmState, setConfirmState] = useState(null)
 
   const getDistrictColor = (districtType) => {
     const colors = {
@@ -25,6 +28,17 @@ function GameBoard({ tiles, districts, players, currentPlayer, onBuyTile }) {
     return colors[player.order_in_game % colors.length] || 'border-gray-600'
   }
 
+  const getInitial = (name) => {
+    return name ? name.charAt(0).toUpperCase() : '?'
+  }
+
+  const getAvatarColor = (ownerId) => {
+    const player = players.find(p => p.id === ownerId)
+    if (!player) return 'bg-gray-600'
+    const colors = ['bg-blue-500', 'bg-green-500', 'bg-yellow-500', 'bg-pink-500', 'bg-cyan-500', 'bg-purple-500']
+    return colors[player.order_in_game % colors.length] || 'bg-gray-600'
+  }
+
   // Arrange districts with tiles
   const arrangedDistricts = districts.map((district) => ({
     ...district,
@@ -32,20 +46,32 @@ function GameBoard({ tiles, districts, players, currentPlayer, onBuyTile }) {
   }))
 
   return (
-    <div className="glass rounded-xl p-4 card-glow">
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-2xl font-display font-bold">🎲 Board</h2>
-        <div className="flex items-center gap-2 text-neon-blue">
-          <MapPin className="w-4 h-4" />
-          <span className="text-xs">Click to buy</span>
+    <>
+      {confirmState && (
+        <ConfirmDialog
+          message={confirmState.message}
+          onConfirm={() => {
+            onBuyTile(confirmState.tileId)
+            setConfirmState(null)
+          }}
+          onCancel={() => setConfirmState(null)}
+        />
+      )}
+      
+      <div className="glass rounded-xl p-4 card-glow">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-2xl font-display font-bold">🎲 Board</h2>
+          <div className="flex items-center gap-2 text-neon-blue">
+            <MapPin className="w-4 h-4" />
+            <span className="text-xs">Click to buy</span>
+          </div>
         </div>
-      </div>
 
       {/* TRUE MONOPOLY BOARD - Properties around perimeter */}
-      <div className="relative bg-gradient-to-br from-amber-50 via-yellow-50 to-amber-100 rounded-xl p-2 border-4 border-amber-800 shadow-xl">
+      <div className="relative bg-gradient-to-br from-neutral-800 via-gray-900 to-neutral-800 rounded-xl p-3 border-2 border-amber-600 shadow-xl">
         
         {/* Compact Grid - All Properties Visible */}
-        <div className="grid grid-cols-8 gap-1">
+        <div className="grid grid-cols-8 gap-2">
           {arrangedDistricts.slice(0, 6).flatMap((district) =>
             district.tiles.slice(0, 4).map((tile) => (
               <PropertyTile
@@ -55,9 +81,12 @@ function GameBoard({ tiles, districts, players, currentPlayer, onBuyTile }) {
                 isOwned={!!tile.owner_id}
                 ownerColor={getOwnerColor(tile.owner_id)}
                 ownerName={getPlayerName(tile.owner_id)}
+                ownerInitial={getInitial(getPlayerName(tile.owner_id))}
+                ownerAvatarColor={getAvatarColor(tile.owner_id)}
                 isAffordable={parseFloat(currentPlayer?.capital || 0) >= parseFloat(tile.purchase_price)}
                 onBuyTile={onBuyTile}
                 currentPlayer={currentPlayer}
+                onConfirm={(tileId, message) => setConfirmState({ tileId, message })}
               />
             ))
           )}
@@ -83,11 +112,12 @@ function GameBoard({ tiles, districts, players, currentPlayer, onBuyTile }) {
         </div>
       </div>
     </div>
+    </>
   )
 }
 
 // Property Tile Component
-function PropertyTile({ tile, district, isOwned, ownerColor, ownerName, isAffordable, onBuyTile, currentPlayer }) {
+function PropertyTile({ tile, district, isOwned, ownerColor, ownerName, ownerInitial, ownerAvatarColor, isAffordable, onBuyTile, currentPlayer, onConfirm }) {
   const getColor = (districtType) => {
     const colors = {
       tech_park: 'bg-blue-500',
@@ -102,13 +132,14 @@ function PropertyTile({ tile, district, isOwned, ownerColor, ownerName, isAfford
   
   const tileColor = district ? getColor(district.type) : 'bg-gray-600'
   
+  // Remove "Plot X" from the name
+  const displayName = district ? district.name : tile.name.split(' - ')[0]
+  
   return (
     <div
       onClick={() => {
         if (!isOwned && isAffordable) {
-          if (window.confirm(`Buy ${tile.name} for $${parseInt(tile.purchase_price).toLocaleString()}?`)) {
-            onBuyTile(tile.id)
-          }
+          onConfirm(tile.id, `Buy ${displayName} for $${parseInt(tile.purchase_price).toLocaleString()}?`)
         }
       }}
       className={`relative ${tileColor} rounded border-2 min-h-[50px] p-1 ${
@@ -118,16 +149,19 @@ function PropertyTile({ tile, district, isOwned, ownerColor, ownerName, isAfford
             ? 'border-gray-700 hover:border-neon-blue hover:shadow-xl cursor-pointer hover:scale-105 transition-all'
             : 'border-gray-800 opacity-50 cursor-not-allowed'
       }`}
-      title={isOwned ? `Owned by ${ownerName}` : `${tile.name} - $${parseInt(tile.purchase_price).toLocaleString()}`}
+      title={isOwned ? `Owned by ${ownerName}` : `${displayName} - $${parseInt(tile.purchase_price).toLocaleString()}`}
     >
       <div className="text-white text-[9px] font-bold truncate">
-        {tile.name.split(' - ')[1] || tile.name}
+        {displayName}
       </div>
       <div className="text-white text-[8px] font-bold">
         ${parseInt(tile.purchase_price).toLocaleString().slice(0, -3)}k
       </div>
       {isOwned && (
-        <div className="absolute bottom-0.5 right-0.5">
+        <div className="absolute bottom-0.5 right-0.5 flex items-center gap-1">
+          <div className={`${ownerAvatarColor} text-white w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold`}>
+            {ownerInitial}
+          </div>
           <Building className="w-3 h-3 text-purple-300" />
         </div>
       )}
