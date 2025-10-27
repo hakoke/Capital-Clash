@@ -12,6 +12,8 @@ function Lobby() {
   const [showJoinForm, setShowJoinForm] = useState(false)
   const [playerName, setPlayerName] = useState('')
   const [companyName, setCompanyName] = useState('')
+  const [isPlayerInGame, setIsPlayerInGame] = useState(false)
+  const [currentPlayerId, setCurrentPlayerId] = useState(null)
 
   useEffect(() => {
     fetchGameData()
@@ -24,6 +26,15 @@ function Lobby() {
       const res = await axios.get(`/api/game/${gameId}`)
       setGame(res.data.game)
       setPlayers(res.data.players)
+      
+      // Check if localStorage has a player ID for this game
+      const savedPlayerId = localStorage.getItem(`player_${gameId}`)
+      if (savedPlayerId && res.data.players.some(p => p.id === savedPlayerId)) {
+        setIsPlayerInGame(true)
+        setCurrentPlayerId(savedPlayerId)
+      } else {
+        setIsPlayerInGame(false)
+      }
     } catch (error) {
       console.error('Error fetching game:', error)
     }
@@ -33,11 +44,14 @@ function Lobby() {
     e.preventDefault()
     setLoading(true)
     try {
-      await axios.post('/api/player/join', {
+      const res = await axios.post('/api/player/join', {
         gameId,
         playerName: playerName || 'Player',
         companyName: companyName || 'Company'
       })
+      localStorage.setItem(`player_${gameId}`, res.data.player.id)
+      setIsPlayerInGame(true)
+      setCurrentPlayerId(res.data.player.id)
       setShowJoinForm(false)
       fetchGameData()
     } catch (error) {
@@ -89,26 +103,32 @@ function Lobby() {
         <div className="glass rounded-xl p-6 card-glow">
           <h2 className="text-2xl font-bold mb-4">Players</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {players.map((player, index) => (
-              <div key={player.id} className="bg-card-bg rounded-lg p-4 border border-neon-blue border-opacity-30">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-bold text-lg">{player.name}</p>
-                    <p className="text-gray-400">{player.company_name}</p>
-                    <p className="text-neon-blue mt-2">${parseInt(player.capital).toLocaleString()}</p>
+            {players.map((player, index) => {
+              const isHost = player.order_in_game === 1
+              return (
+                <div key={player.id} className="bg-card-bg rounded-lg p-4 border border-neon-blue border-opacity-30">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-bold text-lg flex items-center gap-2">
+                        {player.name}
+                        {isHost && <span className="text-2xl">👑</span>}
+                      </p>
+                      <p className="text-gray-400">{player.company_name}</p>
+                      <p className="text-neon-blue mt-2">${parseInt(player.capital).toLocaleString()}</p>
+                    </div>
+                    <div className="text-4xl">👔</div>
                   </div>
-                  <div className="text-4xl">👔</div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
           {players.length < 2 && (
             <p className="text-gray-500 text-center mt-4">Waiting for more players... (Need at least 2)</p>
           )}
         </div>
 
-        {/* Start Button */}
-        {players.length >= 2 && game.status === 'waiting' && (
+        {/* Start Button - Only for host */}
+        {players.length >= 2 && game.status === 'waiting' && isPlayerInGame && players.find(p => p.order_in_game === 1)?.id === currentPlayerId && (
           <div className="flex justify-center">
             <button
               onClick={startGame}
@@ -133,8 +153,8 @@ function Lobby() {
           <code className="bg-dark-bg px-4 py-2 rounded block">{window.location.origin}/lobby/{gameId}</code>
         </div>
 
-        {/* Join Game Form */}
-        {!showJoinForm ? (
+        {/* Join Game Form - Only show if NOT already in game */}
+        {!isPlayerInGame && !showJoinForm && (
           <div className="flex justify-center">
             <button
               onClick={() => setShowJoinForm(true)}
@@ -143,7 +163,8 @@ function Lobby() {
               🎮 Join This Game
             </button>
           </div>
-        ) : (
+        )}
+        {!isPlayerInGame && showJoinForm && (
           <div className="glass rounded-xl p-8 card-glow">
             <h2 className="text-3xl font-bold mb-6 text-center">Join Game</h2>
             <form onSubmit={joinGame} className="space-y-4">
@@ -188,6 +209,13 @@ function Lobby() {
                 </button>
               </div>
             </form>
+          </div>
+        )}
+
+        {/* If already in game but can't start */}
+        {isPlayerInGame && players.length >= 2 && game.status === 'waiting' && players.find(p => p.order_in_game === 1)?.id !== currentPlayerId && (
+          <div className="glass rounded-xl p-6 text-center card-glow">
+            <p className="text-gray-400">Waiting for host to start the game...</p>
           </div>
         )}
       </div>

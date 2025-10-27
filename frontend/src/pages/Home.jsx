@@ -33,6 +33,9 @@ function Home() {
         companyName: companyName || 'My Company'
       })
 
+      // Store player ID so we know they're in the game
+      localStorage.setItem(`player_${gameId}`, playerRes.data.player.id)
+
       navigate(`/lobby/${gameId}`)
     } catch (error) {
       console.error('Error creating game:', error)
