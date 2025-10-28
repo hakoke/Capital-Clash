@@ -150,16 +150,6 @@ function Game() {
               <span className="text-neon-purple font-bold">{currentPlayer.company_name}</span>
             </div>
           </div>
-          
-          {game.phase === 'player_phase' && isMyTurn && (
-            <button
-              onClick={handleEndRound}
-              className="btn-primary px-5 py-2 rounded-lg font-bold text-base transition-all hover:scale-105 flex items-center gap-2 shadow-2xl animate-pulse"
-            >
-              <span>⏭️</span>
-              End My Turn
-            </button>
-          )}
         </div>
 
         {/* Main Game Area - Grid Layout */}
@@ -189,6 +179,7 @@ function Game() {
               currentPlayer={currentPlayer}
               currentTurnPlayer={currentTurnPlayer}
               onBuyTile={(tileId) => handleAction('buy_tile', { tileId })}
+              onEndTurn={handleEndRound}
             />
           </div>
 

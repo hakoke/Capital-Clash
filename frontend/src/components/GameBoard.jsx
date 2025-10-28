@@ -2,7 +2,7 @@ import { useState } from 'react'
 import ConfirmDialog from './ConfirmDialog'
 import { Building2, Factory, ShoppingBag, Leaf, Sparkles, Anchor } from 'lucide-react'
 
-function GameBoard({ tiles, districts, players, currentPlayer, currentTurnPlayer, onBuyTile }) {
+function GameBoard({ tiles, districts, players, currentPlayer, currentTurnPlayer, onBuyTile, onEndTurn }) {
   const [confirmState, setConfirmState] = useState(null)
 
   const getDistrictColor = (districtType) => {
@@ -65,12 +65,18 @@ function GameBoard({ tiles, districts, players, currentPlayer, currentTurnPlayer
     })
   })
 
-  // Arrange for display: take first 24 tiles for perimeter (6 per side)
-  const displayedTiles = perimeterTiles.slice(0, 24)
+  // We have 36 tiles total (12 districts * 3 tiles)
+  // Arrange: 10 top, 9 right, 10 bottom, 9 left
+  const topTiles = perimeterTiles.slice(0, 10)
+  const rightTiles = perimeterTiles.slice(10, 19)
+  const bottomTiles = perimeterTiles.slice(19, 29)
+  const leftTiles = perimeterTiles.slice(29, 36).reverse()
 
   const getDisplayName = (tile, district) => {
     return district ? district.name : tile.name.split(' - ')[0]
   }
+
+  const isMyTurn = currentTurnPlayer && currentPlayer && currentTurnPlayer.id === currentPlayer.id
 
   return (
     <>
@@ -85,14 +91,14 @@ function GameBoard({ tiles, districts, players, currentPlayer, currentTurnPlayer
         />
       )}
       
-      <div className="relative bg-gradient-to-br from-amber-50 via-yellow-50 to-amber-100 rounded-xl border-4 border-amber-800 shadow-2xl p-6">
+      <div className="relative bg-gradient-to-br from-amber-50 via-yellow-50 to-amber-100 rounded-xl border-4 border-amber-800 shadow-2xl p-4">
         
         {/* BOARD LAYOUT */}
-        <div className="relative min-h-[600px]">
+        <div className="relative">
           
           {/* TOP ROW */}
-          <div className="flex justify-center gap-2 mb-2">
-            {displayedTiles.slice(0, 8).map(({ tile, district }) => (
+          <div className="flex justify-center gap-1 mb-1">
+            {topTiles.map(({ tile, district }) => (
               <PropertyTile
                 key={`top-${tile.id}`}
                 tile={tile}
@@ -115,11 +121,11 @@ function GameBoard({ tiles, districts, players, currentPlayer, currentTurnPlayer
           </div>
 
           {/* MIDDLE SECTION */}
-          <div className="flex justify-between gap-2">
+          <div className="flex justify-between gap-1">
             
             {/* LEFT SIDE */}
-            <div className="flex flex-col gap-2">
-              {displayedTiles.slice(8, 11).reverse().map(({ tile, district }) => (
+            <div className="flex flex-col gap-1">
+              {leftTiles.map(({ tile, district }) => (
                 <PropertyTile
                   key={`left-${tile.id}`}
                   tile={tile}
@@ -142,21 +148,29 @@ function GameBoard({ tiles, districts, players, currentPlayer, currentTurnPlayer
             </div>
 
             {/* CENTER AREA */}
-            <div className="flex-1 mx-4 flex items-center justify-center bg-gradient-to-br from-yellow-100 to-amber-50 rounded-xl border-2 border-amber-700 shadow-inner">
-              <div className="text-center p-4">
-                <h1 className="text-4xl font-bold text-amber-800 mb-1">CAPITAL CLASH</h1>
-                <p className="text-lg text-amber-700 font-semibold mb-3">Rise of the CEOs</p>
-                {currentTurnPlayer && (
-                  <div className="px-4 py-2 bg-green-500 text-white rounded-lg font-bold inline-block">
-                    {currentTurnPlayer.id === currentPlayer.id ? 'Your Turn' : `${currentTurnPlayer.name}'s Turn`}
+            <div className="flex-1 mx-2 flex items-center justify-center bg-gradient-to-br from-yellow-100 to-amber-50 rounded-xl border-2 border-amber-700 shadow-inner">
+              <div className="text-center p-3">
+                <h1 className="text-3xl font-bold text-amber-800 mb-1">CAPITAL CLASH</h1>
+                <p className="text-base text-amber-700 font-semibold mb-3">Rise of the CEOs</p>
+                {isMyTurn && (
+                  <button
+                    onClick={onEndTurn}
+                    className="px-6 py-3 bg-green-500 text-white rounded-lg font-bold text-base hover:bg-green-600 transition-all hover:scale-105 shadow-lg animate-pulse"
+                  >
+                    ⏭️ End Turn
+                  </button>
+                )}
+                {!isMyTurn && currentTurnPlayer && (
+                  <div className="px-6 py-3 bg-gray-500 text-white rounded-lg font-bold text-base">
+                    {currentTurnPlayer.name}'s Turn
                   </div>
                 )}
               </div>
             </div>
 
             {/* RIGHT SIDE */}
-            <div className="flex flex-col gap-2">
-              {displayedTiles.slice(11, 14).map(({ tile, district }) => (
+            <div className="flex flex-col gap-1">
+              {rightTiles.map(({ tile, district }) => (
                 <PropertyTile
                   key={`right-${tile.id}`}
                   tile={tile}
@@ -180,8 +194,8 @@ function GameBoard({ tiles, districts, players, currentPlayer, currentTurnPlayer
           </div>
 
           {/* BOTTOM ROW */}
-          <div className="flex justify-center gap-2 mt-2">
-            {displayedTiles.slice(14, 22).reverse().map(({ tile, district }) => (
+          <div className="flex justify-center gap-1 mt-1">
+            {bottomTiles.reverse().map(({ tile, district }) => (
               <PropertyTile
                 key={`bottom-${tile.id}`}
                 tile={tile}
@@ -223,7 +237,7 @@ function PropertyTile({
         }
       }}
       className={`relative ${
-        orientation === 'vertical' ? 'w-16 h-20' : 'h-16 w-20'
+        orientation === 'vertical' ? 'w-14 h-16' : 'h-14 w-16'
       } rounded border-3 flex flex-col items-center justify-between p-1 ${
         isOwned 
           ? `border-4 ${ownerColor} opacity-95 cursor-pointer hover:shadow-xl` 
@@ -239,8 +253,8 @@ function PropertyTile({
       </div>
       
       {/* Property Name */}
-      <div className={`text-white font-bold text-center leading-tight mt-3 px-0.5 ${
-        orientation === 'vertical' ? 'text-[8px]' : 'text-[9px]'
+      <div className={`text-white font-bold text-center leading-tight mt-2 px-0.5 ${
+        orientation === 'vertical' ? 'text-[7px]' : 'text-[7px]'
       }`}>
         {displayName}
       </div>
@@ -248,15 +262,15 @@ function PropertyTile({
       {/* Price or Owner Info */}
       {isOwned ? (
         <div className="flex flex-col items-center gap-0.5 mt-auto mb-1">
-          <div className={`${ownerAvatarColor} text-white w-4 h-4 rounded-full flex items-center justify-center text-[7px] font-bold`}>
+          <div className={`${ownerAvatarColor} text-white w-3.5 h-3.5 rounded-full flex items-center justify-center text-[6px] font-bold`}>
             {ownerInitial}
           </div>
           {isCurrentPlayerTile && (
-            <span className="text-[7px] text-yellow-300 font-bold">MINE</span>
+            <span className="text-[6px] text-yellow-300 font-bold">MINE</span>
           )}
         </div>
       ) : (
-        <div className="text-white text-[8px] font-bold text-center mt-auto mb-1">
+        <div className="text-white text-[7px] font-bold text-center mt-auto mb-0.5">
           ${parseInt(tile.purchase_price).toLocaleString().slice(0, -3)}k
         </div>
       )}
