@@ -6,6 +6,7 @@ import { Users, Copy, Check, Crown, Settings, MessageCircle, Volume2, Search, He
 import { PLAYER_COLORS } from '../utils/monopolyConstants.js'
 import GameSettingToggle from '../components/GameSettingToggle.jsx'
 import { motion, AnimatePresence } from 'framer-motion'
+import MonopolyBoard from '../components/MonopolyBoard.jsx'
 
 const layoutVariants = {
   enter: { opacity: 0, y: 80 },
@@ -18,6 +19,7 @@ function Lobby() {
   const navigate = useNavigate()
   const [game, setGame] = useState(null)
   const [players, setPlayers] = useState([])
+  const [properties, setProperties] = useState([])
   const [loading, setLoading] = useState(false)
   const [playerName, setPlayerName] = useState('')
   const [selectedColor, setSelectedColor] = useState(null)
@@ -114,6 +116,7 @@ function Lobby() {
       const res = await axios.get(`/api/game/${gameId}`)
       setGame(res.data.game)
       setPlayers(res.data.players)
+      setProperties(res.data.properties || [])
       
       // Update settings from database
       if (res.data.game.max_players) {
@@ -242,51 +245,53 @@ function Lobby() {
 
   if (!game) return <div className="min-h-screen flex items-center justify-center bg-purple-950"><div className="text-xl text-white">Loading...</div></div>
 
-    return (
-    <div className="min-h-screen bg-[#1a0033] relative">
+  const currentPlayer = isPlayerInGame ? players.find(p => p.id === currentPlayerId) : null
+  const propertiesOwned = currentPlayer ? properties.filter(p => p.owner_id === currentPlayer.id) : []
 
-      {/* Header */}
-      <div className="relative z-20 px-6 py-4 flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-white tracking-tight">lazydown.oi</h1>
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-full bg-transparent flex items-center justify-center hover:bg-white/10 transition-colors cursor-pointer">
-            <MessageCircle className="w-5 h-5 text-white" />
-          </div>
-          <div className="w-10 h-10 rounded-full bg-transparent flex items-center justify-center hover:bg-white/10 transition-colors cursor-pointer">
-            <HelpCircle className="w-5 h-5 text-white" />
-          </div>
-          <div className="w-10 h-10 rounded-full bg-transparent flex items-center justify-center hover:bg-white/10 transition-colors cursor-pointer">
-            <Volume2 className="w-5 h-5 text-white" />
-          </div>
-          <div className="w-10 h-10 rounded-full bg-transparent flex items-center justify-center hover:bg-white/10 transition-colors cursor-pointer">
-            <Search className="w-5 h-5 text-white" />
+    return (
+    <div className="min-h-screen bg-[#2d1b4e] relative">
+
+      {/* Header - Top Bar */}
+      <div className="relative z-20 px-6 py-3 bg-[#1a0a2e] border-b border-purple-800 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-white">lazydown.oi</h1>
+          <div className="flex items-center gap-2 ml-4">
+            <a href="https://discord.gg" className="text-white hover:opacity-80 transition-opacity">
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M13.545 2.907a13.227 13.227 0 0 0-3.257 1.053A11.89 11.89 0 0 0 5.647 2.216 14.031 14.031 0 0 0 2.9 9.084c.88-.53 1.87-.915 2.93-1.153a9.908 9.908 0 0 1-2.93-1.85A8.84 8.84 0 0 0 1.77 9.073a12.105 12.105 0 0 0 3.592 5.503 10.614 10.614 0 0 1-2.94 1.18 12.343 12.343 0 0 0 7.272 2.631 12.024 12.024 0 0 0 8.718-3.897 13.213 13.213 0 0 1-2.93 1.85 10.073 10.073 0 0 0 5.3-7.514 8.84 8.84 0 0 0 .849-7.588 9.908 9.908 0 0 1-2.93 1.85 10.853 10.853 0 0 0 .877-3.01c.157-1.459-.909-2.602-2.758-3.636z"/></svg>
+            </a>
+            <HelpCircle className="w-5 h-5 text-white cursor-pointer hover:opacity-80 transition-opacity" />
+            <Volume2 className="w-5 h-5 text-white cursor-pointer hover:opacity-80 transition-opacity" />
+            <Search className="w-5 h-5 text-white cursor-pointer hover:opacity-80 transition-opacity" />
           </div>
         </div>
       </div>
 
-      {/* Main content */}
-      <div className="relative z-10 flex h-[calc(100vh-80px)]">
+      {/* Main content - 3 column layout like RICHUP.IO */}
+      <div className="relative z-10 flex h-[calc(100vh-60px)]">
         {/* Left Panel - Share and Chat */}
-        <div className="w-1/3 bg-[#3a1552] p-6 border-r border-purple-800">
+        <div className="w-80 bg-[#221735] p-6 border-r border-purple-900 overflow-y-auto">
           {/* Share this game */}
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-3">
               <h2 className="text-white font-semibold">Share this game</h2>
               <Info className="w-4 h-4 text-purple-400" />
             </div>
-            <div className="flex gap-2 bg-[#2a0f3f] rounded-lg p-2">
               <input 
                 type="text" 
                 readOnly
                 value={`https://lazydown.oi/room/${gameId}`}
-                className="flex-1 bg-transparent text-white text-sm px-2"
+              className="flex-1 bg-[#2a0f3f] text-white text-sm px-3 py-2 rounded-lg mb-2"
               />
+            <div className="flex gap-2">
               <button
                 onClick={copyGameLink}
-                className="px-3 py-1.5 bg-[#2a0f3f] hover:bg-[#3a1552] rounded text-white text-sm flex items-center gap-2"
+                className="flex-1 bg-[#5a2d8c] hover:bg-[#6a3d9c] px-3 py-2 rounded-lg text-white text-sm flex items-center justify-center gap-2 transition-colors"
               >
                 {linkCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                 {linkCopied ? 'Copied' : 'Copy'}
+              </button>
+              <button className="flex-1 bg-[#2a0f3f] hover:bg-[#3a1552] px-3 py-2 rounded-lg text-white text-sm transition-colors">
+                View room settings
               </button>
             </div>
             </div>
@@ -298,10 +303,14 @@ function Lobby() {
 
           {/* Chat */}
           <div className="mb-6">
-            <div className="flex items-center justify-center gap-2 mb-3">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
               <Volume2 className="w-4 h-4 text-gray-400" />
               <h2 className="text-white font-semibold">Chat</h2>
-              <Search className="w-4 h-4 text-gray-400" />
+              </div>
+              <div className="flex items-center gap-1">
+                <ChevronRight className="w-4 h-4 text-gray-400" />
+              </div>
             </div>
             <div className="rounded-lg bg-[#2a0f3f] max-h-60 flex flex-col">
               {/* Messages */}
@@ -328,7 +337,7 @@ function Lobby() {
                       type="text"
                       value={chatInput}
                       onChange={(e) => setChatInput(e.target.value)}
-                      placeholder="Type a message..."
+                      placeholder="Say something..."
                       className="flex-1 bg-[#1a0033] text-white text-sm px-3 py-2 rounded-lg border border-purple-700 focus:border-purple-500 focus:outline-none"
                     />
                     <button
@@ -363,48 +372,125 @@ function Lobby() {
           )}
         </div>
 
-        {/* Center - Blurred background */}
-        <div className="w-1/3 relative overflow-hidden">
-          <div 
-            className="absolute inset-0 opacity-20 blur-2xl"
-            style={{
-              backgroundImage: `url('data:image/svg+xml,${encodeURIComponent('<svg width="800" height="800" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="100" height="100" fill="%23228B22" opacity="0.5"/><rect x="100" y="0" width="100" height="100" fill="%23228B22" opacity="0.5"/><rect x="200" y="0" width="100" height="100" fill="%23228B22" opacity="0.5"/><rect x="300" y="0" width="100" height="100" fill="%234169E1" opacity="0.5"/><rect x="400" y="0" width="100" height="100" fill="%23DC143C" opacity="0.5"/><rect x="500" y="0" width="100" height="100" fill="%23FFD700" opacity="0.5"/><rect x="600" y="0" width="100" height="100" fill="%23FF8C00" opacity="0.5"/><rect x="700" y="0" width="100" height="100" fill="%23DC143C" opacity="0.5"/></svg>')}')`,
-              backgroundSize: 'contain',
-              backgroundRepeat: 'repeat',
-              filter: 'blur(20px)',
-            }}
-          />
+        {/* Center - Board Preview */}
+        <div className="flex-1 bg-[#2d1b4e] relative overflow-auto">
+          <div className="p-8">
+            {/* Dice Display */}
+            <div className="flex items-center justify-center mb-4 gap-4">
+              <div className="w-12 h-12 bg-white rounded-lg shadow-lg flex items-center justify-center">
+                <span className="text-2xl font-bold">⚀</span>
+              </div>
+              <div className="w-12 h-12 bg-white rounded-lg shadow-lg flex items-center justify-center">
+                <span className="text-2xl font-bold">⚁</span>
+              </div>
+              <button className="px-6 py-3 bg-[#5a2d8c] hover:bg-[#6a3d9c] text-white font-semibold rounded-lg shadow-lg transition-colors">
+                🎲 Roll the dice
+              </button>
+            </div>
+
+            {/* Game Log */}
+            <div className="bg-[#1a0a2e] rounded-lg p-4 text-xs text-gray-300 space-y-1">
+              {players.length > 0 && (
+                <>
+                  <div className="text-green-400">Game started with a randomized players order. Good luck!</div>
+                  <div className="text-purple-400">{players[0]?.name || 'Player'} joined the game</div>
+                  <div className="text-purple-400">Joined room {gameId}</div>
+                </>
+              )}
+            </div>
+
+            {/* Mini Board Preview */}
+            <div className="mt-6 bg-[#1a0a2e] rounded-lg p-4">
+              <MonopolyBoard
+                properties={properties}
+                players={players}
+                currentPlayer={currentPlayer}
+                currentTurnPlayer={null}
+                isPreview={true}
+              />
+            </div>
+          </div>
         </div>
 
-        {/* Right Panel - Settings */}
-        <div className="w-1/3 bg-[#3a1552] p-6 border-l border-purple-800 overflow-y-auto">
-          {/* Waiting for players or Players list */}
-          <div className="mb-6">
-            {players.length > 0 ? (
-              <div className="bg-[#2a0f3f] rounded-lg p-4 mb-4">
-                <h3 className="text-white font-semibold mb-3">Players ({players.length}/{maxPlayersValue})</h3>
+        {/* Right Panel - Players and Actions */}
+        <div className="w-80 bg-[#221735] p-6 border-l border-purple-900 overflow-y-auto">
+          {/* Players List */}
+          <div className="mb-4">
                 <div className="space-y-2">
-                  {players.map(player => {
+              {players.map((player, idx) => {
                     const colorData = PLAYER_COLORS.find(c => c.name === player.color)
                     const colorHex = colorData?.hex || '#999'
+                const isCrown = player.order_in_game === 1
                     
                     return (
-                      <div key={player.id} className="flex items-center gap-2 bg-[#1a0033] rounded p-2">
+                  <div key={player.id} className="flex items-center gap-2 text-white">
+                    <div className="relative w-10 h-10">
                         <div 
-                          className="w-8 h-8 rounded-full border-2 border-purple-600"
+                        className="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold"
                           style={{ backgroundColor: colorHex }}
-                        />
-                        <span className="text-white text-sm">{player.name}</span>
-                        {player.order_in_game === 1 && <Crown className="w-4 h-4 text-yellow-300" />}
+                      >
+                        {player.name.charAt(0).toUpperCase()}
+                      </div>
+                      {isCrown && (
+                        <div className="absolute -top-1 -right-1">
+                          <Crown className="w-4 h-4 text-yellow-300" />
+                        </div>
+                      )}
+                    </div>
+                    <span className="flex-1">{player.name}</span>
+                    {isPlayerInGame && currentPlayer && (
+                      <span className="text-green-400 font-bold text-sm">${player.money || 1500}</span>
+                    )}
                       </div>
                     )
                   })}
+              {players.length === 0 && (
+                <div className="text-gray-400 text-sm text-center py-8">Waiting for players...</div>
+              )}
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          {isPlayerInGame && (
+            <div className="mb-4 space-y-2">
+              <button className="w-full bg-[#5a2d8c] hover:bg-[#6a3d9c] text-white py-2 px-4 rounded-lg text-sm font-semibold transition-colors">
+                Votekick
+              </button>
+              <button className="w-full bg-[#d9534f] hover:bg-[#e9615d] text-white py-2 px-4 rounded-lg text-sm font-semibold transition-colors">
+                Bankrupt
+              </button>
                 </div>
+          )}
+
+          {/* Trades */}
+          {isPlayerInGame && (
+            <div className="mb-4 bg-[#1a0a2e] rounded-lg p-3 border border-purple-800">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-white font-semibold text-sm">Trades</h3>
               </div>
-            ) : (
-              <h2 className="text-white font-semibold mb-6">Waiting for players...</h2>
+              <button className="w-full bg-[#5a2d8c] hover:bg-[#6a3d9c] text-white py-2 px-4 rounded-lg text-sm font-semibold transition-colors">
+                Create
+              </button>
+            </div>
+          )}
+
+          {/* My Properties */}
+          {isPlayerInGame && currentPlayer && (
+            <div className="bg-[#1a0a2e] rounded-lg p-3 border border-purple-800">
+              <h3 className="text-white font-semibold text-sm mb-2">My properties ({propertiesOwned.length})</h3>
+              {propertiesOwned.length === 0 ? (
+                <p className="text-gray-500 text-xs">No properties owned yet</p>
+              ) : (
+                <div className="space-y-1">
+                  {propertiesOwned.slice(0, 3).map(prop => (
+                    <div key={prop.id} className="text-xs text-gray-300">
+                      {prop.name}
+                    </div>
+                  ))}
+                </div>
             )}
           </div>
+          )}
 
           {/* ALL settings are host-only */}
           {isHost && (
@@ -622,7 +708,7 @@ function Lobby() {
                   disabled={!playerName.trim()}
                   className="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
                 >
-                  <span>>></span> Join Game
+                  <span>&gt;&gt;</span> Join Game
                 </button>
               </div>
             </motion.div>

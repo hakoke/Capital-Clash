@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { COLOR_GROUPS } from '../utils/monopolyConstants.js'
 
-function MonopolyBoard({ properties, players, currentPlayer, currentTurnPlayer, onBuyProperty, onRollDice, onEndTurn, purchaseProperty }) {
+function MonopolyBoard({ properties, players, currentPlayer, currentTurnPlayer, onBuyProperty, onRollDice, onEndTurn, purchaseProperty, isPreview = false }) {
   const [selectedProperty, setSelectedProperty] = useState(null)
   const [diceRoll, setDiceRoll] = useState(null)
   const [showDiceAnimation, setShowDiceAnimation] = useState(false)
