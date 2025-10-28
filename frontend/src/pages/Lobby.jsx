@@ -269,80 +269,83 @@ function Lobby() {
       {/* Main content - 3 column layout like RICHUP.IO */}
       <div className="relative z-10 flex h-[calc(100vh-60px)]">
         {/* Left Panel - Share and Chat */}
-        <div className="w-80 bg-[#221735] p-6 border-r border-purple-900 overflow-y-auto">
+        <div className="w-80 bg-[#1a0a2e] p-6 border-r border-purple-900 overflow-y-auto">
           {/* Share this game */}
-          <div className="mb-6">
-            <div className="flex items-center gap-2 mb-3">
-              <h2 className="text-white font-semibold">Share this game</h2>
-              <Info className="w-4 h-4 text-purple-400" />
+          <div className="mb-4">
+            <div className="bg-[#2d1b4e] rounded-lg p-4 border border-purple-800">
+              <div className="flex items-center gap-2 mb-3">
+                <h2 className="text-white font-semibold text-sm">Share this game</h2>
+                <Info className="w-4 h-4 text-purple-400" />
+              </div>
+              <div className="space-y-2">
+                <input 
+                  type="text" 
+                  readOnly
+                  value={`https://poordown.oi/room/${gameId}`}
+                  className="w-full bg-[#1a0a2e] text-white text-xs px-3 py-2 rounded border border-purple-700"
+                />
+                <button
+                  onClick={copyGameLink}
+                  className="w-full bg-[#9d4edd] hover:bg-[#7b2cbf] px-3 py-2 rounded-lg text-white text-sm flex items-center justify-center gap-2 transition-colors"
+                >
+                  {linkCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                  {linkCopied ? 'Copied' : 'Copy'}
+                </button>
+              </div>
             </div>
-              <input 
-                type="text" 
-                readOnly
-                value={`https://poordown.oi/room/${gameId}`}
-              className="flex-1 bg-[#2a0f3f] text-white text-sm px-3 py-2 rounded-lg mb-2"
-              />
-            <div className="flex gap-2">
-              <button
-                onClick={copyGameLink}
-                className="flex-1 bg-[#5a2d8c] hover:bg-[#6a3d9c] px-3 py-2 rounded-lg text-white text-sm flex items-center justify-center gap-2 transition-colors"
-              >
-                {linkCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                {linkCopied ? 'Copied' : 'Copy'}
-              </button>
-              <button className="flex-1 bg-[#2a0f3f] hover:bg-[#3a1552] px-3 py-2 rounded-lg text-white text-sm transition-colors">
-                View room settings
-              </button>
-            </div>
-            </div>
+          </div>
 
-          {/* Ad blocker placeholder */}
-          <div className="mb-6 bg-[#3a1552] rounded-lg p-4 text-center border border-purple-700">
-            <p className="text-white text-sm">Disable your ad blocker to support poordown.oi</p>
+          {/* Advertisement placeholder */}
+          <div className="mb-4">
+            <div className="bg-[#2d1b4e] rounded-lg overflow-hidden border border-purple-800 aspect-square flex items-center justify-center">
+              <div className="text-gray-500 text-xs text-center px-4">Advertisement</div>
+            </div>
           </div>
 
           {/* Chat */}
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
+          <div className="mb-4">
+            <div className="flex items-center gap-2 mb-3">
               <Volume2 className="w-4 h-4 text-gray-400" />
-              <h2 className="text-white font-semibold">Chat</h2>
-              </div>
-              <div className="flex items-center gap-1">
-                <ChevronRight className="w-4 h-4 text-gray-400" />
-              </div>
+              <h2 className="text-white font-semibold text-sm">Chat</h2>
+              <div className="flex-1"></div>
+              <ChevronRight className="w-4 h-4 text-gray-400" />
             </div>
-            <div className="rounded-lg bg-[#2a0f3f] max-h-60 flex flex-col">
-              {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-3 space-y-2">
+            <div className="rounded-lg bg-[#2d1b4e] border border-purple-800 flex flex-col min-h-[200px]">
+              <div className="flex-1 overflow-y-auto p-3">
                 {chatMessages.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full text-center">
-                    <MessageCircle className="w-8 h-8 text-gray-500 mb-2" />
-                    <p className="text-gray-500 text-sm">No messages yet</p>
+                  <div className="flex flex-col items-center justify-center h-full text-center py-8">
+                    <MessageCircle className="w-6 h-6 text-gray-600 mb-2" />
+                    <p className="text-gray-600 text-xs">No messages yet</p>
                   </div>
                 ) : (
-                  chatMessages.map((msg, idx) => (
-                    <div key={idx} className="text-sm">
-                      <span className="text-purple-400 font-semibold">{msg.playerName}:</span>{' '}
-                      <span className="text-gray-300">{msg.message}</span>
-                    </div>
-                  ))
+                  <div className="space-y-2">
+                    {chatMessages.map((msg, idx) => (
+                      <div key={idx} className="text-xs">
+                        <span className="text-purple-400 font-semibold">{msg.playerName}:</span>{' '}
+                        <span className="text-gray-300">{msg.message}</span>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
-              {/* Chat input */}
+              {!isPlayerInGame && (
+                <div className="border-t border-purple-800 p-2">
+                  <p className="text-gray-600 text-xs text-center">Only game players can send chat messages</p>
+                </div>
+              )}
               {isPlayerInGame && (
-                <form onSubmit={sendChatMessage} className="border-t border-purple-700 p-2">
+                <form onSubmit={sendChatMessage} className="border-t border-purple-800 p-2">
                   <div className="flex gap-2">
                     <input
                       type="text"
                       value={chatInput}
                       onChange={(e) => setChatInput(e.target.value)}
                       placeholder="Say something..."
-                      className="flex-1 bg-[#1a0033] text-white text-sm px-3 py-2 rounded-lg border border-purple-700 focus:border-purple-500 focus:outline-none"
+                      className="flex-1 bg-[#1a0033] text-white text-xs px-3 py-2 rounded border border-purple-700 focus:border-purple-500 focus:outline-none"
                     />
                     <button
                       type="submit"
-                      className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors"
+                      className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded transition-colors"
                     >
                       <Send className="w-4 h-4" />
                     </button>
@@ -374,8 +377,9 @@ function Lobby() {
 
         {/* Center - Conditional Display */}
         <div className="flex-1 bg-[#2d1b4e] relative overflow-auto flex items-center justify-center">
-          {/* Blurred board background */}
-          <div className="absolute inset-0 opacity-20 blur-sm pointer-events-none">
+          {/* Blurred board background with dark overlay */}
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute inset-0 bg-black/40"></div>
             <MonopolyBoard
               properties={properties}
               players={players}
@@ -387,12 +391,12 @@ function Lobby() {
 
           {/* Show color selection in center if not joined yet */}
           {showColorSelection && !isPlayerInGame && (
-            <div className="relative z-10 max-w-lg w-full px-8">
-              <div className="bg-[#2d1143] rounded-2xl p-10 border border-[#4a2158]">
-                <h2 className="text-white text-2xl font-semibold mb-8 text-center">Select your player appearance:</h2>
+            <div className="relative z-10 max-w-md w-full">
+              <div className="bg-[#1a0a2e] rounded-xl p-8 shadow-2xl">
+                <h2 className="text-white text-xl font-semibold mb-6 text-center">Select your player appearance:</h2>
                 
                 {/* Color grid - 3 columns matching richup.io style */}
-                <div className="grid grid-cols-3 gap-5 mb-8">
+                <div className="grid grid-cols-3 gap-4 mb-6">
                   {PLAYER_COLORS.map((colorObj, idx) => {
                     const takenPlayer = playerByColor.get(colorObj.name)
                     const isSelected = selectedColor === colorObj.name
@@ -404,16 +408,16 @@ function Lobby() {
                         onClick={() => !isTaken && setSelectedColor(colorObj.name)}
                         disabled={isTaken}
                         className={`
-                          w-20 h-20 rounded-full relative mx-auto transition-all duration-200 border-4
-                          ${isSelected ? 'ring-4 ring-purple-400 ring-offset-2 border-white' : 'border-gray-400'}
+                          relative w-20 h-20 rounded-full transition-all duration-200
+                          ${isSelected ? 'ring-2 ring-purple-400 scale-110 shadow-lg' : ''}
                           ${isTaken ? 'opacity-30 cursor-not-allowed' : 'hover:scale-105 cursor-pointer'}
                         `}
                         style={{ backgroundColor: colorObj.hex }}
                       >
                         {isSelected && (
                           <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="w-6 h-6 bg-white rounded-full"></div>
-                            <div className="absolute w-3 h-3 bg-gray-800 rounded-full"></div>
+                            <div className="w-5 h-5 bg-white rounded-full"></div>
+                            <div className="absolute w-2.5 h-2.5 bg-gray-900 rounded-full"></div>
                           </div>
                         )}
                       </button>
@@ -425,16 +429,13 @@ function Lobby() {
                 <button
                   onClick={joinGame}
                   disabled={loading || !selectedColor}
-                  className="w-full bg-[#9d4edd] hover:bg-[#7b2cbf] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors flex items-center justify-center"
+                  className="w-full bg-[#9d4edd] hover:bg-[#7b2cbf] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors mb-3"
                 >
                   {loading ? 'Joining...' : 'Join game'}
                 </button>
                 
                 {/* Get more appearances button */}
-                <button className="w-full bg-transparent hover:bg-[#2a0f3f] text-gray-400 text-sm py-2 rounded-lg transition-colors flex items-center justify-center gap-2">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
+                <button className="w-full text-gray-500 text-sm py-2 hover:text-gray-400 transition-colors">
                   Get more appearances
                 </button>
               </div>
@@ -487,44 +488,12 @@ function Lobby() {
           )}
         </div>
 
-        {/* Right Panel - Players and Actions */}
+        {/* Right Panel - Game Settings */}
         <div className="w-80 bg-[#221735] p-6 border-l border-purple-900 overflow-y-auto">
-          {/* Players List */}
-          {players.length > 0 ? (
-            <div className="mb-4">
-              <div className="space-y-2">
-                {players.map((player, idx) => {
-                  const colorData = PLAYER_COLORS.find(c => c.name === player.color)
-                  const colorHex = colorData?.hex || '#999'
-                  const isCrown = player.order_in_game === 1
-                  
-                  return (
-                    <div key={player.id} className="flex items-center gap-2 text-white">
-                      <div className="relative w-10 h-10">
-                        <div 
-                          className="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold"
-                          style={{ backgroundColor: colorHex }}
-                        >
-                          {player.name.charAt(0).toUpperCase()}
-                        </div>
-                        {isCrown && (
-                          <div className="absolute -top-1 -right-1">
-                            <Crown className="w-4 h-4 text-yellow-300" />
-                          </div>
-                        )}
-                      </div>
-                      <span className="flex-1">{player.name}</span>
-                      {isPlayerInGame && currentPlayer && (
-                        <span className="text-green-400 font-bold text-sm">${player.money || 1500}</span>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          ) : (
-            <div className="text-gray-400 text-sm text-center py-8">
-              Waiting for players...
+          {/* Status Box */}
+          {game && game.status === 'waiting' && (
+            <div className="mb-6 bg-[#2d1b4e] rounded-lg p-3 text-center">
+              <p className="text-white text-sm">Waiting for players...</p>
             </div>
           )}
 
@@ -570,11 +539,43 @@ function Lobby() {
           </div>
           )}
 
+          {/* Players List (if any players) */}
+          {players.length > 0 && (
+            <div className="mb-6">
+              <div className="space-y-2">
+                {players.map((player, idx) => {
+                  const colorData = PLAYER_COLORS.find(c => c.name === player.color)
+                  const colorHex = colorData?.hex || '#999'
+                  const isCrown = player.order_in_game === 1
+                  
+                  return (
+                    <div key={player.id} className="flex items-center gap-2 text-white text-sm">
+                      <div className="relative w-8 h-8">
+                        <div 
+                          className="w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold"
+                          style={{ backgroundColor: colorHex }}
+                        >
+                          {player.name.charAt(0).toUpperCase()}
+                        </div>
+                        {isCrown && (
+                          <div className="absolute -top-1 -right-1">
+                            <Crown className="w-3 h-3 text-yellow-300" />
+                          </div>
+                        )}
+                      </div>
+                      <span className="flex-1">{player.name}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
           {/* ALL settings are host-only */}
           {isHost && (
             <>
             <div className="mb-6">
-              <h3 className="text-white text-sm font-semibold mb-4">Game settings</h3>
+              <h3 className="text-white font-semibold mb-4 text-sm">Game settings</h3>
               <div className="space-y-4">
                 {/* Maximum players */}
                 <div className="bg-[#2a0f3f] rounded-lg p-4">
