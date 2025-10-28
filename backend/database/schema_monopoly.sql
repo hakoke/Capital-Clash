@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS players (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     game_id UUID REFERENCES games(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
-    color VARCHAR(50) NOT NULL, -- red, blue, green, yellow, etc.
+    color VARCHAR(50), -- red, blue, green, yellow, etc.
     money DECIMAL(15, 2) DEFAULT 1500.00,
     position INTEGER DEFAULT 0, -- Position on the board (0-39 for 40 spaces)
     order_in_game INTEGER,

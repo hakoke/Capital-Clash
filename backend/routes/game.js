@@ -90,6 +90,13 @@ router.post('/:gameId/initialize-board', async (req, res) => {
       }
       console.log('✅ Schema initialized successfully');
     }
+    
+    // Ensure color column exists in players table
+    try {
+      await pool.query('ALTER TABLE players ADD COLUMN IF NOT EXISTS color VARCHAR(50)');
+    } catch (err) {
+      // Column might already exist, ignore
+    }
 
     // Create all Monopoly properties
     for (const prop of MONOPOLY_PROPERTIES) {
@@ -162,6 +169,13 @@ router.post('/:gameId/start', async (req, res) => {
         }
       }
       console.log('Schema initialized');
+    }
+    
+    // Ensure color column exists in players table
+    try {
+      await pool.query('ALTER TABLE players ADD COLUMN IF NOT EXISTS color VARCHAR(50)');
+    } catch (err) {
+      // Column might already exist, ignore
     }
 
     // Initialize board if not already done
