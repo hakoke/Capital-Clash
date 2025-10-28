@@ -350,24 +350,6 @@ function Lobby() {
             </div>
           </div>
 
-          {/* Ad blocker notice */}
-          {showAdBlocker && (
-            <div className="fixed bottom-6 left-6 bg-[#3a1552] border border-purple-700 rounded-lg p-3 max-w-xs shadow-lg">
-              <div className="flex items-start gap-2">
-                <div className="flex-1">
-                  <p className="text-white text-xs leading-tight font-semibold mb-1">
-                    Please disable your Adblocker
-                  </p>
-                  <p className="text-white text-xs leading-tight">
-                    poordown.oi is free and wants to stay free. We use ad revenue to keep maintaining the game. Thanks! ❤️
-                  </p>
-                </div>
-                <button onClick={() => setShowAdBlocker(false)} className="text-red-500 hover:text-red-600 transition-colors">
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Center - Conditional Display */}
@@ -389,8 +371,13 @@ function Lobby() {
           {/* Show color selection in center if not joined yet */}
           {showColorSelection && !isPlayerInGame && (
             <div className="relative z-10 max-w-md w-full">
-              <div className="bg-[#1a0a2e] rounded-xl p-8 shadow-2xl border border-purple-700" style={{ maxWidth: '420px' }}>
-                <h2 className="text-gray-300 text-base font-normal mb-6 text-center">Select your player appearance:</h2>
+              <div className="rounded-xl p-8 border" style={{ 
+                maxWidth: '420px',
+                background: 'rgba(15, 10, 25, 0.95)',
+                borderColor: 'rgba(160, 76, 249, 0.3)',
+                boxShadow: '0 10px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(160, 76, 249, 0.1)'
+              }}>
+                <h2 className="text-white text-sm font-medium mb-8 text-center">Select your player appearance:</h2>
                 
                 {/* Color grid - 4 columns like RichUp.io */}
                 <div className="grid grid-cols-4 gap-3 mb-6">
@@ -411,33 +398,45 @@ function Lobby() {
                         `}
                         style={{ backgroundColor: colorObj.hex, width: '72px', height: '72px' }}
                       >
-                        {/* Two-tone gradient effect - always show */}
+                        {/* 3D glossy effect with two-tone gradient */}
                         <div className="absolute inset-0" style={{
-                          background: `linear-gradient(to bottom, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 60%)`
+                          background: `linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 30%, rgba(255,255,255,0) 70%, rgba(0,0,0,0.2) 100%)`,
+                          boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.2), 0 2px 8px rgba(0,0,0,0.3)'
                         }}></div>
                         
-                        {/* Eyes - ONLY show on selected avatar */}
+                        {/* Eyes - ONLY show on selected avatar, larger and positioned lower */}
                         {isSelected && (
-                          <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 flex gap-1">
-                            <div className="w-2.5 h-2.5 bg-white rounded-full opacity-90 relative">
-                              <div className="w-1.5 h-1.5 bg-gray-800 rounded-full absolute" style={{ top: '2px', left: '2px' }}></div>
+                          <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex gap-2">
+                            <div className="w-3.5 h-3.5 bg-white rounded-full shadow-lg">
+                              <div className="w-2 h-2 bg-gray-900 rounded-full ml-1 mt-1"></div>
                             </div>
-                            <div className="w-2.5 h-2.5 bg-white rounded-full opacity-90 relative">
-                              <div className="w-1.5 h-1.5 bg-gray-800 rounded-full absolute" style={{ top: '2px', left: '2px' }}></div>
+                            <div className="w-3.5 h-3.5 bg-white rounded-full shadow-lg">
+                              <div className="w-2 h-2 bg-gray-900 rounded-full ml-1 mt-1"></div>
                             </div>
                           </div>
+                        )}
+                        
+                        {/* Glow effect on selected avatar */}
+                        {isSelected && (
+                          <div className="absolute inset-0 rounded-full animate-pulse" style={{
+                            boxShadow: '0 0 20px rgba(100, 200, 255, 0.6), 0 0 40px rgba(100, 200, 255, 0.3)'
+                          }}></div>
                         )}
                       </button>
                     )
                   })}
                 </div>
 
-                {/* Join game button */}
+                {/* Join game button with glow effect */}
                 <button
                   onClick={joinGame}
                   disabled={loading || !selectedColor}
-                  className="w-full bg-[#7A3DF4] hover:bg-[#6630C4] disabled:opacity-50 disabled:cursor-not-allowed text-white py-2.5 rounded-lg transition-colors mb-3"
-                  style={{ fontSize: '14px', fontWeight: 'normal' }}
+                  className="w-full disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 rounded-lg transition-all mb-3 font-bold uppercase tracking-wide"
+                  style={{ 
+                    fontSize: '13px', 
+                    background: '#7A3DF4',
+                    boxShadow: '0 4px 15px rgba(122, 61, 244, 0.4), 0 0 20px rgba(100, 200, 255, 0.2)'
+                  }}
                 >
                   {loading ? 'Joining...' : 'Join game'}
                 </button>
@@ -497,7 +496,11 @@ function Lobby() {
         </div>
 
         {/* Right Panel - Game Settings */}
-        <div className="w-80 bg-[#221735] p-6 border-l border-purple-900 overflow-y-auto">
+        <div className="w-80 p-6 border-l overflow-y-auto" style={{
+          background: 'rgba(34, 23, 53, 0.95)',
+          borderColor: 'rgba(160, 76, 249, 0.2)',
+          boxShadow: 'inset 2px 0 10px rgba(0, 0, 0, 0.3)'
+        }}>
           {/* Status Box */}
           {game && game.status === 'waiting' && (
             <div className="mb-6 bg-[#2d1b4e] rounded-lg p-3 text-center border border-purple-700">
@@ -606,7 +609,7 @@ function Lobby() {
 
           {/* ALL settings are visible to all users for now */}
           <div className="mb-6">
-            <h3 className="text-white font-semibold mb-4">Game settings</h3>
+            <h3 className="text-white font-semibold mb-4 text-sm">Game settings</h3>
               <div className="space-y-4">
                 {/* Maximum players */}
                 <div className="bg-[#2a0f3f] rounded-lg p-4">
@@ -703,7 +706,7 @@ function Lobby() {
 
             {/* Gameplay rules */}
             <div>
-              <h3 className="text-white text-sm font-semibold mb-4">Gameplay rules</h3>
+              <h3 className="text-white font-semibold mb-4 text-sm">Gameplay rules</h3>
               <div className="space-y-4">
                 <GameSettingToggle
                   icon="💰"
