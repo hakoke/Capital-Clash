@@ -1,9 +1,15 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import axios from 'axios'
 
 function GameSettingToggle({ icon, title, description, setting, gameId, game }) {
-  const [value, setValue] = useState(game[setting] !== undefined ? game[setting] : true)
+  const [value, setValue] = useState(game[setting] !== undefined ? game[setting] : false)
   const [updating, setUpdating] = useState(false)
+
+  useEffect(() => {
+    if (game[setting] !== undefined) {
+      setValue(game[setting])
+    }
+  }, [game, setting])
 
   const toggleSetting = async () => {
     const newValue = !value
@@ -23,30 +29,32 @@ function GameSettingToggle({ icon, title, description, setting, gameId, game }) 
   }
 
   return (
-    <div className="flex items-center justify-between bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-4 hover:bg-white/15 transition-all">
-      <div className="flex items-center gap-3 flex-1">
-        <span className="text-2xl">{icon}</span>
-        <div className="flex-1">
-          <div className="text-sm font-semibold text-white">{title}</div>
-          <div className="text-xs text-white/60">{description}</div>
+    <div className="bg-purple-950/50 rounded-lg p-4 border border-purple-700">
+      <div className="flex items-start justify-between">
+        <div className="flex items-start gap-3 flex-1">
+          <span className="text-xl">{icon}</span>
+          <div className="flex-1">
+            <p className="text-white font-semibold text-sm">{title}</p>
+            <p className="text-gray-400 text-xs">{description}</p>
+          </div>
         </div>
+        
+        {/* Toggle Switch */}
+        <button
+          onClick={toggleSetting}
+          disabled={updating}
+          className={`
+            relative w-14 h-7 rounded-full transition-all duration-200 flex-shrink-0
+            ${value ? 'bg-purple-600' : 'bg-gray-600'}
+            ${updating ? 'opacity-50' : 'cursor-pointer'}
+          `}
+        >
+          <div className={`
+            absolute w-5 h-5 bg-white rounded-full shadow-lg transition-transform duration-200
+            ${value ? 'translate-x-7' : 'translate-x-1'}
+          `}></div>
+        </button>
       </div>
-      
-      {/* Toggle Switch */}
-      <button
-        onClick={toggleSetting}
-        disabled={updating}
-        className={`
-          relative w-14 h-7 rounded-full transition-all duration-200 flex-shrink-0
-          ${value ? 'bg-gradient-to-r from-purple-600 to-pink-600' : 'bg-gray-600'}
-          ${updating ? 'opacity-50' : 'hover:scale-105'}
-        `}
-      >
-        <div className={`
-          absolute w-5 h-5 bg-white rounded-full shadow-lg transition-transform duration-200
-          ${value ? 'translate-x-7' : 'translate-x-1'}
-        `}></div>
-      </button>
     </div>
   )
 }
