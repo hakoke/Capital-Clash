@@ -32,27 +32,27 @@ function GameSettingToggle({ icon, title, description, setting, gameId, game }) 
     <div className="bg-[#2a0f3f] rounded-lg p-4">
       <div className="flex items-start justify-between">
         <div className="flex items-start gap-3 flex-1">
-          <span className="text-xl mt-0.5">{icon}</span>
+          <span className="text-xl mt-0.5" style={{ filter: 'drop-shadow(0 0 6px rgba(0,255,255,0.4))' }}>{icon}</span>
           <div className="flex-1">
-            <p className="text-white font-semibold text-sm">{title}</p>
-            <p className="text-gray-400 text-xs mt-0.5">{description}</p>
+            <p className="text-white font-semibold text-sm" style={{ fontSize: '13px', fontWeight: 500 }}>{title}</p>
+            <p className="text-gray-400 text-xs mt-0.5" style={{ fontSize: '11px' }}>{description}</p>
           </div>
         </div>
         
-        {/* Toggle Switch */}
+        {/* Toggle Switch - RichUp style with cyan glow */}
         <button
           onClick={toggleSetting}
           disabled={updating}
-          className={`
-            relative w-14 h-7 rounded-full transition-all duration-200 flex-shrink-0 top-1
-            ${value ? 'bg-purple-600' : 'bg-gray-700'}
-            ${updating ? 'opacity-50' : 'cursor-pointer'}
-          `}
+          className={`relative w-14 h-7 rounded-full transition-all duration-200 flex-shrink-0 top-1 ${updating ? 'opacity-50' : 'cursor-pointer'}`}
+          style={{ 
+            background: value ? '#4B2BB2' : '#2F2F2F',
+            boxShadow: value ? '0 0 15px rgba(0, 228, 255, 0.5), inset 0 0 10px rgba(0, 228, 255, 0.2)' : 'none',
+            border: '1px solid rgba(255,255,255,0.1)'
+          }}
         >
-          <div className={`
-            absolute w-5 h-5 bg-white rounded-full transition-transform duration-200 top-1
-            ${value ? 'translate-x-7' : 'translate-x-1'}
-          `}></div>
+          <div className={`absolute w-5 h-5 bg-white rounded-full transition-all duration-200 top-1 ${value ? 'translate-x-7' : 'translate-x-1'}`}
+            style={{ boxShadow: '0 2px 4px rgba(0,0,0,0.3)' }}
+          ></div>
         </button>
       </div>
     </div>
