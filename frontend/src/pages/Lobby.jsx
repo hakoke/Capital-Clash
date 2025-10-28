@@ -374,14 +374,25 @@ function Lobby() {
 
         {/* Center - Conditional Display */}
         <div className="flex-1 bg-[#2d1b4e] relative overflow-auto flex items-center justify-center">
+          {/* Blurred board background */}
+          <div className="absolute inset-0 opacity-20 blur-sm pointer-events-none">
+            <MonopolyBoard
+              properties={properties}
+              players={players}
+              currentPlayer={null}
+              currentTurnPlayer={null}
+              isPreview={true}
+            />
+          </div>
+
           {/* Show color selection in center if not joined yet */}
           {showColorSelection && !isPlayerInGame && (
-            <div className="max-w-lg w-full px-8">
-              <div className="bg-[#3a1552] rounded-2xl p-8 border border-purple-700">
-                <h2 className="text-white text-xl font-semibold mb-6 text-center">Select your player appearance:</h2>
+            <div className="relative z-10 max-w-lg w-full px-8">
+              <div className="bg-[#2d1143] rounded-2xl p-10 border border-[#4a2158]">
+                <h2 className="text-white text-2xl font-semibold mb-8 text-center">Select your player appearance:</h2>
                 
                 {/* Color grid - 3 columns matching richup.io style */}
-                <div className="grid grid-cols-3 gap-4 mb-6">
+                <div className="grid grid-cols-3 gap-5 mb-8">
                   {PLAYER_COLORS.map((colorObj, idx) => {
                     const takenPlayer = playerByColor.get(colorObj.name)
                     const isSelected = selectedColor === colorObj.name
@@ -393,16 +404,16 @@ function Lobby() {
                         onClick={() => !isTaken && setSelectedColor(colorObj.name)}
                         disabled={isTaken}
                         className={`
-                          w-16 h-16 rounded-full relative mx-auto transition-all duration-200
-                          ${isSelected ? 'ring-4 ring-purple-400 scale-110 shadow-lg' : ''}
+                          w-20 h-20 rounded-full relative mx-auto transition-all duration-200 border-4
+                          ${isSelected ? 'ring-4 ring-purple-400 ring-offset-2 border-white' : 'border-gray-400'}
                           ${isTaken ? 'opacity-30 cursor-not-allowed' : 'hover:scale-105 cursor-pointer'}
                         `}
                         style={{ backgroundColor: colorObj.hex }}
                       >
                         {isSelected && (
                           <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="w-4 h-4 bg-white rounded-full opacity-80"></div>
-                            <div className="absolute w-2 h-2 bg-gray-800 rounded-full"></div>
+                            <div className="w-6 h-6 bg-white rounded-full"></div>
+                            <div className="absolute w-3 h-3 bg-gray-800 rounded-full"></div>
                           </div>
                         )}
                       </button>
@@ -414,13 +425,13 @@ function Lobby() {
                 <button
                   onClick={joinGame}
                   disabled={loading || !selectedColor}
-                  className="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors flex items-center justify-center gap-2 mb-3"
+                  className="w-full bg-[#9d4edd] hover:bg-[#7b2cbf] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors flex items-center justify-center"
                 >
                   {loading ? 'Joining...' : 'Join game'}
                 </button>
                 
                 {/* Get more appearances button */}
-                <button className="w-full bg-[#2a0f3f] hover:bg-[#3a1552] text-gray-300 text-sm py-2 rounded-lg transition-colors flex items-center justify-center gap-2">
+                <button className="w-full bg-transparent hover:bg-[#2a0f3f] text-gray-400 text-sm py-2 rounded-lg transition-colors flex items-center justify-center gap-2">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
@@ -432,7 +443,7 @@ function Lobby() {
 
           {/* Show Start Game button when joined and waiting for host */}
           {isPlayerInGame && !isHost && game && game.status === 'waiting' && (
-            <div className="max-w-md w-full px-8">
+            <div className="relative z-10 max-w-md w-full px-8">
               <div className="text-center">
                 <div className="mb-6 flex items-center justify-center gap-4">
                   <div className="w-16 h-16 bg-white rounded-lg shadow-lg flex items-center justify-center">
@@ -450,7 +461,7 @@ function Lobby() {
 
           {/* Show Start Game option for host */}
           {isHost && game && game.status === 'waiting' && (
-            <div className="max-w-md w-full px-8">
+            <div className="relative z-10 max-w-md w-full px-8">
               <div className="text-center">
                 <div className="mb-6 flex items-center justify-center gap-4">
                   <div className="w-16 h-16 bg-white rounded-lg shadow-lg flex items-center justify-center">
@@ -479,40 +490,43 @@ function Lobby() {
         {/* Right Panel - Players and Actions */}
         <div className="w-80 bg-[#221735] p-6 border-l border-purple-900 overflow-y-auto">
           {/* Players List */}
-          <div className="mb-4">
-                <div className="space-y-2">
-              {players.map((player, idx) => {
-                    const colorData = PLAYER_COLORS.find(c => c.name === player.color)
-                    const colorHex = colorData?.hex || '#999'
-                const isCrown = player.order_in_game === 1
-                    
-                    return (
-                  <div key={player.id} className="flex items-center gap-2 text-white">
-                    <div className="relative w-10 h-10">
+          {players.length > 0 ? (
+            <div className="mb-4">
+              <div className="space-y-2">
+                {players.map((player, idx) => {
+                  const colorData = PLAYER_COLORS.find(c => c.name === player.color)
+                  const colorHex = colorData?.hex || '#999'
+                  const isCrown = player.order_in_game === 1
+                  
+                  return (
+                    <div key={player.id} className="flex items-center gap-2 text-white">
+                      <div className="relative w-10 h-10">
                         <div 
-                        className="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold"
+                          className="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold"
                           style={{ backgroundColor: colorHex }}
-                      >
-                        {player.name.charAt(0).toUpperCase()}
-                      </div>
-                      {isCrown && (
-                        <div className="absolute -top-1 -right-1">
-                          <Crown className="w-4 h-4 text-yellow-300" />
+                        >
+                          {player.name.charAt(0).toUpperCase()}
                         </div>
+                        {isCrown && (
+                          <div className="absolute -top-1 -right-1">
+                            <Crown className="w-4 h-4 text-yellow-300" />
+                          </div>
+                        )}
+                      </div>
+                      <span className="flex-1">{player.name}</span>
+                      {isPlayerInGame && currentPlayer && (
+                        <span className="text-green-400 font-bold text-sm">${player.money || 1500}</span>
                       )}
                     </div>
-                    <span className="flex-1">{player.name}</span>
-                    {isPlayerInGame && currentPlayer && (
-                      <span className="text-green-400 font-bold text-sm">${player.money || 1500}</span>
-                    )}
-                      </div>
-                    )
-                  })}
-              {players.length === 0 && (
-                <div className="text-gray-400 text-sm text-center py-8">Waiting for players...</div>
-              )}
+                  )
+                })}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="text-gray-400 text-sm text-center py-8">
+              Waiting for players...
+            </div>
+          )}
 
           {/* Action Buttons */}
           {isPlayerInGame && (
