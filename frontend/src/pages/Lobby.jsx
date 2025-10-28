@@ -33,6 +33,7 @@ function Lobby() {
   const [startingCash, setStartingCash] = useState(1500)
   const [customStartingCash, setCustomStartingCash] = useState('')
   const [maxPlayersDb, setMaxPlayersDb] = useState(4)
+  const [isGameCreator, setIsGameCreator] = useState(false)
 
   const socketRef = useRef(null)
 
@@ -86,16 +87,17 @@ function Lobby() {
     }
   }, [gameId])
 
-  // Load player name from localStorage if available
+  // Load player name from localStorage if available (for game creator)
   useEffect(() => {
     if (game && !isPlayerInGame) {
       const tempName = localStorage.getItem(`tempPlayerName_${gameId}`)
       if (tempName && !playerName) {
         setPlayerName(tempName)
-        // Automatically trigger name submit for game creator
-        setTimeout(() => {
-          handleNameSubmit()
-        }, 100)
+        setIsGameCreator(true)
+        // Go directly to color selection for game creator
+        setShowColorSelection(true)
+      } else {
+        setIsGameCreator(false)
       }
     }
   }, [game])
@@ -582,7 +584,7 @@ function Lobby() {
 
       {/* Name input overlay modal - shown when player visits lobby URL but hasn't joined */}
       <AnimatePresence>
-        {!isPlayerInGame && !showColorSelection && !showNameInput && players.length > 0 && (
+        {!isPlayerInGame && !showColorSelection && !isGameCreator && game && game.status === 'waiting' && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
