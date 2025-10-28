@@ -5,6 +5,7 @@ import { io } from 'socket.io-client'
 import { Users, Copy, Check, Crown, Settings, MessageCircle, Volume2, Search, HelpCircle, X, ChevronRight, Info, Bot, Send } from 'lucide-react'
 import { PLAYER_COLORS } from '../utils/monopolyConstants.js'
 import GameSettingToggle from '../components/GameSettingToggle.jsx'
+import PlayerAvatar from '../components/PlayerAvatar.jsx'
 import { motion, AnimatePresence } from 'framer-motion'
 import MonopolyBoard from '../components/MonopolyBoard.jsx'
 
@@ -377,9 +378,9 @@ function Lobby() {
 
         {/* Center - Conditional Display */}
         <div className="flex-1 bg-[#2d1b4e] relative overflow-auto flex items-center justify-center">
-          {/* Blurred board background with dark overlay */}
+          {/* Blurred board background with darker overlay */}
           <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute inset-0 bg-black/40"></div>
+            <div className="absolute inset-0 bg-black/60"></div>
             <MonopolyBoard
               properties={properties}
               players={players}
@@ -392,11 +393,11 @@ function Lobby() {
           {/* Show color selection in center if not joined yet */}
           {showColorSelection && !isPlayerInGame && (
             <div className="relative z-10 max-w-md w-full">
-              <div className="bg-[#1a0a2e] rounded-xl p-8 shadow-2xl">
-                <h2 className="text-white text-xl font-semibold mb-6 text-center">Select your player appearance:</h2>
+              <div className="bg-[#1a0a2e] rounded-xl p-8 shadow-2xl border border-purple-700">
+                <h2 className="text-white text-lg font-medium mb-6 text-center text-gray-300">Select your player appearance:</h2>
                 
-                {/* Color grid - 3 columns matching richup.io style */}
-                <div className="grid grid-cols-3 gap-4 mb-6">
+                {/* Color grid - 3 columns matching screenshot 1 */}
+                <div className="grid grid-cols-3 gap-3 mb-6">
                   {PLAYER_COLORS.map((colorObj, idx) => {
                     const takenPlayer = playerByColor.get(colorObj.name)
                     const isSelected = selectedColor === colorObj.name
@@ -408,18 +409,25 @@ function Lobby() {
                         onClick={() => !isTaken && setSelectedColor(colorObj.name)}
                         disabled={isTaken}
                         className={`
-                          relative w-20 h-20 rounded-full transition-all duration-200
-                          ${isSelected ? 'ring-2 ring-purple-400 scale-110 shadow-lg' : ''}
+                          relative w-16 h-16 rounded-full transition-all duration-200
+                          ${isSelected ? 'ring-2 ring-blue-400 scale-105' : ''}
                           ${isTaken ? 'opacity-30 cursor-not-allowed' : 'hover:scale-105 cursor-pointer'}
                         `}
                         style={{ backgroundColor: colorObj.hex }}
                       >
-                        {isSelected && (
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="w-5 h-5 bg-white rounded-full"></div>
-                            <div className="absolute w-2.5 h-2.5 bg-gray-900 rounded-full"></div>
+                        {/* Render avatar with eyes - always show eyes */}
+                        <div className="absolute bottom-0.5 left-1/2 transform -translate-x-1/2 flex gap-1">
+                          <div className="w-1.5 h-1.5 bg-white rounded-full opacity-90 relative">
+                            <div className="w-0.5 h-0.5 bg-black rounded-full absolute ml-0.5 mt-0.5 opacity-60"></div>
                           </div>
-                        )}
+                          <div className="w-1.5 h-1.5 bg-white rounded-full opacity-90 relative">
+                            <div className="w-0.5 h-0.5 bg-black rounded-full absolute ml-0.5 mt-0.5 opacity-60"></div>
+                          </div>
+                        </div>
+                        {/* Two-tone gradient effect */}
+                        <div className="absolute inset-0 rounded-full opacity-30" style={{
+                          background: `linear-gradient(to bottom, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 50%)`
+                        }}></div>
                       </button>
                     )
                   })}
@@ -429,13 +437,16 @@ function Lobby() {
                 <button
                   onClick={joinGame}
                   disabled={loading || !selectedColor}
-                  className="w-full bg-[#9d4edd] hover:bg-[#7b2cbf] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors mb-3"
+                  className="w-full bg-[#7A3DF4] hover:bg-[#6630C4] disabled:opacity-50 disabled:cursor-not-allowed text-white py-2.5 rounded-lg transition-colors mb-2 text-sm"
                 >
                   {loading ? 'Joining...' : 'Join game'}
                 </button>
                 
                 {/* Get more appearances button */}
-                <button className="w-full text-gray-500 text-sm py-2 hover:text-gray-400 transition-colors">
+                <button className="w-full text-gray-400 text-xs py-1.5 hover:text-gray-300 transition-colors flex items-center justify-center gap-1">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
                   Get more appearances
                 </button>
               </div>
@@ -492,8 +503,65 @@ function Lobby() {
         <div className="w-80 bg-[#221735] p-6 border-l border-purple-900 overflow-y-auto">
           {/* Status Box */}
           {game && game.status === 'waiting' && (
-            <div className="mb-6 bg-[#2d1b4e] rounded-lg p-3 text-center">
+            <div className="mb-6 bg-[#2d1b4e] rounded-lg p-3 text-center border border-purple-700">
               <p className="text-white text-sm">Waiting for players...</p>
+            </div>
+          )}
+
+          {/* Players List - Show during color selection */}
+          {!isPlayerInGame && players.length > 0 && (
+            <div className="mb-6">
+              <h3 className="text-white text-sm font-semibold mb-3">Players</h3>
+              <div className="space-y-2">
+                {players.map((player, idx) => {
+                  const colorData = PLAYER_COLORS.find(c => c.name === player.color)
+                  const colorHex = colorData?.hex || '#999'
+                  const isCrown = player.order_in_game === 1
+                  
+                  return (
+                    <div key={player.id} className="flex items-center gap-2 text-white text-sm">
+                      <div className="relative">
+                        <PlayerAvatar color={player.color} size="md" />
+                        {isCrown && (
+                          <div className="absolute -top-1 -right-1">
+                            <Crown className="w-3 h-3 text-yellow-300" />
+                          </div>
+                        )}
+                      </div>
+                      <span className="flex-1">{player.name}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Players List - Show when joined */}
+          {isPlayerInGame && players.length > 0 && (
+            <div className="mb-6">
+              <h3 className="text-white text-sm font-semibold mb-3">Players</h3>
+              <div className="space-y-2">
+                {players.map((player, idx) => {
+                  const colorData = PLAYER_COLORS.find(c => c.name === player.color)
+                  const colorHex = colorData?.hex || '#999'
+                  const isCrown = player.order_in_game === 1
+                  
+                  return (
+                    <div key={player.id} className="flex items-center gap-2 text-white text-sm">
+                      <div className="relative">
+                        <PlayerAvatar color={player.color} size="md" />
+                        {isCrown && (
+                          <div className="absolute -top-1 -right-1">
+                            <Crown className="w-3 h-3 text-yellow-300" />
+                          </div>
+                        )}
+                      </div>
+                      <span className="flex-1">{player.name}</span>
+                      <span className="text-green-400 font-bold text-sm">${player.money || 1500}</span>
+                    </div>
+                  )
+                })}
+              </div>
             </div>
           )}
 
@@ -506,7 +574,7 @@ function Lobby() {
               <button className="w-full bg-[#d9534f] hover:bg-[#e9615d] text-white py-2 px-4 rounded-lg text-sm font-semibold transition-colors">
                 Bankrupt
               </button>
-                </div>
+            </div>
           )}
 
           {/* Trades */}
@@ -537,38 +605,6 @@ function Lobby() {
                 </div>
             )}
           </div>
-          )}
-
-          {/* Players List (if any players) */}
-          {players.length > 0 && (
-            <div className="mb-6">
-              <div className="space-y-2">
-                {players.map((player, idx) => {
-                  const colorData = PLAYER_COLORS.find(c => c.name === player.color)
-                  const colorHex = colorData?.hex || '#999'
-                  const isCrown = player.order_in_game === 1
-                  
-                  return (
-                    <div key={player.id} className="flex items-center gap-2 text-white text-sm">
-                      <div className="relative w-8 h-8">
-                        <div 
-                          className="w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold"
-                          style={{ backgroundColor: colorHex }}
-                        >
-                          {player.name.charAt(0).toUpperCase()}
-                        </div>
-                        {isCrown && (
-                          <div className="absolute -top-1 -right-1">
-                            <Crown className="w-3 h-3 text-yellow-300" />
-                          </div>
-                        )}
-                      </div>
-                      <span className="flex-1">{player.name}</span>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
           )}
 
           {/* ALL settings are host-only */}
