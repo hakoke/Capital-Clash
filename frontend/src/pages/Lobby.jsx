@@ -419,57 +419,60 @@ function Lobby() {
           {/* Show color selection in center if not joined yet */}
           {showColorSelection && !isPlayerInGame && (
             <div className="relative z-20 flex items-center justify-center">
-              <div className="poordown-selection-card">
-                <h2 className="poordown-selection-title">Select your player appearance</h2>
-                <div className="poordown-avatar-grid">
-                  {PLAYER_COLORS.map((colorObj) => {
-                    const takenPlayer = playerByColor.get(colorObj.name)
-                    const isSelected = selectedColor === colorObj.name
-                    const isTaken = Boolean(takenPlayer)
+              <div className="poordown-selection-wrapper">
+                <div className="poordown-selection-ambient" aria-hidden="true"></div>
+                <div className="poordown-selection-card">
+                  <div className="poordown-selection-header">
+                    <span className="poordown-selection-subtle">Select your player appearance</span>
+                    <h2 className="poordown-selection-title">SELECT YOUR PLAYER APPEARANCE</h2>
+                  </div>
+                  <div className="poordown-avatar-grid">
+                    {PLAYER_COLORS.map((colorObj) => {
+                      const takenPlayer = playerByColor.get(colorObj.name)
+                      const isSelected = selectedColor === colorObj.name
+                      const isTaken = Boolean(takenPlayer)
 
-                    return (
-                      <button
-                        key={colorObj.name}
-                        type="button"
-                        onClick={() => !isTaken && setSelectedColor(colorObj.name)}
-                        disabled={isTaken}
-                        className={`poordown-avatar-circle ${isTaken ? 'poordown-avatar-circle--taken' : 'poordown-avatar-circle--interactive'} ${isSelected ? 'poordown-avatar-circle--selected' : ''}`}
-                        style={{
-                          background: isTaken
-                            ? 'radial-gradient(circle at 30% 30%, rgba(255,255,255,0.08) 0%, transparent 55%), #1f1b2e'
-                            : `radial-gradient(circle at 30% 30%, rgba(255,255,255,0.18) 0%, transparent 55%), radial-gradient(circle at 75% 75%, rgba(0,0,0,0.28) 0%, transparent 60%), ${colorObj.hex}`
-                        }}
-                      >
-                        <span className="poordown-avatar-gloss" aria-hidden="true"></span>
-                        {isSelected && (
-                          <div className="poordown-avatar-eyes" aria-hidden="true">
-                            <div className="poordown-eye">
-                              <span className="poordown-pupil"></span>
-                              <span className="poordown-eye-glint"></span>
+                      return (
+                        <button
+                          key={colorObj.name}
+                          type="button"
+                          onClick={() => !isTaken && setSelectedColor(colorObj.name)}
+                          disabled={isTaken}
+                          className={`poordown-avatar-circle ${isTaken ? 'poordown-avatar-circle--taken' : 'poordown-avatar-circle--interactive'} ${isSelected ? 'poordown-avatar-circle--selected' : ''}`}
+                          style={{ '--avatar-color': colorObj.hex }}
+                        >
+                          <span className="poordown-avatar-halo" aria-hidden="true"></span>
+                          <span className="poordown-avatar-gloss" aria-hidden="true"></span>
+                          {isSelected && (
+                            <div className="poordown-avatar-eyes" aria-hidden="true">
+                              <div className="poordown-eye">
+                                <span className="poordown-pupil"></span>
+                                <span className="poordown-eye-glint"></span>
+                              </div>
+                              <div className="poordown-eye">
+                                <span className="poordown-pupil"></span>
+                                <span className="poordown-eye-glint"></span>
+                              </div>
                             </div>
-                            <div className="poordown-eye">
-                              <span className="poordown-pupil"></span>
-                              <span className="poordown-eye-glint"></span>
-                            </div>
-                          </div>
-                        )}
-                      </button>
-                    )
-                  })}
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+                  <button
+                    onClick={joinGame}
+                    disabled={loading || !selectedColor}
+                    className="poordown-join-button"
+                  >
+                    {loading ? 'joining...' : 'join game'}
+                  </button>
+                  <button
+                    type="button"
+                    className="poordown-secondary-action"
+                  >
+                    Get more appearances
+                  </button>
                 </div>
-                <button
-                  onClick={joinGame}
-                  disabled={loading || !selectedColor}
-                  className="poordown-join-button"
-                >
-                  {loading ? 'joining...' : 'join game'}
-                </button>
-                <button
-                  type="button"
-                  className="poordown-secondary-action"
-                >
-                  Get more appearances
-                </button>
               </div>
             </div>
           )}
