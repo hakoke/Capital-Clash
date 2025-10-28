@@ -371,9 +371,8 @@ function Lobby() {
           {/* Blurred board background with depth fade like RichUp */}
           <div className="absolute inset-0 pointer-events-none overflow-hidden">
             <div className="absolute inset-0" style={{ 
-              filter: 'blur(15px) brightness(0.4)',
-              backdropFilter: 'blur(15px)',
-              background: 'linear-gradient(to bottom, rgba(0,0,0,0.3), transparent 50%, rgba(0,0,0,0.3))'
+              filter: 'blur(12px)',
+              opacity: 0.6
             }}>
               <MonopolyBoard
                 properties={properties}
@@ -390,105 +389,128 @@ function Lobby() {
             <div className="relative z-10" style={{ 
               maxWidth: '380px',
               backdropFilter: 'blur(12px)',
-              background: 'radial-gradient(circle at center, rgba(30,25,55,0.9) 0%, rgba(10,8,25,0.85) 80%)',
+              background: 'rgba(15, 12, 30, 0.75)',
               borderRadius: '12px',
               padding: '32px',
-              boxShadow: '0 0 40px rgba(0,0,0,0.7), inset 0 0 25px rgba(255,255,255,0.05)',
-              border: '1px solid rgba(0, 228, 255, 0.1)',
-              maskImage: 'radial-gradient(circle, black 90%, transparent 100%)'
+              boxShadow: '0 0 60px rgba(0, 255, 255, 0.08), inset 0 0 60px rgba(255,255,255,0.05)',
+              border: 'none'
             }}>
-                <h2 className="text-white text-xs font-medium mb-6 text-center" style={{ letterSpacing: '-0.2px' }}>Select your player appearance:</h2>
+                <div style={{
+                  position: 'absolute',
+                  inset: 0,
+                  borderRadius: '12px',
+                  background: 'radial-gradient(circle, rgba(30,25,55,0.9) 0%, rgba(10,8,25,0.75) 80%)',
+                  pointerEvents: 'none',
+                  opacity: 0.9
+                }}></div>
                 
-                {/* Color grid - 3x3 like RichUp.io */}
-                <div className="grid grid-cols-3 gap-3 mb-6">
-                  {PLAYER_COLORS.map((colorObj, idx) => {
-                    const takenPlayer = playerByColor.get(colorObj.name)
-                    const isSelected = selectedColor === colorObj.name
-                    const isTaken = Boolean(takenPlayer)
-                    
-                    return (
-                      <button
-                        key={colorObj.name}
-                        onClick={() => !isTaken && setSelectedColor(colorObj.name)}
-                        disabled={isTaken}
-                        className={`
-                          relative rounded-full transition-all duration-200 flex items-center justify-center overflow-hidden
-                          ${isTaken ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer'}
-                          ${isSelected ? 'animate-pulse' : 'hover:scale-105'}
-                        `}
-                        style={{ 
-                          width: '72px', 
-                          height: '72px',
-                          background: `radial-gradient(circle at 35% 35%, rgba(255,255,255,0.2) 10%, ${colorObj.hex} 60%, rgba(0,0,0,0.1) 100%)`,
-                          boxShadow: isSelected 
-                            ? '0 0 25px #00e5ff, 0 0 10px #00e5ff inset, 0 4px 12px rgba(0,0,0,0.5)' 
-                            : '0 2px 8px rgba(0,0,0,0.3), inset 0 1px 2px rgba(255,255,255,0.08)',
-                          transition: 'all 0.2s ease'
-                        }}
-                        onMouseEnter={(e) => !isTaken && !isSelected && Object.assign(e.currentTarget.style, {
-                          transform: 'scale(1.08)',
-                          filter: 'brightness(1.15)',
-                          boxShadow: '0 0 20px rgba(0, 228, 255, 0.3), 0 2px 8px rgba(0,0,0,0.3)'
-                        })}
-                        onMouseLeave={(e) => !isSelected && Object.assign(e.currentTarget.style, {
-                          transform: 'scale(1)',
-                          filter: 'brightness(1)',
-                          boxShadow: '0 2px 8px rgba(0,0,0,0.3), inset 0 1px 2px rgba(255,255,255,0.08)'
-                        })}
-                      >
-                        {/* Eyes - ONLY show on selected avatar, positioned higher */}
-                        {isSelected && (
-                          <div className="absolute" style={{ top: '22px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '8px' }}>
-                            <div className="w-5 h-5 bg-white rounded-full" style={{ opacity: 0.95 }}>
-                              <div className="w-3 h-3 bg-black rounded-full" style={{ margin: '4px', position: 'relative' }}>
-                                <div className="w-1.5 h-1.5 bg-white rounded-full" style={{ position: 'absolute', top: '2px', right: '2px' }}></div>
+                {/* Light spill effect from avatars */}
+                <div style={{
+                  position: 'absolute',
+                  inset: 0,
+                  borderRadius: '12px',
+                  background: 'radial-gradient(circle, rgba(0,255,255,0.1) 0%, transparent 70%)',
+                  pointerEvents: 'none',
+                  opacity: 0.6
+                }}></div>
+                
+                <div style={{ position: 'relative', zIndex: 1 }}>
+                  <h2 className="text-white text-xs font-medium mb-6 text-center" style={{ letterSpacing: '-0.2px' }}>Select your player appearance</h2>
+                  
+                  {/* Color grid - 3x3 like RichUp.io */}
+                  <div className="grid grid-cols-3 gap-3 mb-4">
+                    {PLAYER_COLORS.map((colorObj, idx) => {
+                      const takenPlayer = playerByColor.get(colorObj.name)
+                      const isSelected = selectedColor === colorObj.name
+                      const isTaken = Boolean(takenPlayer)
+                      
+                      return (
+                        <button
+                          key={colorObj.name}
+                          onClick={() => !isTaken && setSelectedColor(colorObj.name)}
+                          disabled={isTaken}
+                          className={`
+                            relative rounded-full transition-all duration-200 flex items-center justify-center overflow-hidden
+                            ${isTaken ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer'}
+                          `}
+                          style={{ 
+                            width: '72px', 
+                            height: '72px',
+                            background: isTaken 
+                              ? 'transparent' 
+                              : `radial-gradient(circle at 30% 25%, rgba(255,255,255,0.15) 2%, ${colorObj.hex} 90%)`,
+                            boxShadow: isSelected 
+                              ? '0 0 25px rgba(0, 230, 255, 0.6)' 
+                              : 'none',
+                            transition: 'all 0.2s ease',
+                            border: isSelected ? 'none' : 'none'
+                          }}
+                          onMouseEnter={(e) => !isTaken && !isSelected && Object.assign(e.currentTarget.style, {
+                            transform: 'scale(1.08)',
+                            filter: 'brightness(1.15)',
+                            transition: 'all 0.2s ease'
+                          })}
+                          onMouseLeave={(e) => Object.assign(e.currentTarget.style, {
+                            transform: 'scale(1)',
+                            filter: 'brightness(1)',
+                            transition: 'all 0.2s ease'
+                          })}
+                        >
+                          {/* Eyes - ONLY show on selected avatar, positioned higher (like RichUp) */}
+                          {isSelected && (
+                            <div className="absolute" style={{ top: '20px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '8px' }}>
+                              <div className="w-5 h-5 bg-white rounded-full" style={{ opacity: 1 }}>
+                                <div className="w-3 h-3 bg-black rounded-full" style={{ margin: '4px', position: 'relative' }}>
+                                  <div className="w-1.5 h-1.5 bg-white rounded-full" style={{ position: 'absolute', top: '2px', right: '2px' }}></div>
+                                </div>
+                              </div>
+                              <div className="w-5 h-5 bg-white rounded-full" style={{ opacity: 1 }}>
+                                <div className="w-3 h-3 bg-black rounded-full" style={{ margin: '4px', position: 'relative' }}>
+                                  <div className="w-1.5 h-1.5 bg-white rounded-full" style={{ position: 'absolute', top: '2px', right: '2px' }}></div>
+                                </div>
                               </div>
                             </div>
-                            <div className="w-5 h-5 bg-white rounded-full" style={{ opacity: 0.95 }}>
-                              <div className="w-3 h-3 bg-black rounded-full" style={{ margin: '4px', position: 'relative' }}>
-                                <div className="w-1.5 h-1.5 bg-white rounded-full" style={{ position: 'absolute', top: '2px', right: '2px' }}></div>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </button>
-                    )
-                  })}
-                </div>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
 
-                {/* Join game button - RichUp exact style */}
-                <button
-                  onClick={joinGame}
-                  disabled={loading || !selectedColor}
-                  className="disabled:opacity-50 disabled:cursor-not-allowed text-white transition-all"
-                  style={{ 
-                    fontSize: '13px',
-                    fontWeight: 500,
-                    textTransform: 'lowercase',
-                    letterSpacing: '0px',
-                    padding: '10px 24px',
-                    borderRadius: '8px',
-                    background: '#6F3CF5',
-                    boxShadow: '0 6px 25px rgba(0,0,0,0.5), 0 0 12px rgba(111, 60, 245, 0.4)',
-                    width: '100%',
-                    marginBottom: '12px'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.boxShadow = '0 0 15px #00e0ff, 0 6px 25px rgba(0,0,0,0.5)';
-                    e.currentTarget.style.filter = 'brightness(1.05)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.boxShadow = '0 6px 25px rgba(0,0,0,0.5), 0 0 12px rgba(111, 60, 245, 0.4)';
-                    e.currentTarget.style.filter = 'none';
-                  }}
-                >
-                  {loading ? 'Joining...' : 'Join game'}
-                </button>
-                
-                {/* Get more appearances button */}
-                <button className="w-full text-gray-400 text-xs py-2 hover:text-gray-300 transition-colors text-center">
-                  Get more appearances
-                </button>
+                  {/* Join game button - RichUp exact style */}
+                  <button
+                    onClick={joinGame}
+                    disabled={loading || !selectedColor}
+                    className="disabled:opacity-50 disabled:cursor-not-allowed text-white transition-all"
+                    style={{ 
+                      fontSize: '13px',
+                      fontWeight: 500,
+                      textTransform: 'lowercase',
+                      letterSpacing: '0px',
+                      padding: '10px 24px',
+                      borderRadius: '8px',
+                      background: '#6F3CF5',
+                      boxShadow: '0 0 40px rgba(0,0,0,0.5)',
+                      width: '100%',
+                      marginBottom: '12px',
+                      marginTop: '0px'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.boxShadow = '0 0 20px rgba(0,255,255,0.5), 0 0 40px rgba(0,0,0,0.5)';
+                      e.currentTarget.style.filter = 'brightness(1.05)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.boxShadow = '0 0 40px rgba(0,0,0,0.5)';
+                      e.currentTarget.style.filter = 'none';
+                    }}
+                  >
+                    {loading ? 'Joining...' : 'join game'}
+                  </button>
+                  
+                  {/* Get more appearances button */}
+                  <button className="w-full text-gray-400 text-xs py-2 hover:text-gray-300 transition-colors text-center">
+                    Get more appearances
+                  </button>
+                </div>
             </div>
           )}
 
