@@ -86,13 +86,16 @@ function Lobby() {
     }
   }, [gameId])
 
-  // Load player name from localStorage and show color selection if not joined
+  // Load player name from localStorage if available
   useEffect(() => {
     if (game && !isPlayerInGame) {
       const tempName = localStorage.getItem(`tempPlayerName_${gameId}`)
       if (tempName && !playerName) {
         setPlayerName(tempName)
-        setShowColorSelection(true)
+        // Automatically trigger name submit for game creator
+        setTimeout(() => {
+          handleNameSubmit()
+        }, 100)
       }
     }
   }, [game])
@@ -576,6 +579,54 @@ function Lobby() {
           )}
         </div>
       </div>
+
+      {/* Name input overlay modal - shown when player visits lobby URL but hasn't joined */}
+      <AnimatePresence>
+        {!isPlayerInGame && !showColorSelection && !showNameInput && players.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-[#3a1552] rounded-2xl p-8 max-w-md w-full mx-4 border border-purple-700"
+            >
+              <h2 className="text-white text-xl font-semibold mb-6 text-center">Join Game</h2>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-white text-sm font-semibold mb-2">Your Name</label>
+                  <input
+                    type="text"
+                    value={playerName}
+                    onChange={(e) => setPlayerName(e.target.value)}
+                    placeholder="Enter your name"
+                    className="w-full bg-[#2a0f3f] text-white px-4 py-3 rounded-lg border border-purple-700 focus:border-purple-500 focus:outline-none"
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' && playerName.trim()) {
+                        handleNameSubmit()
+                      }
+                    }}
+                    autoFocus
+                  />
+                </div>
+                
+                <button
+                  onClick={handleNameSubmit}
+                  disabled={!playerName.trim()}
+                  className="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
+                >
+                  <span>>></span> Join Game
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Color selection overlay modal */}
       <AnimatePresence>
