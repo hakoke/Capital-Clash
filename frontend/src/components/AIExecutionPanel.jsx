@@ -44,13 +44,13 @@ function AIExecutionPanel({ playerId, onNotification }) {
   }
 
   return (
-    <div className="glass rounded-xl p-4 card-glow">
-      <div className="flex items-center gap-2 mb-3">
+    <div className="glass rounded-xl p-3 card-glow">
+      <div className="flex items-center gap-2 mb-2">
         <Rocket className="w-5 h-5 text-neon-purple" />
         <h3 className="text-lg font-bold">AI Execution</h3>
       </div>
 
-      <div className="bg-neon-purple bg-opacity-10 border border-neon-purple rounded-lg p-2 mb-3">
+      <div className="bg-neon-purple bg-opacity-10 border border-neon-purple rounded-lg p-1.5 mb-2 text-xs">
         <p className="text-xs text-gray-300 mb-2">
           🤖 <strong>AI Mode:</strong> Execute commands to affect the game!
         </p>

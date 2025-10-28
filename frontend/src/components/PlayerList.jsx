@@ -17,8 +17,8 @@ function PlayerList({ players, currentPlayer, currentTurnPlayer, game }) {
   }
 
   return (
-    <div className="glass rounded-xl p-4 card-glow">
-      <div className="flex items-center justify-between mb-3">
+    <div className="glass rounded-xl p-3 card-glow">
+      <div className="flex items-center justify-between mb-2">
         <h3 className="text-lg font-bold flex items-center gap-2">
           <User className="w-5 h-5 text-neon-blue" />
           Players
@@ -30,7 +30,7 @@ function PlayerList({ players, currentPlayer, currentTurnPlayer, game }) {
         )}
       </div>
 
-      <div className="space-y-2 max-h-64 overflow-y-auto custom-scrollbar">
+      <div className="space-y-1.5 max-h-48 overflow-y-auto custom-scrollbar">
         {sortedPlayers.map((player) => {
           const isMyPlayer = player.id === currentPlayer.id
           const isTheirTurn = currentTurnPlayer && player.id === currentTurnPlayer.id

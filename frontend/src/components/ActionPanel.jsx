@@ -27,8 +27,8 @@ function ActionPanel({ player, onAction, onAISimulation, game, onEndRound, onNot
 
   return (
     <>
-      <div className="glass rounded-xl p-4 card-glow space-y-3">
-        <div className="flex items-center justify-between mb-3">
+      <div className="glass rounded-xl p-3 card-glow space-y-2">
+        <div className="flex items-center justify-between mb-2">
           <h3 className="text-lg font-bold">Quick Actions</h3>
           {game?.phase === 'player_phase' && (
             <span className="text-xs bg-green-500 px-2 py-1 rounded">Phase: Active</span>

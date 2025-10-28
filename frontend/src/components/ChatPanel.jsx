@@ -54,9 +54,6 @@ function ChatPanel({ gameId, playerId, onNotification }) {
       setMessages([...messages, newMessage])
       
       setInputMessage('')
-      if (onNotification) {
-        onNotification('✓ Message sent!', 'success')
-      }
     } catch (error) {
       console.error('Error sending message:', error)
       if (onNotification) {
@@ -66,15 +63,15 @@ function ChatPanel({ gameId, playerId, onNotification }) {
   }
 
   return (
-    <div className="glass rounded-xl p-4 card-glow">
-      <div className="flex items-center justify-between mb-3">
+    <div className="glass rounded-xl p-3 card-glow">
+      <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <MessageCircle className="w-5 h-5 text-neon-blue" />
           <h3 className="text-lg font-bold">Chat</h3>
         </div>
       </div>
 
-      <div className="space-y-2 max-h-64 overflow-y-auto mb-2 custom-scrollbar">
+      <div className="space-y-1.5 max-h-48 overflow-y-auto mb-2 custom-scrollbar">
         {messages.length === 0 ? (
           <div className="text-center text-gray-500 py-6">
             <MessageCircle className="w-8 h-8 mx-auto mb-2 opacity-50" />

@@ -2,17 +2,17 @@ import { Newspaper, Sparkles } from 'lucide-react'
 
 function NewsPanel({ news }) {
   return (
-    <div className="glass rounded-xl p-4 card-glow">
-      <div className="flex items-center gap-2 mb-3">
+    <div className="glass rounded-xl p-3 card-glow">
+      <div className="flex items-center gap-2 mb-2">
         <Newspaper className="w-5 h-5 text-neon-purple" />
         <h3 className="text-lg font-bold">World News</h3>
       </div>
 
-      <div className="space-y-3 max-h-64 overflow-y-auto custom-scrollbar">
+      <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
         {news.length === 0 ? (
-          <div className="text-center text-gray-500 py-6">
-            <Newspaper className="w-10 h-10 mx-auto mb-2 opacity-50" />
-            <p className="text-sm">No news yet. Start playing to see AI-generated events!</p>
+          <div className="text-center text-gray-500 py-4">
+            <Newspaper className="w-8 h-8 mx-auto mb-2 opacity-50" />
+            <p className="text-xs">No news yet. Start playing to see AI-generated events!</p>
           </div>
         ) : (
           news.map((item) => (
