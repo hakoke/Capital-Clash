@@ -296,12 +296,6 @@ function Lobby() {
             </div>
           </div>
 
-          {/* Advertisement placeholder */}
-          <div className="mb-4">
-            <div className="bg-[#2d1b4e] rounded-lg overflow-hidden border border-purple-800 aspect-square flex items-center justify-center">
-              <div className="text-gray-500 text-xs text-center px-4">Advertisement</div>
-            </div>
-          </div>
 
           {/* Chat */}
           <div className="mb-4">
@@ -378,26 +372,28 @@ function Lobby() {
 
         {/* Center - Conditional Display */}
         <div className="flex-1 bg-[#2d1b4e] relative overflow-auto flex items-center justify-center">
-          {/* Blurred board background with darker overlay */}
-          <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute inset-0 bg-black/60"></div>
-            <MonopolyBoard
-              properties={properties}
-              players={players}
-              currentPlayer={null}
-              currentTurnPlayer={null}
-              isPreview={true}
-            />
+          {/* Blurred board background with darker overlay - like RichUp */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            <div className="absolute inset-0 bg-black/70"></div>
+            <div className="absolute inset-0" style={{ filter: 'blur(8px)' }}>
+              <MonopolyBoard
+                properties={properties}
+                players={players}
+                currentPlayer={null}
+                currentTurnPlayer={null}
+                isPreview={true}
+              />
+            </div>
           </div>
 
           {/* Show color selection in center if not joined yet */}
           {showColorSelection && !isPlayerInGame && (
             <div className="relative z-10 max-w-md w-full">
-              <div className="bg-[#1a0a2e] rounded-xl p-8 shadow-2xl border border-purple-700">
-                <h2 className="text-white text-lg font-medium mb-6 text-center text-gray-300">Select your player appearance:</h2>
+              <div className="bg-[#1a0a2e] rounded-xl p-8 shadow-2xl border border-purple-700" style={{ maxWidth: '420px' }}>
+                <h2 className="text-gray-300 text-base font-normal mb-6 text-center">Select your player appearance:</h2>
                 
-                {/* Color grid - 3 columns matching screenshot 1 */}
-                <div className="grid grid-cols-3 gap-3 mb-6">
+                {/* Color grid - 4 columns like RichUp.io */}
+                <div className="grid grid-cols-4 gap-3 mb-6">
                   {PLAYER_COLORS.map((colorObj, idx) => {
                     const takenPlayer = playerByColor.get(colorObj.name)
                     const isSelected = selectedColor === colorObj.name
@@ -409,25 +405,28 @@ function Lobby() {
                         onClick={() => !isTaken && setSelectedColor(colorObj.name)}
                         disabled={isTaken}
                         className={`
-                          relative w-16 h-16 rounded-full transition-all duration-200
-                          ${isSelected ? 'ring-2 ring-blue-400 scale-105' : ''}
+                          relative w-18 h-18 rounded-full transition-all duration-200
+                          ${isSelected ? 'ring-2 ring-blue-400' : ''}
                           ${isTaken ? 'opacity-30 cursor-not-allowed' : 'hover:scale-105 cursor-pointer'}
                         `}
                         style={{ backgroundColor: colorObj.hex }}
                       >
-                        {/* Render avatar with eyes - always show eyes */}
-                        <div className="absolute bottom-0.5 left-1/2 transform -translate-x-1/2 flex gap-1">
-                          <div className="w-1.5 h-1.5 bg-white rounded-full opacity-90 relative">
-                            <div className="w-0.5 h-0.5 bg-black rounded-full absolute ml-0.5 mt-0.5 opacity-60"></div>
-                          </div>
-                          <div className="w-1.5 h-1.5 bg-white rounded-full opacity-90 relative">
-                            <div className="w-0.5 h-0.5 bg-black rounded-full absolute ml-0.5 mt-0.5 opacity-60"></div>
-                          </div>
-                        </div>
-                        {/* Two-tone gradient effect */}
-                        <div className="absolute inset-0 rounded-full opacity-30" style={{
-                          background: `linear-gradient(to bottom, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 50%)`
+                        {/* Two-tone gradient effect - always show */}
+                        <div className="absolute inset-0 rounded-full" style={{
+                          background: `linear-gradient(to bottom, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 60%)`
                         }}></div>
+                        
+                        {/* Eyes - ONLY show on selected avatar */}
+                        {isSelected && (
+                          <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 flex gap-1">
+                            <div className="w-2 h-2 bg-white rounded-full opacity-90 relative">
+                              <div className="w-1 h-1 bg-black rounded-full absolute ml-0.5 mt-0.5 opacity-70"></div>
+                            </div>
+                            <div className="w-2 h-2 bg-white rounded-full opacity-90 relative">
+                              <div className="w-1 h-1 bg-black rounded-full absolute ml-0.5 mt-0.5 opacity-70"></div>
+                            </div>
+                          </div>
+                        )}
                       </button>
                     )
                   })}
@@ -437,16 +436,14 @@ function Lobby() {
                 <button
                   onClick={joinGame}
                   disabled={loading || !selectedColor}
-                  className="w-full bg-[#7A3DF4] hover:bg-[#6630C4] disabled:opacity-50 disabled:cursor-not-allowed text-white py-2.5 rounded-lg transition-colors mb-2 text-sm"
+                  className="w-full bg-[#7A3DF4] hover:bg-[#6630C4] disabled:opacity-50 disabled:cursor-not-allowed text-white py-2.5 rounded-lg transition-colors mb-3"
+                  style={{ fontSize: '14px', fontWeight: 'normal' }}
                 >
                   {loading ? 'Joining...' : 'Join game'}
                 </button>
                 
                 {/* Get more appearances button */}
-                <button className="w-full text-gray-400 text-xs py-1.5 hover:text-gray-300 transition-colors flex items-center justify-center gap-1">
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
+                <button className="w-full text-gray-400 text-xs py-1 hover:text-gray-300 transition-colors text-center">
                   Get more appearances
                 </button>
               </div>
@@ -607,11 +604,11 @@ function Lobby() {
           </div>
           )}
 
-          {/* ALL settings are host-only */}
+          {/* ALL settings are host-only - but show while picking color too */}
           {isHost && (
             <>
             <div className="mb-6">
-              <h3 className="text-white font-semibold mb-4 text-sm">Game settings</h3>
+              <h3 className="text-white font-semibold mb-4">Game settings</h3>
               <div className="space-y-4">
                 {/* Maximum players */}
                 <div className="bg-[#2a0f3f] rounded-lg p-4">

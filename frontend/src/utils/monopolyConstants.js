@@ -13,16 +13,19 @@ export const COLOR_GROUPS = {
   'special': '#FFFFFF'
 };
 
-// Available player colors - matching richup.io style exactly
+// Available player colors - matching RichUp.io style exactly
 export const PLAYER_COLORS = [
   { name: 'bright_green', hex: '#4ade80' },      // Lime green
   { name: 'bright_yellow', hex: '#fbbf24' },    // Yellow
   { name: 'bright_orange', hex: '#fb923c' },    // Orange
-  { name: 'light_blue', hex: '#38bdf8' },       // Blue
   { name: 'cyan', hex: '#22d3ee' },              // Light blue/cyan
-  { name: 'teal', hex: '#2dd4bf' },              // Dark teal
+  { name: 'light_blue', hex: '#38bdf8' },       // Blue
+  { name: 'teal', hex: '#2dd4bf' },              // Teal
   { name: 'brown', hex: '#92400e' },             // Brown
   { name: 'magenta', hex: '#ec4899' },           // Magenta
-  { name: 'bright_pink', hex: '#f472b6' }       // Pink
+  { name: 'bright_pink', hex: '#f472b6' },      // Pink
+  { name: 'purple', hex: '#a855f7' },            // Purple
+  { name: 'red', hex: '#ef4444' },               // Red
+  { name: 'emerald', hex: '#10b981' }            // Emerald
 ];
 
