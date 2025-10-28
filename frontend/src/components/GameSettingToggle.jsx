@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 
-function GameSettingToggle({ icon, title, description, setting, gameId, game }) {
+function GameSettingToggle({ icon, title, description, setting, gameId, game, disabled = false }) {
   const [value, setValue] = useState(game[setting] !== undefined ? game[setting] : false)
   const [updating, setUpdating] = useState(false)
 
@@ -12,6 +12,7 @@ function GameSettingToggle({ icon, title, description, setting, gameId, game }) 
   }, [game, setting])
 
   const toggleSetting = async () => {
+    if (disabled || updating) return
     const newValue = !value
     setUpdating(true)
     
@@ -42,8 +43,8 @@ function GameSettingToggle({ icon, title, description, setting, gameId, game }) 
         {/* Toggle Switch - RichUp style with cyan glow */}
         <button
           onClick={toggleSetting}
-          disabled={updating}
-          className={`relative w-14 h-7 rounded-full transition-all duration-200 flex-shrink-0 top-1 ${updating ? 'opacity-50' : 'cursor-pointer'}`}
+          disabled={disabled || updating}
+          className={`relative w-14 h-7 rounded-full transition-all duration-200 flex-shrink-0 top-1 ${(disabled || updating) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
           style={{ 
             background: value ? '#4B2BB2' : '#2F2F2F',
             boxShadow: value ? '0 0 15px rgba(0, 228, 255, 0.5), inset 0 0 10px rgba(0, 228, 255, 0.2)' : 'none',

@@ -37,6 +37,7 @@ function Lobby() {
   const [customStartingCash, setCustomStartingCash] = useState('')
   const [maxPlayersDb, setMaxPlayersDb] = useState(4)
   const [isGameCreator, setIsGameCreator] = useState(false)
+  const [hoveredSetting, setHoveredSetting] = useState(null)
 
   const socketRef = useRef(null)
 
@@ -227,6 +228,31 @@ function Lobby() {
 
   const isHost = isPlayerInGame && players.length > 0 && players.find(p => p.order_in_game === 1)?.id === currentPlayerId
   const maxPlayersValue = maxPlayers
+  const disableSettings = showColorSelection && !isPlayerInGame
+
+  useEffect(() => {
+    if (!disableSettings && hoveredSetting) {
+      setHoveredSetting(null)
+    }
+  }, [disableSettings, hoveredSetting])
+
+  const handleGuardHover = (id) => {
+    if (!disableSettings) return
+    setHoveredSetting(id)
+  }
+
+  const handleGuardLeave = () => {
+    if (!disableSettings) return
+    setHoveredSetting(null)
+  }
+
+  const renderGuardTooltip = (id) => (
+    disableSettings && hoveredSetting === id ? (
+      <div className="settings-guard-tooltip">
+        Join the game to change settings
+      </div>
+    ) : null
+  )
 
   const emptySlots = useMemo(() => {
     if (!maxPlayersValue) return []
@@ -249,10 +275,16 @@ function Lobby() {
   const currentPlayer = isPlayerInGame ? players.find(p => p.id === currentPlayerId) : null
   const propertiesOwned = currentPlayer ? properties.filter(p => p.owner_id === currentPlayer.id) : []
 
-    return (
-    <div className="min-h-screen relative" style={{ 
-      background: 'linear-gradient(to bottom, #141126, #1E193D)'
+  return (
+    <div className="min-h-screen relative overflow-hidden" style={{ 
+      background: 'linear-gradient(180deg, #0E0B1A 0%, #1C183A 100%)'
     }}>
+      <div className="absolute inset-0 pointer-events-none" style={{
+        background: 'radial-gradient(circle at 50% -20%, rgba(78, 227, 255, 0.18) 0%, transparent 55%), radial-gradient(circle at 20% 80%, rgba(168, 85, 247, 0.14) 0%, transparent 60%), radial-gradient(circle at 80% 85%, rgba(16, 185, 129, 0.14) 0%, transparent 62%)'
+      }}></div>
+      <div className="absolute inset-0 pointer-events-none" style={{
+        background: 'radial-gradient(circle, transparent 68%, rgba(3, 7, 18, 0.85) 100%)'
+      }}></div>
 
       {/* Header - Top Bar */}
       <div className="relative z-20 px-6 py-3 bg-[#1a0a2e] border-b border-purple-800 flex items-center justify-between">
@@ -386,112 +418,59 @@ function Lobby() {
 
           {/* Show color selection in center if not joined yet */}
           {showColorSelection && !isPlayerInGame && (
-            <div className="relative z-10" style={{ 
-              maxWidth: '380px',
-              backdropFilter: 'blur(12px)',
-              background: 'rgba(13, 10, 24, 0.85)',
-              borderRadius: '12px',
-              padding: '32px',
-              boxShadow: '0 0 60px rgba(0, 255, 255, 0.08), inset 0 0 40px rgba(0,0,0,0.6), inset 0 0 80px rgba(0,255,255,0.03)',
-              border: 'none'
-            }}>
-                <div style={{
-                  position: 'absolute',
-                  inset: 0,
-                  borderRadius: '12px',
-                  background: 'radial-gradient(circle at center, rgba(35,30,60,0.6) 0%, rgba(10,8,20,0.45) 80%)',
-                  pointerEvents: 'none',
-                  opacity: 0.8
-                }}></div>
-                
-                <div style={{ position: 'relative', zIndex: 1 }}>
-                  <h2 className="text-white text-xs font-medium mb-6 text-center" style={{ letterSpacing: '-0.2px' }}>Select your player appearance</h2>
-                  
-                  {/* Color grid - 3x3 like RichUp.io */}
-                  <div className="grid grid-cols-3 gap-3 mb-4">
-                    {PLAYER_COLORS.map((colorObj, idx) => {
-                      const takenPlayer = playerByColor.get(colorObj.name)
-                      const isSelected = selectedColor === colorObj.name
-                      const isTaken = Boolean(takenPlayer)
-                      
-                      return (
-                        <button
-                          key={colorObj.name}
-                          onClick={() => !isTaken && setSelectedColor(colorObj.name)}
-                          disabled={isTaken}
-                          className={`
-                            relative rounded-full transition-all duration-300 flex items-center justify-center overflow-hidden
-                            ${isTaken ? 'opacity-20 cursor-not-allowed' : 'cursor-pointer'}
-                          `}
-                          style={{ 
-                            width: '72px', 
-                            height: '72px',
-                            background: isTaken ? '#222' : colorObj.hex,
-                            boxShadow: isSelected 
-                              ? '0 0 30px rgba(100, 200, 255, 0.6), inset 0 0 20px rgba(255,255,255,0.1)' 
-                              : '0 4px 12px rgba(0,0,0,0.2)',
-                            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                            border: isSelected ? '2px solid rgba(100, 200, 255, 0.5)' : 'none',
-                            transform: isSelected ? 'scale(1.05)' : 'scale(1)'
-                          }}
-                          onMouseEnter={(e) => !isTaken && !isSelected && Object.assign(e.currentTarget.style, {
-                            transform: 'scale(1.1)',
-                            filter: 'brightness(1.2)',
-                            transition: 'all 0.2s ease'
-                          })}
-                          onMouseLeave={(e) => !isSelected && Object.assign(e.currentTarget.style, {
-                            transform: 'scale(1)',
-                            filter: 'brightness(1)',
-                            transition: 'all 0.2s ease'
-                          })}
-                        >
-                          {/* Eyes - ONLY show on selected avatar */}
-                          {isSelected && (
-                            <div className="absolute" style={{ top: '22px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '10px' }}>
-                              <div className="w-4 h-4 rounded-full" style={{ background: 'rgba(0,0,0,0.3)' }}></div>
-                              <div className="w-4 h-4 rounded-full" style={{ background: 'rgba(0,0,0,0.3)' }}></div>
-                            </div>
-                          )}
-                        </button>
-                      )
-                    })}
-                  </div>
+            <div className="relative z-20 flex items-center justify-center">
+              <div className="poordown-selection-card">
+                <h2 className="poordown-selection-title">Select your player appearance</h2>
+                <div className="poordown-avatar-grid">
+                  {PLAYER_COLORS.map((colorObj) => {
+                    const takenPlayer = playerByColor.get(colorObj.name)
+                    const isSelected = selectedColor === colorObj.name
+                    const isTaken = Boolean(takenPlayer)
 
-                  {/* Join game button - RichUp exact style */}
-                  <button
-                    onClick={joinGame}
-                    disabled={loading || !selectedColor}
-                    className="disabled:opacity-50 disabled:cursor-not-allowed text-white transition-all"
-                    style={{ 
-                      fontSize: '13px',
-                      fontWeight: 500,
-                      textTransform: 'lowercase',
-                      letterSpacing: '0px',
-                      padding: '10px 24px',
-                      borderRadius: '8px',
-                      background: '#6F3CF5',
-                      boxShadow: '0 0 40px rgba(0,0,0,0.5)',
-                      width: '100%',
-                      marginBottom: '12px',
-                      marginTop: '0px'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.boxShadow = '0 0 20px rgba(0,255,255,0.5), 0 0 40px rgba(0,0,0,0.5)';
-                      e.currentTarget.style.filter = 'brightness(1.05)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.boxShadow = '0 0 40px rgba(0,0,0,0.5)';
-                      e.currentTarget.style.filter = 'none';
-                    }}
-                  >
-                    {loading ? 'Joining...' : 'join game'}
-                  </button>
-                  
-                  {/* Get more appearances button */}
-                  <button className="w-full text-gray-400 text-xs py-2 hover:text-gray-300 transition-colors text-center">
-                    Get more appearances
-                  </button>
+                    return (
+                      <button
+                        key={colorObj.name}
+                        type="button"
+                        onClick={() => !isTaken && setSelectedColor(colorObj.name)}
+                        disabled={isTaken}
+                        className={`poordown-avatar-circle ${isTaken ? 'poordown-avatar-circle--taken' : 'poordown-avatar-circle--interactive'} ${isSelected ? 'poordown-avatar-circle--selected' : ''}`}
+                        style={{
+                          background: isTaken
+                            ? 'radial-gradient(circle at 30% 30%, rgba(255,255,255,0.08) 0%, transparent 55%), #1f1b2e'
+                            : `radial-gradient(circle at 30% 30%, rgba(255,255,255,0.18) 0%, transparent 55%), radial-gradient(circle at 75% 75%, rgba(0,0,0,0.28) 0%, transparent 60%), ${colorObj.hex}`
+                        }}
+                      >
+                        <span className="poordown-avatar-gloss" aria-hidden="true"></span>
+                        {isSelected && (
+                          <div className="poordown-avatar-eyes" aria-hidden="true">
+                            <div className="poordown-eye">
+                              <span className="poordown-pupil"></span>
+                              <span className="poordown-eye-glint"></span>
+                            </div>
+                            <div className="poordown-eye">
+                              <span className="poordown-pupil"></span>
+                              <span className="poordown-eye-glint"></span>
+                            </div>
+                          </div>
+                        )}
+                      </button>
+                    )
+                  })}
                 </div>
+                <button
+                  onClick={joinGame}
+                  disabled={loading || !selectedColor}
+                  className="poordown-join-button"
+                >
+                  {loading ? 'joining...' : 'join game'}
+                </button>
+                <button
+                  type="button"
+                  className="poordown-secondary-action"
+                >
+                  Get more appearances
+                </button>
+              </div>
             </div>
           )}
 
@@ -665,7 +644,12 @@ function Lobby() {
             <h3 className="text-white font-semibold mb-4 text-sm">Game settings</h3>
               <div className="space-y-4">
                 {/* Maximum players */}
-                <div className="bg-[#2a0f3f] rounded-lg p-4">
+                <div
+                  className="relative"
+                  onMouseEnter={() => handleGuardHover('maxPlayers')}
+                  onMouseLeave={handleGuardLeave}
+                >
+                  <div className={`bg-[#2a0f3f] rounded-lg p-4 transition-opacity ${disableSettings ? 'settings-card-disabled' : ''}`}>
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-3 flex-1">
                       <div className="mt-0.5 flex items-center gap-1">
@@ -679,6 +663,7 @@ function Lobby() {
                     <select 
                       value={maxPlayers}
                       onChange={(e) => {
+                        if (disableSettings) return
                         const val = parseInt(e.target.value)
                         setMaxPlayers(val)
                         // Save to database immediately
@@ -687,7 +672,8 @@ function Lobby() {
                           value: val
                         }).catch(err => console.error('Error saving max players:', err))
                       }}
-                      className="bg-[#2a0f3f] text-white text-sm px-3 py-1.5 rounded-lg border border-purple-700"
+                      disabled={disableSettings}
+                      className="bg-[#2a0f3f] text-white text-sm px-3 py-1.5 rounded-lg border border-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <option value="2">2</option>
                       <option value="3">3</option>
@@ -696,10 +682,17 @@ function Lobby() {
                       <option value="6">6</option>
                     </select>
                   </div>
+                  </div>
+                  {renderGuardTooltip('maxPlayers')}
                 </div>
 
                 {/* Starting cash */}
-                <div className="bg-[#2a0f3f] rounded-lg p-4">
+                <div
+                  className="relative"
+                  onMouseEnter={() => handleGuardHover('startingCash')}
+                  onMouseLeave={handleGuardLeave}
+                >
+                  <div className={`bg-[#2a0f3f] rounded-lg p-4 transition-opacity ${disableSettings ? 'settings-card-disabled' : ''}`}>
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-start gap-3 flex-1">
                       <div className="w-5 h-5 text-white mt-0.5" style={{ filter: 'drop-shadow(0 0 6px rgba(0,255,255,0.4))' }}>💰</div>
@@ -711,6 +704,7 @@ function Lobby() {
                     <select 
                       value={startingCash === 'custom' ? 'custom' : startingCash}
                       onChange={async (e) => {
+                        if (disableSettings) return
                         const val = e.target.value
                         if (val === 'custom') {
                           setStartingCash('custom')
@@ -724,7 +718,8 @@ function Lobby() {
                           }).catch(err => console.error('Error saving starting cash:', err))
                         }
                       }}
-                      className="bg-[#2a0f3f] text-white text-sm px-3 py-1.5 rounded-lg border border-purple-700"
+                      disabled={disableSettings}
+                      className="bg-[#2a0f3f] text-white text-sm px-3 py-1.5 rounded-lg border border-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <option value="1000">$1,000</option>
                       <option value="1500">$1,500</option>
@@ -740,7 +735,7 @@ function Lobby() {
                         value={customStartingCash}
                         onChange={(e) => setCustomStartingCash(e.target.value)}
                         onBlur={async () => {
-                          if (customStartingCash) {
+                          if (!disableSettings && customStartingCash) {
                             const val = parseInt(customStartingCash)
                             await axios.post(`/api/game/${gameId}/settings`, {
                               setting: 'starting_cash',
@@ -749,10 +744,13 @@ function Lobby() {
                           }
                         }}
                         placeholder="Enter custom amount"
-                        className="w-full bg-[#1a0033] text-white text-sm px-3 py-2 rounded-lg border border-purple-700 focus:border-purple-500 focus:outline-none"
+                        disabled={disableSettings}
+                        className="w-full bg-[#1a0033] text-white text-sm px-3 py-2 rounded-lg border border-purple-700 focus:border-purple-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                       />
                     </div>
                   )}
+                  </div>
+                  {renderGuardTooltip('startingCash')}
                 </div>
               </div>
             </div>
@@ -761,59 +759,64 @@ function Lobby() {
             <div>
               <h3 className="text-white font-semibold mb-4 text-sm">Gameplay rules</h3>
               <div className="space-y-4">
-                <GameSettingToggle
-                  icon="💰"
-                    title="x2 rent on full-set properties"
-                    description="If a player owns a full property set, the base rent payment will be doubled"
-                  setting="double_rent_on_full_set"
-                  gameId={gameId}
-                  game={game}
-                />
-
-                <GameSettingToggle
-                  icon="🏖️"
-                    title="Vacation cash"
-                    description="If a player lands on Vacation, all collected money from taxes and bank payments will be earned"
-                  setting="vacation_cash"
-                  gameId={gameId}
-                  game={game}
-                />
-
-                <GameSettingToggle
-                  icon="🔨"
-                    title="Auction"
-                    description="If someone skips purchasing the property landed on, it will be sold to the highest bidder"
-                  setting="auction_enabled"
-                  gameId={gameId}
-                  game={game}
-                />
-
-                <GameSettingToggle
-                  icon="⚖️"
-                    title="Don't collect rent while in prison"
-                    description="Rent will not be collected when landing on properties whose owners are in prison"
-                  setting="no_rent_in_prison"
-                  gameId={gameId}
-                  game={game}
-                />
-
-                <GameSettingToggle
-                  icon="🏠"
-                    title="Mortgage"
-                    description="Mortgage properties to earn 50% of their cost, but you won't get paid rent when players land on them"
-                  setting="mortgage_enabled"
-                  gameId={gameId}
-                  game={game}
-                />
-
-                <GameSettingToggle
-                  icon="🏘️"
-                    title="Even build"
-                    description="Houses and hotels must be built up and sold off evenly within a property set"
-                  setting="even_build"
-                  gameId={gameId}
-                  game={game}
-                />
+                {[
+                  {
+                    icon: '💰',
+                    title: 'x2 rent on full-set properties',
+                    description: 'If a player owns a full property set, the base rent payment will be doubled',
+                    setting: 'double_rent_on_full_set'
+                  },
+                  {
+                    icon: '🏖️',
+                    title: 'Vacation cash',
+                    description: 'If a player lands on Vacation, all collected money from taxes and bank payments will be earned',
+                    setting: 'vacation_cash'
+                  },
+                  {
+                    icon: '🔨',
+                    title: 'Auction',
+                    description: 'If someone skips purchasing the property landed on, it will be sold to the highest bidder',
+                    setting: 'auction_enabled'
+                  },
+                  {
+                    icon: '⚖️',
+                    title: "Don't collect rent while in prison",
+                    description: 'Rent will not be collected when landing on properties whose owners are in prison',
+                    setting: 'no_rent_in_prison'
+                  },
+                  {
+                    icon: '🏠',
+                    title: 'Mortgage',
+                    description: "Mortgage properties to earn 50% of their cost, but you won't get paid rent when players land on them",
+                    setting: 'mortgage_enabled'
+                  },
+                  {
+                    icon: '🏘️',
+                    title: 'Even build',
+                    description: 'Houses and hotels must be built up and sold off evenly within a property set',
+                    setting: 'even_build'
+                  }
+                ].map((config) => (
+                  <div
+                    key={config.setting}
+                    className="relative"
+                    onMouseEnter={() => handleGuardHover(config.setting)}
+                    onMouseLeave={handleGuardLeave}
+                  >
+                    <div className={disableSettings ? 'settings-card-disabled transition-opacity' : ''}>
+                      <GameSettingToggle
+                        icon={config.icon}
+                        title={config.title}
+                        description={config.description}
+                        setting={config.setting}
+                        gameId={gameId}
+                        game={game}
+                        disabled={disableSettings}
+                      />
+                    </div>
+                    {renderGuardTooltip(config.setting)}
+                  </div>
+                ))}
               </div>
             </div>
 
