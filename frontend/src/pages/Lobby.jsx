@@ -132,8 +132,6 @@ function Lobby() {
     }
   }
 
-  if (!game) return <div className="min-h-screen flex items-center justify-center bg-purple-950"><div className="text-xl text-white">Loading...</div></div>
-
   const isHost = isPlayerInGame && players.length > 0 && players.find(p => p.order_in_game === 1)?.id === currentPlayerId
   const maxPlayersValue = maxPlayers
 
@@ -152,6 +150,8 @@ function Lobby() {
     })
     return map
   }, [players])
+
+  if (!game) return <div className="min-h-screen flex items-center justify-center bg-purple-950"><div className="text-xl text-white">Loading...</div></div>
 
     return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-purple-950 relative">
