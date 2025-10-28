@@ -160,7 +160,7 @@ IMPORTANT: This is a fantasy game - be creative and dramatic! Entertain any stor
     try {
       this.log('OPENAI', 'Sending request to GPT-4');
       const completion = await openai.chat.completions.create({
-        model: "gpt-4", // Best model for complex reasoning and following instructions
+        model: "gpt-4o", // Use gpt-4o which supports JSON mode
         messages: [{ role: "user", content: prompt }],
         temperature: 0.8, // Creative but focused
         max_tokens: 1500,
@@ -214,7 +214,7 @@ Format as JSON:
     try {
       this.log('OPENAI', 'Sending news request to GPT-4');
       const completion = await openai.chat.completions.create({
-        model: "gpt-4",
+        model: "gpt-4o", // Use gpt-4o which supports JSON mode
         messages: [{ role: "user", content: prompt }],
         temperature: 0.8,
         max_tokens: 1000,
@@ -273,7 +273,7 @@ Return as JSON:
     try {
       this.log('OPENAI', 'Sending suggestion request to GPT-4');
       const completion = await openai.chat.completions.create({
-        model: "gpt-4",
+        model: "gpt-4o", // Use gpt-4o which supports JSON mode
         messages: [{ role: "user", content: prompt }],
         temperature: 0.7, // More focused for strategic advice
         max_tokens: 500,
@@ -451,7 +451,7 @@ Return as JSON:
 
     try {
       const completion = await openai.chat.completions.create({
-        model: "gpt-4",
+        model: "gpt-4o", // Use gpt-4o which supports JSON mode
         messages: [{ role: "user", content: prompt }],
         temperature: 0.95, // Very random and creative
         max_tokens: 1000,

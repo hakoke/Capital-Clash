@@ -13,7 +13,7 @@ router.post('/:playerId/custom-action', async (req, res) => {
 
     // Get player info
     const playerResult = await pool.query(
-      'SELECT game_id, name, company_name FROM players WHERE id = $1',
+      'SELECT game_id, name, company_name, capital FROM players WHERE id = $1',
       [playerId]
     );
 
@@ -22,6 +22,13 @@ router.post('/:playerId/custom-action', async (req, res) => {
     }
 
     const player = playerResult.rows[0];
+    
+    // Get current round from game
+    const gameResult = await pool.query(
+      'SELECT current_round FROM games WHERE id = $1',
+      [player.game_id]
+    );
+    const currentRound = gameResult.rows[0]?.current_round || 1;
 
     // Get target player if specified
     let targetPlayer = null;
@@ -44,14 +51,15 @@ router.post('/:playerId/custom-action', async (req, res) => {
       targetPlayerId,
       targetPlayerName: targetPlayer?.name,
       details,
+      round_number: currentRound,
       timestamp: new Date().toISOString()
     };
 
     // Save to database
     await pool.query(
       `INSERT INTO player_actions (id, game_id, player_id, round_number, action_type, details)
-       VALUES (uuid_generate_v4(), $1, $2, (SELECT current_round FROM games WHERE id = $1), $3, $4)`,
-      [player.game_id, playerId, actionType, JSON.stringify(actionRecord)]
+       VALUES (uuid_generate_v4(), $1, $2, $3, $4, $5)`,
+      [player.game_id, playerId, currentRound, actionType, JSON.stringify(actionRecord)]
     );
 
     // Get FULL game state for AI
@@ -70,11 +78,25 @@ router.post('/:playerId/custom-action', async (req, res) => {
       currentPlayer: player
     };
 
-    // Generate AI response with FULL context
-    const aiResponse = await aiService.generateCustomEventResponse(actionRecord, player, targetPlayer, gameState);
+    // If confirmed, use stored execute commands instead of generating new AI response
+    let aiResponse;
+    if (actionRecord.details?.confirmed && actionRecord.details?.executeCommands) {
+      // Reuse the AI response from initial request
+      aiResponse = {
+        eventTitle: actionRecord.details?.eventTitle || actionRecord.actionType,
+        eventDescription: actionRecord.details?.eventDescription || actionRecord.actionDescription,
+        needsConfirmation: false,
+        estimatedCost: actionRecord.details?.cost,
+        playerMessage: actionRecord.details?.playerMessage || 'Action confirmed',
+        executeCommands: actionRecord.details.executeCommands
+      };
+    } else {
+      // Generate AI response with FULL context
+      aiResponse = await aiService.generateCustomEventResponse(actionRecord, player, targetPlayer, gameState);
+    }
 
-    // EXECUTE the commands AI returned
-    if (aiResponse.executeCommands) {
+    // EXECUTE the commands AI returned (only if confirmed or doesn't need confirmation)
+    if (aiResponse.executeCommands && (actionRecord.details?.confirmed || !aiResponse.needsConfirmation)) {
       for (const cmd of aiResponse.executeCommands) {
         try {
           switch (cmd.type) {
@@ -138,7 +160,7 @@ router.post('/:playerId/custom-action', async (req, res) => {
             case 'propertyAction':
               if (cmd.action === 'create' && cmd.propertyType && cmd.district) {
                 // Create a property that generates revenue
-                // Find a tile in that district that belongs to the player
+                // Find a tile in that district
                 const districtResult = await pool.query(
                   'SELECT id FROM districts WHERE name = $1 AND game_id = $2',
                   [cmd.district, player.game_id]
@@ -147,12 +169,19 @@ router.post('/:playerId/custom-action', async (req, res) => {
                 if (districtResult.rows.length > 0) {
                   const districtId = districtResult.rows[0].id;
                   
-                  // Create or update a tile for this property
+                  // Create a new tile for this property
+                  const propertyName = `${cmd.propertyType} in ${cmd.district}`;
+                  const propertyId = uuidv4();
                   await pool.query(
                     `INSERT INTO tiles (id, game_id, district_id, name, purchase_price, current_value, owner_id, property_type, development_level, income_per_round)
-                     VALUES (uuid_generate_v4(), $1, $2, $3, $4, $4, $5, $6, 1, $7)
-                     ON CONFLICT DO NOTHING`,
-                    [player.game_id, districtId, `${cmd.propertyType} - ${cmd.district}`, cmd.amount || 100000, playerId, cmd.propertyType, (cmd.amount || 100000) * 0.03]
+                     VALUES ($1, $2, $3, $4, $5, $5, $6, $7, 1, $8)`,
+                    [propertyId, player.game_id, districtId, propertyName, cmd.amount || 100000, playerId, cmd.propertyType, (cmd.amount || 100000) * 0.03]
+                  );
+                  
+                  // Deduct cost from player
+                  await pool.query(
+                    'UPDATE players SET capital = capital - $1 WHERE id = $2',
+                    [cmd.amount, playerId]
                   );
                 }
               } else if (cmd.action === 'invest' && cmd.amount && cmd.propertyName) {
@@ -172,6 +201,50 @@ router.post('/:playerId/custom-action', async (req, res) => {
           console.error(`Error executing command ${cmd.type}:`, error);
         }
       }
+
+      // Generate news for this action
+      const newsPrompt = `A player action just happened in Capital Clash:
+Action: ${actionRecord.actionDescription}
+Player: ${player.name}
+Result: ${aiResponse.eventTitle}
+
+Generate a short, dramatic news headline and story (2-3 sentences) about this event.
+
+Return as JSON:
+{
+  "headline": "Headline here",
+  "story": "Short news story"
+}`;
+
+      try {
+        const { OpenAI } = await import('openai');
+        const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+        
+        const newsCompletion = await openai.chat.completions.create({
+          model: "gpt-4o",
+          messages: [{ role: "user", content: newsPrompt }],
+          temperature: 0.8,
+          max_tokens: 300,
+          response_format: { type: "json_object" }
+        });
+
+        const newsResponse = JSON.parse(newsCompletion.choices[0].message.content);
+        
+        // Save news
+        await pool.query(
+          `INSERT INTO news_reports (id, game_id, round_number, headline, story, player_impacts)
+           VALUES (uuid_generate_v4(), $1, $2, $3, $4, $5)`,
+          [
+            player.game_id,
+            actionRecord.round_number || 1,
+            newsResponse.headline,
+            newsResponse.story,
+            JSON.stringify({ [player.name]: { action: actionRecord.actionType } })
+          ]
+        );
+      } catch (newsError) {
+        console.error('Error generating news for action:', newsError);
+      }
     }
 
     // Broadcast to all players
@@ -186,14 +259,23 @@ router.post('/:playerId/custom-action', async (req, res) => {
 
     // Check if action needs confirmation
     if (aiResponse.needsConfirmation && !actionRecord.details?.confirmed) {
+      // Don't execute commands yet, just return confirmation request
       return res.json({
         success: true,
         needsConfirmation: true,
         estimatedCost: aiResponse.estimatedCost,
         playerMessage: aiResponse.playerMessage,
         eventTitle: aiResponse.eventTitle,
+        eventDescription: aiResponse.eventDescription,
+        executeCommands: aiResponse.executeCommands, // Send commands so frontend can show details
         action: actionRecord
       });
+    }
+    
+    // If confirmed, execute the commands from the AI response
+    if (actionRecord.details?.confirmed && aiResponse.executeCommands) {
+      // Commands will be executed in the code above
+      // This flow is fine - commands execute when confirmed
     }
 
     res.json({ 

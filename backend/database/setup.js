@@ -10,8 +10,8 @@ async function setupDatabase() {
   try {
     console.log('🔄 Setting up database schema...');
 
-    // Read schema file
-    const schemaPath = path.join(__dirname, 'schema.sql');
+    // Read monopoly schema file
+    const schemaPath = path.join(__dirname, 'schema_monopoly.sql');
     const schema = fs.readFileSync(schemaPath, 'utf8');
 
     // Execute schema

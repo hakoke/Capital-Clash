@@ -1,8 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import { useState } from 'react'
 import Home from './pages/Home'
 import Lobby from './pages/Lobby'
-import Game from './pages/Game'
+import MonopolyGame from './pages/MonopolyGame'
 import './App.css'
 
 function App() {
@@ -12,7 +11,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/lobby/:gameId" element={<Lobby />} />
-          <Route path="/game/:gameId" element={<Game />} />
+          <Route path="/game/:gameId" element={<MonopolyGame />} />
         </Routes>
       </div>
     </Router>

@@ -29,6 +29,7 @@ function Game() {
   const fetchGameData = async () => {
     try {
       const res = await axios.get(`/api/game/${gameId}`)
+      const previousPhase = game?.phase
       setGame(res.data.game)
       setPlayers(res.data.players)
       setTiles(res.data.tiles)
@@ -52,9 +53,17 @@ function Game() {
         setCurrentTurnPlayer(turnPlayer)
       }
 
+      // Auto-trigger AI simulation when phase changes to ai_phase
+      if (previousPhase !== 'ai_phase' && res.data.game.phase === 'ai_phase') {
+        console.log('Auto-triggering AI simulation...')
+        setTimeout(() => {
+          handleAISimulation()
+        }, 1000)
+      }
+
       // Fetch news
       const newsRes = await axios.get(`/api/ai/news/${gameId}`)
-      setNews(newsRes.data.news.slice(0, 3))
+      setNews(newsRes.data.news.slice(0, 5)) // Show more news items
     } catch (error) {
       console.error('Error fetching game data:', error)
     }
@@ -105,14 +114,8 @@ function Game() {
 
   const handleEndRound = async () => {
     try {
-      showNotification('⏭️ Ending turn...', 'info')
-      
       // Advance to next player's turn instead of ending the round
       const res = await axios.post(`/api/game/${gameId}/advance-turn`)
-      
-      if (res.data.success) {
-        showNotification('✓ Turn advanced to ' + res.data.currentPlayer, 'success')
-      }
       
       fetchGameData()
     } catch (error) {

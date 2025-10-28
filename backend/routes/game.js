@@ -1,21 +1,21 @@
 import express from 'express';
 import pool from '../database/index.js';
 import { v4 as uuidv4 } from 'uuid';
-import aiService from '../services/aiService.js';
+import { MONOPOLY_PROPERTIES } from './monopoly-properties.js';
 
 const router = express.Router();
 
 // Create a new game
 router.post('/create', async (req, res) => {
   try {
-    const { name, maxRounds = 8 } = req.body;
+    const { name } = req.body;
     const gameId = uuidv4();
 
     const result = await pool.query(
-      `INSERT INTO games (id, name, max_rounds, status, current_round)
-       VALUES ($1, $2, $3, 'waiting', 1)
+      `INSERT INTO games (id, name, status)
+       VALUES ($1, $2, 'waiting')
        RETURNING *`,
-      [gameId, name, maxRounds]
+      [gameId, name]
     );
 
     res.json({ success: true, game: result.rows[0] });
@@ -45,25 +45,9 @@ router.get('/:gameId', async (req, res) => {
       [gameId]
     );
 
-    // Get districts
-    const districtsResult = await pool.query(
-      'SELECT * FROM districts WHERE game_id = $1 ORDER BY order_on_board',
-      [gameId]
-    );
-
-    // Get tiles
-    const tilesResult = await pool.query(
-      `SELECT t.*, d.name as district_name, d.type as district_type
-       FROM tiles t
-       LEFT JOIN districts d ON t.district_id = d.id
-       WHERE t.game_id = $1
-       ORDER BY d.order_on_board, t.order_in_district`,
-      [gameId]
-    );
-
-    // Get companies
-    const companiesResult = await pool.query(
-      'SELECT * FROM companies WHERE game_id = $1',
+    // Get properties
+    const propertiesResult = await pool.query(
+      'SELECT * FROM properties WHERE game_id = $1 ORDER BY position',
       [gameId]
     );
 
@@ -71,9 +55,7 @@ router.get('/:gameId', async (req, res) => {
       success: true,
       game: gameResult.rows[0],
       players: playersResult.rows,
-      districts: districtsResult.rows,
-      tiles: tilesResult.rows,
-      companies: companiesResult.rows
+      properties: propertiesResult.rows
     });
   } catch (error) {
     console.error('Error fetching game:', error);
@@ -81,60 +63,48 @@ router.get('/:gameId', async (req, res) => {
   }
 });
 
-// Initialize board (create districts and tiles)
+// Initialize board (create Monopoly properties)
 router.post('/:gameId/initialize-board', async (req, res) => {
   try {
     const { gameId } = req.params;
 
-    const districts = [
-      { name: 'AI Data Core', type: 'tech_park', order: 1, description: 'Advanced AI startups and data centers' },
-      { name: 'Quantum Plaza', type: 'tech_park', order: 2, description: 'Quantum computing and robotics firms' },
-      { name: 'Neo Financial Tower', type: 'downtown', order: 3, description: 'Corporate headquarters and banks' },
-      { name: 'Market Square', type: 'downtown', order: 4, description: 'Shopping centers and entertainment' },
-      { name: 'Steel Works', type: 'industrial', order: 5, description: 'Heavy manufacturing and production' },
-      { name: 'Energy Grid', type: 'industrial', order: 6, description: 'Power plants and infrastructure' },
-      { name: 'Eco Gardens', type: 'green_valley', order: 7, description: 'Renewable energy and sustainable tech' },
-      { name: 'Bio Farms', type: 'green_valley', order: 8, description: 'Organic agriculture and biotech' },
-      { name: 'Fashion District', type: 'luxury_mile', order: 9, description: 'Luxury brands and fashion houses' },
-      { name: 'Entertainment Hub', type: 'luxury_mile', order: 10, description: 'Media studios and entertainment' },
-      { name: 'Deep Port', type: 'harborfront', order: 11, description: 'Shipping and logistics center' },
-      { name: 'Tourist Bay', type: 'harborfront', order: 12, description: 'Resorts and tourism facilities' }
-    ];
-
-    const districtIds = [];
-
-    // Create districts
-    for (const district of districts) {
-      const districtId = uuidv4();
-      districtIds.push(districtId);
-
+    // Create all Monopoly properties
+    for (const prop of MONOPOLY_PROPERTIES) {
       await pool.query(
-        `INSERT INTO districts (id, game_id, name, type, description, order_on_board)
-         VALUES ($1, $2, $3, $4, $5, $6)`,
-        [districtId, gameId, district.name, district.type, district.description, district.order]
+        `INSERT INTO properties (id, game_id, name, color_group, price, rent, rent_with_set, 
+         house_rent_1, house_rent_2, house_rent_3, house_rent_4, hotel_rent, house_cost, hotel_cost, 
+         position, property_type, houses, hotels)
+         VALUES (uuid_generate_v4(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`,
+        [
+          gameId,
+          prop.name,
+          prop.color_group || null,
+          prop.price || 0,
+          prop.rent || 0,
+          prop.rent_with_set || 0,
+          prop.house_rent_1 || 0,
+          prop.house_rent_2 || 0,
+          prop.house_rent_3 || 0,
+          prop.house_rent_4 || 0,
+          prop.hotel_rent || 0,
+          prop.house_cost || 0,
+          prop.house_cost ? prop.house_cost * 5 : 0,
+          prop.position,
+          prop.property_type || 'property',
+          prop.houses || 0,
+          prop.hotels || 0
+        ]
       );
-
-      // Create 3 tiles per district
-      for (let i = 1; i <= 3; i++) {
-        const basePrice = [200000, 300000, 400000][i - 1];
-        const tileName = `${district.name} - Plot ${i}`;
-
-        await pool.query(
-          `INSERT INTO tiles (id, game_id, district_id, name, purchase_price, current_value, order_in_district)
-           VALUES (uuid_generate_v4(), $1, $2, $3, $4, $4, $5)`,
-          [gameId, districtId, tileName, basePrice, i]
-        );
-      }
     }
 
-    res.json({ success: true, message: 'Board initialized', districts: districtIds });
+    res.json({ success: true, message: 'Board initialized with Monopoly properties' });
   } catch (error) {
     console.error('Error initializing board:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
-// Start game - With automatic turn system
+// Start game - Initialize Monopoly board
 router.post('/:gameId/start', async (req, res) => {
   try {
     const { gameId } = req.params;
@@ -147,70 +117,219 @@ router.post('/:gameId/start', async (req, res) => {
 
     const playerCount = parseInt(playersResult.rows[0].count);
 
-    if (playerCount < parseInt(process.env.MIN_PLAYERS_PER_GAME || 2)) {
+    if (playerCount < 2) {
       return res.status(400).json({
         success: false,
-        error: `Need at least ${process.env.MIN_PLAYERS_PER_GAME || 2} players to start`
+        error: 'Need at least 2 players to start'
       });
     }
 
     // Initialize board if not already done
-    const boardsResult = await pool.query(
-      'SELECT COUNT(*) as count FROM districts WHERE game_id = $1',
+    const propertiesResult = await pool.query(
+      'SELECT COUNT(*) as count FROM properties WHERE game_id = $1',
       [gameId]
     );
     
-    if (parseInt(boardsResult.rows[0].count) === 0) {
-      // Board not initialized, do it now
-      const districts = [
-        { name: 'AI Data Core', type: 'tech_park', order: 1, description: 'Advanced AI startups and data centers' },
-        { name: 'Quantum Plaza', type: 'tech_park', order: 2, description: 'Quantum computing and robotics firms' },
-        { name: 'Neo Financial Tower', type: 'downtown', order: 3, description: 'Corporate headquarters and banks' },
-        { name: 'Market Square', type: 'downtown', order: 4, description: 'Shopping centers and entertainment' },
-        { name: 'Steel Works', type: 'industrial', order: 5, description: 'Heavy manufacturing and production' },
-        { name: 'Energy Grid', type: 'industrial', order: 6, description: 'Power plants and infrastructure' },
-        { name: 'Eco Gardens', type: 'green_valley', order: 7, description: 'Renewable energy and sustainable tech' },
-        { name: 'Bio Farms', type: 'green_valley', order: 8, description: 'Organic agriculture and biotech' },
-        { name: 'Fashion District', type: 'luxury_mile', order: 9, description: 'Luxury brands and fashion houses' },
-        { name: 'Entertainment Hub', type: 'luxury_mile', order: 10, description: 'Media studios and entertainment' },
-        { name: 'Deep Port', type: 'harborfront', order: 11, description: 'Shipping and logistics center' },
-        { name: 'Tourist Bay', type: 'harborfront', order: 12, description: 'Resorts and tourism facilities' }
-      ];
-
-      for (const district of districts) {
-        const districtId = uuidv4();
+    if (parseInt(propertiesResult.rows[0].count) === 0) {
+      // Create all Monopoly properties
+      for (const prop of MONOPOLY_PROPERTIES) {
         await pool.query(
-          `INSERT INTO districts (id, game_id, name, type, description, order_on_board)
-           VALUES ($1, $2, $3, $4, $5, $6)`,
-          [districtId, gameId, district.name, district.type, district.description, district.order]
+          `INSERT INTO properties (id, game_id, name, color_group, price, rent, rent_with_set, 
+           house_rent_1, house_rent_2, house_rent_3, house_rent_4, hotel_rent, house_cost, hotel_cost, 
+           position, property_type, houses, hotels)
+           VALUES (uuid_generate_v4(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`,
+          [
+            gameId,
+            prop.name,
+            prop.color_group || null,
+            prop.price || 0,
+            prop.rent || 0,
+            prop.rent_with_set || 0,
+            prop.house_rent_1 || 0,
+            prop.house_rent_2 || 0,
+            prop.house_rent_3 || 0,
+            prop.house_rent_4 || 0,
+            prop.hotel_rent || 0,
+            prop.house_cost || 0,
+            prop.house_cost ? prop.house_cost * 5 : 0,
+            prop.position,
+            prop.property_type || 'property',
+            prop.houses || 0,
+            prop.hotels || 0
+          ]
         );
-
-        for (let i = 1; i <= 3; i++) {
-          const basePrice = [200000, 300000, 400000][i - 1];
-          const tileName = `${district.name} - Plot ${i}`;
-          await pool.query(
-            `INSERT INTO tiles (id, game_id, district_id, name, purchase_price, current_value, order_in_district)
-             VALUES (uuid_generate_v4(), $1, $2, $3, $4, $4, $5)`,
-            [gameId, districtId, tileName, basePrice, i]
-          );
-        }
       }
     }
 
     // Update game status to active, start with player 1's turn
     await pool.query(
-      'UPDATE games SET status = $1, phase = $2, current_player_turn = 1 WHERE id = $3',
-      ['active', 'player_phase', gameId]
+      'UPDATE games SET status = $1, current_player_turn = 1 WHERE id = $2',
+      ['active', gameId]
     );
 
-    res.json({ success: true, message: 'Game started' });
+    res.json({ success: true, message: 'Monopoly game started!' });
   } catch (error) {
     console.error('Error starting game:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
-// Advance to next turn/round automatically
+// Roll dice and move player
+router.post('/:gameId/roll', async (req, res) => {
+  try {
+    const { gameId } = req.params;
+    const { playerId } = req.body;
+
+    // Get game and player info
+    const gameResult = await pool.query('SELECT * FROM games WHERE id = $1', [gameId]);
+    if (gameResult.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Game not found' });
+    }
+    const game = gameResult.rows[0];
+
+    const playerResult = await pool.query('SELECT * FROM players WHERE id = $1', [playerId]);
+    if (playerResult.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Player not found' });
+    }
+    const player = playerResult.rows[0];
+
+    // Check if it's this player's turn
+    if (game.current_player_turn !== player.order_in_game) {
+      return res.status(400).json({ success: false, error: 'Not your turn!' });
+    }
+
+    // Check if player can roll
+    if (!player.can_roll) {
+      return res.status(400).json({ success: false, error: 'Cannot roll yet' });
+    }
+
+    // Roll dice (1-6 for each die)
+    const die1 = Math.floor(Math.random() * 6) + 1;
+    const die2 = Math.floor(Math.random() * 6) + 1;
+    const total = die1 + die2;
+    const isDoubles = die1 === die2;
+
+    // Move player
+    const currentPosition = player.position;
+    let newPosition = (currentPosition + total) % 40;
+
+    // Check for passing or landing on GO
+    if (currentPosition + total >= 40) {
+      // Player passed GO, collect $200
+      await pool.query(
+        'UPDATE players SET money = money + 200 WHERE id = $1',
+        [playerId]
+      );
+    }
+
+    await pool.query(
+      'UPDATE players SET position = $1, can_roll = false WHERE id = $2',
+      [newPosition, playerId]
+    );
+
+    // Log the roll
+    await pool.query(
+      `INSERT INTO player_actions (id, game_id, player_id, action_type, details)
+       VALUES (uuid_generate_v4(), $1, $2, $3, $4)`,
+      [gameId, playerId, 'roll_dice', JSON.stringify({ die1, die2, total, newPosition, isDoubles })]
+    );
+
+    // Get property at new position
+    const propertyResult = await pool.query(
+      'SELECT * FROM properties WHERE game_id = $1 AND position = $2',
+      [gameId, newPosition]
+    );
+
+    const property = propertyResult.rows[0];
+
+    // Check if property is owned by another player and rent needs to be paid
+    let rentDue = null;
+    let ownerInfo = null;
+    
+    if (property && property.owner_id && property.owner_id !== playerId) {
+      // Get the owner
+      const ownerResult = await pool.query('SELECT * FROM players WHERE id = $1', [property.owner_id]);
+      ownerInfo = ownerResult.rows[0];
+      
+      // Calculate rent (for now just basic rent, can add house logic later)
+      if (property.hotels > 0) {
+        rentDue = property.hotel_rent;
+      } else if (property.houses > 0) {
+        // Rent based on number of houses
+        rentDue = property.houses === 4 ? property.house_rent_4 : 
+                  property.houses === 3 ? property.house_rent_3 :
+                  property.houses === 2 ? property.house_rent_2 : property.house_rent_1;
+      } else if (property.color_group && property.color_group !== 'railroad' && property.color_group !== 'utility') {
+        // Check if owner has the whole color group
+        const sameColorProperties = await pool.query(
+          'SELECT * FROM properties WHERE game_id = $1 AND color_group = $2',
+          [gameId, property.color_group]
+        );
+        const ownedInGroup = sameColorProperties.rows.filter(p => p.owner_id === property.owner_id).length;
+        const totalInGroup = sameColorProperties.rows.length;
+        
+        if (ownedInGroup === totalInGroup) {
+          rentDue = property.rent_with_set;
+        } else {
+          rentDue = property.rent;
+        }
+      } else if (property.property_type === 'railroad') {
+        // Count owned railroads
+        const ownedRailroads = await pool.query(
+          'SELECT COUNT(*) as count FROM properties WHERE owner_id = $1 AND property_type = $2',
+          [property.owner_id, 'railroad']
+        );
+        const count = parseInt(ownedRailroads.rows[0].count);
+        rentDue = 25 * count; // $25 per railroad, doubles for each owned
+      } else if (property.property_type === 'utility') {
+        // Base utility rent (would multiply by dice total if both owned)
+        rentDue = 4 * total; // 4x dice roll if one owned, 10x if both
+      } else {
+        rentDue = property.rent || 0;
+      }
+      
+      // Auto-pay rent if player has enough money
+      if (rentDue > 0 && parseFloat(player.money) >= rentDue) {
+        await pool.query(
+          'UPDATE players SET money = money - $1 WHERE id = $2',
+          [rentDue, playerId]
+        );
+        await pool.query(
+          'UPDATE players SET money = money + $1 WHERE id = $2',
+          [rentDue, property.owner_id]
+        );
+        
+        // Log the rent payment
+        await pool.query(
+          `INSERT INTO player_actions (id, game_id, player_id, action_type, details)
+           VALUES (uuid_generate_v4(), $1, $2, $3, $4)`,
+          [gameId, playerId, 'pay_rent', JSON.stringify({ amount: rentDue, propertyId: property.id, ownerId: property.owner_id })]
+        );
+      } else if (rentDue > 0) {
+        // Player doesn't have enough money - they're bankrupt!
+        await pool.query(
+          'UPDATE players SET status = $1 WHERE id = $2',
+          ['bankrupt', playerId]
+        );
+      }
+      
+      rentDue = null; // Reset so we don't send it in response
+    }
+
+    res.json({
+      success: true,
+      dice: { die1, die2, total, isDoubles },
+      newPosition,
+      property: property || null,
+      rentPaid: rentDue !== null ? rentDue : undefined
+    });
+  } catch (error) {
+    console.error('Error rolling dice:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Advance to next turn
 router.post('/:gameId/advance-turn', async (req, res) => {
   try {
     const { gameId } = req.params;
@@ -227,72 +346,30 @@ router.post('/:gameId/advance-turn', async (req, res) => {
     );
     const activePlayers = playersResult.rows.filter(p => p.status === 'active');
     
-    // Check if all players have taken their turn this round
+    // Move to next player
     const currentTurn = game.current_player_turn || 1;
     const nextTurn = currentTurn % activePlayers.length + 1;
     
-    if (nextTurn === 1) {
-      // Last player finished, advance round
-      await pool.query(
-        'UPDATE games SET current_round = current_round + 1, current_player_turn = 1, phase = $1 WHERE id = $2',
-        ['ai_phase', gameId]
-      );
-      
-      // Trigger auto AI simulation for this round
-      const simulateRes = await req.app.get('simulateRound');
-      if (simulateRes) {
-        // AI simulation will handle phase change back to player_phase
-      }
-      
-      res.json({ 
-        success: true, 
-        message: 'Round advanced',
-        newRound: game.current_round + 1,
-        phase: 'ai_phase'
-      });
-    } else {
-      // Just advance to next player's turn
-      await pool.query(
-        'UPDATE games SET current_player_turn = $1 WHERE id = $2',
-        [nextTurn, gameId]
-      );
-      
-      res.json({ 
-        success: true, 
-        message: 'Turn advanced',
-        currentTurn: nextTurn,
-        currentPlayer: activePlayers.find(p => p.order_in_game === nextTurn)?.name
-      });
-    }
-  } catch (error) {
-    console.error('Error advancing turn:', error);
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// End current round and trigger AI simulation
-router.post('/:gameId/end-round', async (req, res) => {
-  try {
-    const { gameId } = req.params;
-    const io = req.app.get('io');
-    
-    // Set phase to AI simulation
+    // Update current player to allow rolling again
     await pool.query(
-      'UPDATE games SET phase = $1 WHERE id = $2',
-      ['ai_phase', gameId]
+      `UPDATE players SET can_roll = true WHERE game_id = $1 AND order_in_game = $2`,
+      [gameId, nextTurn]
     );
     
-    // Broadcast to all players
-    if (io) {
-      io.to(`game_${gameId}`).emit('round_ending', {
-        message: 'Round ending... AI simulation beginning',
-        timestamp: new Date().toISOString()
-      });
-    }
+    // Update game to next player's turn
+    await pool.query(
+      'UPDATE games SET current_player_turn = $1 WHERE id = $2',
+      [nextTurn, gameId]
+    );
     
-    res.json({ success: true, message: 'Round ended, AI simulation will begin' });
+    res.json({ 
+      success: true, 
+      message: 'Turn advanced',
+      currentTurn: nextTurn,
+      currentPlayer: activePlayers.find(p => p.order_in_game === nextTurn)?.name
+    });
   } catch (error) {
-    console.error('Error ending round:', error);
+    console.error('Error advancing turn:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });

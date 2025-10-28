@@ -1,18 +1,13 @@
 import express from 'express';
 import pool from '../database/index.js';
 import { v4 as uuidv4 } from 'uuid';
-import aiService from '../services/aiService.js';
 
 const router = express.Router();
 
 // Join a game as a player
 router.post('/join', async (req, res) => {
   try {
-    const { gameId, playerName, companyName } = req.body;
-    
-    // Sanitize inputs to filter inappropriate content
-    const sanitizedPlayerName = aiService.sanitizeInput(playerName);
-    const sanitizedCompanyName = aiService.sanitizeInput(companyName);
+    const { gameId, playerName, color } = req.body;
     
     const playerId = uuidv4();
 
@@ -24,7 +19,7 @@ router.post('/join', async (req, res) => {
     const order = parseInt(countResult.rows[0].count) + 1;
 
     // Check max players
-    const maxPlayers = parseInt(process.env.MAX_PLAYERS_PER_GAME || 6);
+    const maxPlayers = 6;
     if (order > maxPlayers) {
       return res.status(400).json({
         success: false,
@@ -32,22 +27,26 @@ router.post('/join', async (req, res) => {
       });
     }
 
-    // Create player
-    const result = await pool.query(
-      `INSERT INTO players (id, game_id, name, company_name, capital, order_in_game)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING *`,
-      [playerId, gameId, sanitizedPlayerName, sanitizedCompanyName, process.env.STARTING_CAPITAL || 1000000, order]
+    // Check if color is already taken
+    const colorCheck = await pool.query(
+      'SELECT COUNT(*) as count FROM players WHERE game_id = $1 AND color = $2',
+      [gameId, color]
     );
-
-    // Notify other players via socket
-    const io = req.app.get('io');
-    if (io) {
-      io.to(`game_${gameId}`).emit('new_player_joined', {
-        player: result.rows[0],
-        timestamp: new Date().toISOString()
+    
+    if (parseInt(colorCheck.rows[0].count) > 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Color already taken'
       });
     }
+
+    // Create player with Monopoly starting money
+    const result = await pool.query(
+      `INSERT INTO players (id, game_id, name, color, money, order_in_game, position, can_roll)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING *`,
+      [playerId, gameId, playerName || 'Player ' + order, color, 1500.00, order, 0, false]
+    );
 
     res.json({ success: true, player: result.rows[0] });
   } catch (error) {
@@ -77,39 +76,32 @@ router.get('/:playerId', async (req, res) => {
   }
 });
 
-// Get player's tiles and companies
-router.get('/:playerId/assets', async (req, res) => {
+// Get player's properties
+router.get('/:playerId/properties', async (req, res) => {
   try {
     const { playerId } = req.params;
 
-    // Get tiles
-    const tilesResult = await pool.query(
-      'SELECT * FROM tiles WHERE owner_id = $1',
-      [playerId]
-    );
-
-    // Get companies
-    const companiesResult = await pool.query(
-      'SELECT * FROM companies WHERE player_id = $1',
+    // Get properties
+    const propertiesResult = await pool.query(
+      'SELECT * FROM properties WHERE owner_id = $1 ORDER BY position',
       [playerId]
     );
 
     res.json({
       success: true,
-      tiles: tilesResult.rows,
-      companies: companiesResult.rows
+      properties: propertiesResult.rows
     });
   } catch (error) {
-    console.error('Error fetching player assets:', error);
+    console.error('Error fetching player properties:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
-// Buy a tile
-router.post('/:playerId/buy-tile', async (req, res) => {
+// Buy a property
+router.post('/:playerId/buy-property', async (req, res) => {
   try {
     const { playerId } = req.params;
-    const { tileId } = req.body;
+    const { propertyId } = req.body;
 
     // Get player info
     const playerResult = await pool.query(
@@ -123,105 +115,58 @@ router.post('/:playerId/buy-tile', async (req, res) => {
 
     const player = playerResult.rows[0];
 
-    // Get tile info
-    const tileResult = await pool.query(
-      'SELECT * FROM tiles WHERE id = $1',
-      [tileId]
+    // Get property info
+    const propertyResult = await pool.query(
+      'SELECT * FROM properties WHERE id = $1',
+      [propertyId]
     );
 
-    if (tileResult.rows.length === 0) {
-      return res.status(404).json({ success: false, error: 'Tile not found' });
+    if (propertyResult.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Property not found' });
     }
 
-    const tile = tileResult.rows[0];
+    const property = propertyResult.rows[0];
 
     // Check if already owned
-    if (tile.owner_id) {
-      return res.status(400).json({ success: false, error: 'Tile already owned' });
+    if (property.owner_id) {
+      return res.status(400).json({ success: false, error: 'Property already owned' });
     }
 
-    // Check if player has enough capital
-    if (parseFloat(player.capital) < parseFloat(tile.purchase_price)) {
-      return res.status(400).json({ success: false, error: 'Insufficient capital' });
+    // Check if property is purchasable
+    if (property.property_type === 'special' || property.property_type === 'chance' || 
+        property.property_type === 'community_chest' || property.property_type === 'tax' ||
+        property.property_type === 'jail' || property.property_type === 'free_parking' ||
+        property.property_type === 'go_to_jail') {
+      return res.status(400).json({ success: false, error: 'Cannot buy this property' });
     }
 
-    // Update tile ownership
+    // Check if player has enough money
+    if (parseFloat(player.money) < parseFloat(property.price)) {
+      return res.status(400).json({ success: false, error: 'Insufficient funds' });
+    }
+
+    // Update property ownership
     await pool.query(
-      'UPDATE tiles SET owner_id = $1 WHERE id = $2',
-      [playerId, tileId]
+      'UPDATE properties SET owner_id = $1 WHERE id = $2',
+      [playerId, propertyId]
     );
 
-    // Deduct capital
+    // Deduct money
     await pool.query(
-      'UPDATE players SET capital = capital - $1 WHERE id = $2',
-      [tile.purchase_price, playerId]
+      'UPDATE players SET money = money - $1 WHERE id = $2',
+      [property.price, playerId]
     );
 
     // Record action
     await pool.query(
-      `INSERT INTO player_actions (id, game_id, player_id, round_number, action_type, details)
-       VALUES (uuid_generate_v4(), $1, $2, (SELECT current_round FROM games WHERE id = $1), $3, $4)`,
-      [tile.game_id, playerId, 'buy_tile', JSON.stringify({ tileId, price: tile.purchase_price })]
+      `INSERT INTO player_actions (id, game_id, player_id, action_type, details)
+       VALUES (uuid_generate_v4(), $1, $2, $3, $4)`,
+      [property.game_id, playerId, 'buy_property', JSON.stringify({ propertyId, price: property.price })]
     );
 
-    res.json({ success: true, message: 'Tile purchased' });
+    res.json({ success: true, message: 'Property purchased' });
   } catch (error) {
-    console.error('Error buying tile:', error);
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// Launch a company
-router.post('/:playerId/launch-company', async (req, res) => {
-  try {
-    const { playerId } = req.params;
-    const { name, industry, initialInvestment } = req.body;
-
-    // Sanitize company name and industry
-    const sanitizedName = aiService.sanitizeInput(name);
-    const sanitizedIndustry = aiService.sanitizeInput(industry);
-
-    // Get player info
-    const playerResult = await pool.query(
-      'SELECT game_id, capital FROM players WHERE id = $1',
-      [playerId]
-    );
-
-    if (playerResult.rows.length === 0) {
-      return res.status(404).json({ success: false, error: 'Player not found' });
-    }
-
-    const player = playerResult.rows[0];
-
-    if (parseFloat(player.capital) < parseFloat(initialInvestment)) {
-      return res.status(400).json({ success: false, error: 'Insufficient capital' });
-    }
-
-    const companyId = uuidv4();
-
-    // Create company
-    await pool.query(
-      `INSERT INTO companies (id, game_id, player_id, name, industry, valuation, revenue_per_round)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-      [companyId, player.game_id, playerId, sanitizedName, sanitizedIndustry, initialInvestment, initialInvestment * 0.1]
-    );
-
-    // Deduct capital
-    await pool.query(
-      'UPDATE players SET capital = capital - $1 WHERE id = $2',
-      [initialInvestment, playerId]
-    );
-
-    // Record action
-    await pool.query(
-      `INSERT INTO player_actions (id, game_id, player_id, round_number, action_type, details)
-       VALUES (uuid_generate_v4(), $1, $2, (SELECT current_round FROM games WHERE id = $1), $3, $4)`,
-      [player.game_id, playerId, 'launch_company', JSON.stringify({ companyId, name, industry, investment: initialInvestment })]
-    );
-
-    res.json({ success: true, message: 'Company launched', companyId });
-  } catch (error) {
-    console.error('Error launching company:', error);
+    console.error('Error buying property:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
