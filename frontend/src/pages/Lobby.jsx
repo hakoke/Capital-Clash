@@ -250,7 +250,7 @@ function Lobby() {
   const propertiesOwned = currentPlayer ? properties.filter(p => p.owner_id === currentPlayer.id) : []
 
     return (
-    <div className="min-h-screen bg-[#2d1b4e] relative">
+    <div className="min-h-screen relative" style={{ background: '#1C1632' }}>
 
       {/* Header - Top Bar */}
       <div className="relative z-20 px-6 py-3 bg-[#1a0a2e] border-b border-purple-800 flex items-center justify-between">
@@ -270,7 +270,11 @@ function Lobby() {
       {/* Main content - 3 column layout like RICHUP.IO */}
       <div className="relative z-10 flex h-[calc(100vh-60px)]">
         {/* Left Panel - Share and Chat */}
-        <div className="w-80 bg-[#1a0a2e] p-6 border-r border-purple-900 overflow-y-auto">
+        <div className="w-80 p-6 border-r overflow-y-auto" style={{
+          background: '#1A102B',
+          borderColor: 'rgba(100, 200, 255, 0.1)',
+          boxShadow: 'inset -1px 0 10px rgba(0, 0, 0, 0.3)'
+        }}>
           {/* Share this game */}
           <div className="mb-4">
             <div className="bg-[#2d1b4e] rounded-lg p-4 border border-purple-800">
@@ -353,11 +357,17 @@ function Lobby() {
         </div>
 
         {/* Center - Conditional Display */}
-        <div className="flex-1 bg-[#2d1b4e] relative overflow-auto flex items-center justify-center">
-          {/* Blurred board background with darker overlay - like RichUp */}
+        <div className="flex-1 relative overflow-auto flex items-center justify-center" style={{ 
+          background: 'linear-gradient(rgba(0,0,0,0.3), transparent)',
+          backgroundSize: '100% 100%'
+        }}>
+          {/* Blurred board background with depth fade like RichUp */}
           <div className="absolute inset-0 pointer-events-none overflow-hidden">
-            <div className="absolute inset-0 bg-black/70"></div>
-            <div className="absolute inset-0" style={{ filter: 'blur(8px)' }}>
+            <div className="absolute inset-0" style={{ 
+              filter: 'blur(15px) brightness(0.4)',
+              backdropFilter: 'blur(15px)',
+              background: 'linear-gradient(to bottom, rgba(0,0,0,0.3), transparent 50%, rgba(0,0,0,0.3))'
+            }}>
               <MonopolyBoard
                 properties={properties}
                 players={players}
@@ -372,12 +382,12 @@ function Lobby() {
           {showColorSelection && !isPlayerInGame && (
             <div className="relative z-10 max-w-md w-full">
               <div className="rounded-xl p-8 border" style={{ 
-                maxWidth: '420px',
-                background: 'rgba(15, 10, 25, 0.95)',
-                borderColor: 'rgba(160, 76, 249, 0.3)',
-                boxShadow: '0 10px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(160, 76, 249, 0.1)'
+                maxWidth: '380px',
+                background: 'rgba(15, 10, 25, 0.98)',
+                borderColor: 'rgba(100, 200, 255, 0.2)',
+                boxShadow: '0 10px 40px rgba(0, 0, 0, 0.8), 0 0 40px rgba(0, 255, 255, 0.15), inset 0 0 60px rgba(0,0,0,0.5)'
               }}>
-                <h2 className="text-white text-sm font-medium mb-8 text-center">Select your player appearance:</h2>
+                <h2 className="text-white text-xs font-medium mb-6 text-center tracking-tight" style={{ letterSpacing: '0.5px' }}>Select your player appearance:</h2>
                 
                 {/* Color grid - 4 columns like RichUp.io */}
                 <div className="grid grid-cols-4 gap-3 mb-6">
@@ -392,51 +402,58 @@ function Lobby() {
                         onClick={() => !isTaken && setSelectedColor(colorObj.name)}
                         disabled={isTaken}
                         className={`
-                          relative w-18 h-18 rounded-full transition-all duration-200 flex items-center justify-center overflow-hidden
-                          ${isSelected ? 'ring-2 ring-blue-400 ring-offset-2' : ''}
-                          ${isTaken ? 'opacity-30 cursor-not-allowed' : 'hover:scale-105 cursor-pointer'}
+                          relative rounded-full transition-all duration-200 flex items-center justify-center overflow-hidden
+                          ${isTaken ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer'}
+                          ${isSelected ? 'animate-pulse' : 'hover:scale-105'}
                         `}
-                        style={{ backgroundColor: colorObj.hex, width: '72px', height: '72px' }}
+                        style={{ 
+                          width: '72px', 
+                          height: '72px',
+                          background: `radial-gradient(circle at 30% 30%, #FFF 3%, ${colorObj.hex} 92%, rgba(0,0,0,0.15) 100%)`,
+                          boxShadow: isSelected 
+                            ? '0 0 20px rgba(100, 200, 255, 0.8), 0 0 40px rgba(100, 200, 255, 0.4), inset 0 2px 4px rgba(255,255,255,0.3)' 
+                            : '0 2px 8px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.1)',
+                          filter: isSelected ? 'drop-shadow(0 0 8px rgba(100, 200, 255, 0.6))' : 'none'
+                        }}
+                        onMouseEnter={(e) => !isTaken && !isSelected && (e.currentTarget.style.boxShadow = '0 0 15px rgba(0, 255, 255, 0.4), 0 0 30px rgba(0, 255, 255, 0.2)')}
+                        onMouseLeave={(e) => !isSelected && (e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.1)')}
                       >
-                        {/* 3D glossy effect with two-tone gradient */}
-                        <div className="absolute inset-0" style={{
-                          background: `linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 30%, rgba(255,255,255,0) 70%, rgba(0,0,0,0.2) 100%)`,
-                          boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.2), 0 2px 8px rgba(0,0,0,0.3)'
-                        }}></div>
-                        
-                        {/* Eyes - ONLY show on selected avatar, larger and positioned lower */}
+                        {/* Eyes - ONLY show on selected avatar, positioned higher */}
                         {isSelected && (
-                          <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex gap-2">
-                            <div className="w-3.5 h-3.5 bg-white rounded-full shadow-lg">
-                              <div className="w-2 h-2 bg-gray-900 rounded-full ml-1 mt-1"></div>
+                          <div className="absolute" style={{ bottom: '14px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '6px' }}>
+                            <div className="w-4 h-4 bg-white rounded-full" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.3)' }}>
+                              <div className="w-2.5 h-2.5 bg-gray-900 rounded-full" style={{ margin: '0.75px auto', position: 'relative' }}>
+                                <div className="w-1 h-1 bg-white rounded-full" style={{ position: 'absolute', top: '2px', left: '2px', opacity: 0.8 }}></div>
+                              </div>
                             </div>
-                            <div className="w-3.5 h-3.5 bg-white rounded-full shadow-lg">
-                              <div className="w-2 h-2 bg-gray-900 rounded-full ml-1 mt-1"></div>
+                            <div className="w-4 h-4 bg-white rounded-full" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.3)' }}>
+                              <div className="w-2.5 h-2.5 bg-gray-900 rounded-full" style={{ margin: '0.75px auto', position: 'relative' }}>
+                                <div className="w-1 h-1 bg-white rounded-full" style={{ position: 'absolute', top: '2px', left: '2px', opacity: 0.8 }}></div>
+                              </div>
                             </div>
                           </div>
-                        )}
-                        
-                        {/* Glow effect on selected avatar */}
-                        {isSelected && (
-                          <div className="absolute inset-0 rounded-full animate-pulse" style={{
-                            boxShadow: '0 0 20px rgba(100, 200, 255, 0.6), 0 0 40px rgba(100, 200, 255, 0.3)'
-                          }}></div>
                         )}
                       </button>
                     )
                   })}
                 </div>
 
-                {/* Join game button with glow effect */}
+                {/* Join game button with RichUp style */}
                 <button
                   onClick={joinGame}
                   disabled={loading || !selectedColor}
-                  className="w-full disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 rounded-lg transition-all mb-3 font-bold uppercase tracking-wide"
+                  className="w-full disabled:opacity-50 disabled:cursor-not-allowed text-white py-2.5 rounded-lg transition-all mb-3"
                   style={{ 
-                    fontSize: '13px', 
-                    background: '#7A3DF4',
-                    boxShadow: '0 4px 15px rgba(122, 61, 244, 0.4), 0 0 20px rgba(100, 200, 255, 0.2)'
+                    fontSize: '13px',
+                    fontWeight: 'normal',
+                    textTransform: 'lowercase',
+                    letterSpacing: '0.5px',
+                    background: 'linear-gradient(180deg, #6F3CF5, #4B2BB2)',
+                    boxShadow: '0 4px 12px rgba(111, 60, 245, 0.6), 0 0 20px rgba(111, 60, 245, 0.3), inset 0 1px 2px rgba(255,255,255,0.2)',
+                    textShadow: '0 1px 2px rgba(0,0,0,0.3)'
                   }}
+                  onMouseEnter={(e) => e.currentTarget.style.filter = 'brightness(1.1) drop-shadow(0 0 8px rgba(0, 228, 255, 0.6))'}
+                  onMouseLeave={(e) => e.currentTarget.style.filter = 'none'}
                 >
                   {loading ? 'Joining...' : 'Join game'}
                 </button>
@@ -496,11 +513,18 @@ function Lobby() {
         </div>
 
         {/* Right Panel - Game Settings */}
-        <div className="w-80 p-6 border-l overflow-y-auto" style={{
+        <div className="w-80 p-6 border-l overflow-y-auto relative" style={{
           background: 'rgba(34, 23, 53, 0.95)',
-          borderColor: 'rgba(160, 76, 249, 0.2)',
-          boxShadow: 'inset 2px 0 10px rgba(0, 0, 0, 0.3)'
+          borderColor: 'rgba(100, 200, 255, 0.1)',
+          boxShadow: 'inset 1px 0 10px rgba(0, 0, 0, 0.3)'
         }}>
+          {/* Fade mask at top and bottom for smooth scroll */}
+          <div className="absolute top-0 left-0 right-0 h-8 pointer-events-none" style={{
+            background: 'linear-gradient(to bottom, rgba(28, 22, 50, 0.95), transparent)'
+          }}></div>
+          <div className="absolute bottom-0 left-0 right-0 h-8 pointer-events-none" style={{
+            background: 'linear-gradient(to top, rgba(28, 22, 50, 0.95), transparent)'
+          }}></div>
           {/* Status Box */}
           {game && game.status === 'waiting' && (
             <div className="mb-6 bg-[#2d1b4e] rounded-lg p-3 text-center border border-purple-700">
