@@ -405,25 +405,25 @@ function Lobby() {
                         onClick={() => !isTaken && setSelectedColor(colorObj.name)}
                         disabled={isTaken}
                         className={`
-                          relative w-18 h-18 rounded-full transition-all duration-200
-                          ${isSelected ? 'ring-2 ring-blue-400' : ''}
+                          relative w-18 h-18 rounded-full transition-all duration-200 flex items-center justify-center overflow-hidden
+                          ${isSelected ? 'ring-2 ring-blue-400 ring-offset-2' : ''}
                           ${isTaken ? 'opacity-30 cursor-not-allowed' : 'hover:scale-105 cursor-pointer'}
                         `}
-                        style={{ backgroundColor: colorObj.hex }}
+                        style={{ backgroundColor: colorObj.hex, width: '72px', height: '72px' }}
                       >
                         {/* Two-tone gradient effect - always show */}
-                        <div className="absolute inset-0 rounded-full" style={{
+                        <div className="absolute inset-0" style={{
                           background: `linear-gradient(to bottom, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 60%)`
                         }}></div>
                         
                         {/* Eyes - ONLY show on selected avatar */}
                         {isSelected && (
                           <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 flex gap-1">
-                            <div className="w-2 h-2 bg-white rounded-full opacity-90 relative">
-                              <div className="w-1 h-1 bg-black rounded-full absolute ml-0.5 mt-0.5 opacity-70"></div>
+                            <div className="w-2.5 h-2.5 bg-white rounded-full opacity-90 relative">
+                              <div className="w-1.5 h-1.5 bg-gray-800 rounded-full absolute" style={{ top: '2px', left: '2px' }}></div>
                             </div>
-                            <div className="w-2 h-2 bg-white rounded-full opacity-90 relative">
-                              <div className="w-1 h-1 bg-black rounded-full absolute ml-0.5 mt-0.5 opacity-70"></div>
+                            <div className="w-2.5 h-2.5 bg-white rounded-full opacity-90 relative">
+                              <div className="w-1.5 h-1.5 bg-gray-800 rounded-full absolute" style={{ top: '2px', left: '2px' }}></div>
                             </div>
                           </div>
                         )}
@@ -604,11 +604,9 @@ function Lobby() {
           </div>
           )}
 
-          {/* ALL settings are host-only - but show while picking color too */}
-          {isHost && (
-            <>
-            <div className="mb-6">
-              <h3 className="text-white font-semibold mb-4">Game settings</h3>
+          {/* ALL settings are visible to all users for now */}
+          <div className="mb-6">
+            <h3 className="text-white font-semibold mb-4">Game settings</h3>
               <div className="space-y-4">
                 {/* Maximum players */}
                 <div className="bg-[#2a0f3f] rounded-lg p-4">
@@ -762,8 +760,6 @@ function Lobby() {
                 />
               </div>
             </div>
-            </>
-          )}
 
         </div>
       </div>
