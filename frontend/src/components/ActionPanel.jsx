@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { ShoppingCart, Building2, Rocket } from 'lucide-react'
+import { Rocket, Zap } from 'lucide-react'
 
-function ActionPanel({ player, availableTiles, onAction, onAISimulation, game, onEndRound, onNotification }) {
+function ActionPanel({ player, onAction, onAISimulation, game, onEndRound, onNotification, isMyTurn }) {
   const [showLaunchCompany, setShowLaunchCompany] = useState(false)
   const [companyName, setCompanyName] = useState('')
   const [industry, setIndustry] = useState('ai')
@@ -26,81 +26,49 @@ function ActionPanel({ player, availableTiles, onAction, onAISimulation, game, o
   ]
 
   return (
-    <div className="glass rounded-xl p-6 card-glow space-y-4">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-2xl font-bold">Actions</h3>
-        <span className="text-sm text-gray-400">Turn: {player.name}</span>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="flex gap-3 mb-4">
-        <button
-          onClick={() => setShowLaunchCompany(true)}
-          className="flex-1 bg-card-bg p-4 rounded-lg border border-gray-600 hover:border-neon-purple transition-all"
-        >
-          <Rocket className="w-6 h-6 text-neon-purple mx-auto mb-2" />
-          <p className="font-semibold">Launch Company</p>
-          <p className="text-xs text-gray-400">Start new business</p>
-        </button>
-      </div>
-
-      {/* Round Phase Info */}
-      {game?.phase === 'player_phase' && (
-        <div className="bg-green-500 bg-opacity-10 border border-green-500 rounded-lg p-3 mb-4">
-          <p className="text-sm text-green-400 font-semibold">
-            ✓ Players can take actions now
-          </p>
-        </div>
-      )}
-      
-      {game?.phase === 'ai_phase' && (
-        <div className="bg-neon-purple bg-opacity-10 border border-neon-purple rounded-lg p-3 mb-4">
-          <p className="text-sm text-neon-purple font-semibold">
-            🤖 AI is simulating the round...
-          </p>
-        </div>
-      )}
-
-      {/* End Round Button - Fixed at bottom of viewport */}
-      {game?.phase === 'player_phase' && player.order_in_game === game.current_player_turn && (
-        <div className="fixed bottom-8 right-8 z-50 animate-fade-in">
-          <button
-            onClick={onEndRound}
-            className="btn-primary py-4 px-8 rounded-lg font-bold text-lg transition-all hover:scale-105 flex items-center justify-center gap-2 shadow-2xl"
-          >
-            <span>⏭️</span>
-            End My Turn
-          </button>
-        </div>
-      )}
-
-      {/* Available Properties - Compact Card Grid */}
-      {availableTiles.length > 0 && (
-        <div className="border-t border-gray-700 pt-4">
-          <h4 className="font-semibold mb-3 text-sm flex items-center gap-2 text-gray-300">
-            <ShoppingCart className="w-4 h-4 text-neon-blue" />
-            Available ({availableTiles.length})
-          </h4>
-          <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto">
-            {availableTiles.slice(0, 8).map((tile) => (
-              <div
-                key={tile.id}
-                className="bg-card-bg p-2 rounded-lg border border-gray-700 hover:border-neon-blue transition-all"
-              >
-                <p className="font-semibold text-xs mb-1 truncate">{tile.name}</p>
-                <p className="text-neon-blue font-bold text-sm">
-                  ${parseInt(tile.purchase_price).toLocaleString()}
-                </p>
-              </div>
-            ))}
-          </div>
-          {availableTiles.length > 8 && (
-            <p className="text-xs text-gray-500 text-center mt-2">
-              +{availableTiles.length - 8} more (click tiles on board)
-            </p>
+    <>
+      <div className="glass rounded-xl p-4 card-glow space-y-3">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-lg font-bold">Quick Actions</h3>
+          {game?.phase === 'player_phase' && (
+            <span className="text-xs bg-green-500 px-2 py-1 rounded">Phase: Active</span>
+          )}
+          {game?.phase === 'ai_phase' && (
+            <span className="text-xs bg-purple-500 px-2 py-1 rounded">AI Phase</span>
           )}
         </div>
-      )}
+
+        {/* Launch Company Button */}
+        {isMyTurn && (
+          <button
+            onClick={() => setShowLaunchCompany(true)}
+            className="w-full bg-card-bg p-3 rounded-lg border-2 border-gray-600 hover:border-neon-purple transition-all flex items-center justify-center gap-2"
+          >
+            <Rocket className="w-5 h-5 text-neon-purple" />
+            <p className="font-semibold">Launch New Company</p>
+          </button>
+        )}
+
+        {/* AI Simulation - Only visible to party leader or when in AI phase */}
+        {game?.phase === 'ai_phase' && player.order_in_game === 1 && (
+          <button
+            onClick={onAISimulation}
+            className="w-full bg-neon-purple bg-opacity-20 border-2 border-neon-purple p-3 rounded-lg hover:bg-opacity-30 transition-all flex items-center justify-center gap-2"
+          >
+            <Zap className="w-5 h-5 text-neon-purple" />
+            <p className="font-semibold text-neon-purple">Run AI Simulation</p>
+          </button>
+        )}
+
+        {/* Game Phase Info */}
+        {game?.phase === 'ai_phase' && (
+          <div className="bg-purple-500 bg-opacity-10 border border-purple-500 rounded-lg p-2">
+            <p className="text-xs text-purple-400 font-semibold text-center">
+              🤖 AI is processing this round...
+            </p>
+          </div>
+        )}
+      </div>
 
       {/* Launch Company Modal */}
       {showLaunchCompany && (
@@ -124,7 +92,7 @@ function ActionPanel({ player, availableTiles, onAction, onAISimulation, game, o
                   value={companyName}
                   onChange={(e) => setCompanyName(e.target.value)}
                   placeholder="NovaTech Corp"
-                  className="w-full px-4 py-2 rounded-lg"
+                  className="w-full px-4 py-2 rounded-lg bg-background border border-gray-600"
                 />
               </div>
 
@@ -133,7 +101,7 @@ function ActionPanel({ player, availableTiles, onAction, onAISimulation, game, o
                 <select
                   value={industry}
                   onChange={(e) => setIndustry(e.target.value)}
-                  className="w-full px-4 py-2 rounded-lg"
+                  className="w-full px-4 py-2 rounded-lg bg-background border border-gray-600"
                 >
                   {industries.map((ind) => (
                     <option key={ind.value} value={ind.value}>
@@ -173,9 +141,8 @@ function ActionPanel({ player, availableTiles, onAction, onAISimulation, game, o
           </div>
         </div>
       )}
-    </div>
+    </>
   )
 }
 
 export default ActionPanel
-

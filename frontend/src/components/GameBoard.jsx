@@ -1,20 +1,19 @@
 import { useState } from 'react'
-import { MapPin, Building } from 'lucide-react'
 import ConfirmDialog from './ConfirmDialog'
 
-function GameBoard({ tiles, districts, players, currentPlayer, onBuyTile }) {
+function GameBoard({ tiles, districts, players, currentPlayer, currentTurnPlayer, onBuyTile }) {
   const [confirmState, setConfirmState] = useState(null)
 
   const getDistrictColor = (districtType) => {
     const colors = {
-      tech_park: 'bg-blue-500',
+      tech_park: 'bg-blue-600',
       downtown: 'bg-yellow-500',
-      industrial: 'bg-gray-500',
-      green_valley: 'bg-green-500',
+      industrial: 'bg-gray-600',
+      green_valley: 'bg-green-600',
       luxury_mile: 'bg-pink-500',
-      harborfront: 'bg-teal-500'
+      harborfront: 'bg-teal-600'
     }
-    return colors[districtType] || 'bg-purple-500'
+    return colors[districtType] || 'bg-purple-600'
   }
 
   const getPlayerName = (ownerId) => {
@@ -39,11 +38,21 @@ function GameBoard({ tiles, districts, players, currentPlayer, onBuyTile }) {
     return colors[player.order_in_game % colors.length] || 'bg-gray-600'
   }
 
-  // Arrange districts with tiles
-  const arrangedDistricts = districts.map((district) => ({
+  // Group tiles by district and organize for display
+  const organizedDistricts = districts.map(district => ({
     ...district,
     tiles: tiles.filter(t => t.district_id === district.id).sort((a, b) => a.order_in_district - b.order_in_district)
-  }))
+  })).sort((a, b) => a.order_on_board - b.order_on_board)
+
+  // Total tiles across all districts (12 districts * 3 tiles = 36)
+  // Arrange in a perimeter similar to Monopoly
+  // Top row, right column, bottom row (reversed), left column (reversed)
+  
+  // Simplify: Show all districts in a grid with their tiles grouped together
+  const getDisplayName = (tile, district) => {
+    // Remove "Plot X" from the name
+    return district ? district.name.replace(' - Plot 1', '').replace(' - Plot 2', '').replace(' - Plot 3', '') : tile.name.split(' - ')[0]
+  }
 
   return (
     <>
@@ -58,24 +67,26 @@ function GameBoard({ tiles, districts, players, currentPlayer, onBuyTile }) {
         />
       )}
       
-      <div className="glass rounded-xl p-6 card-glow">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-display font-bold">🏙️ Capital Clash Board</h2>
-          <div className="flex items-center gap-2 text-neon-blue">
-            <MapPin className="w-4 h-4" />
-            <span className="text-xs">Click properties to buy</span>
+      <div className="bg-gradient-to-br from-amber-50 via-yellow-50 to-amber-100 rounded-2xl p-6 border-4 border-amber-800 shadow-2xl relative">
+        {/* Center Area - Logo and Game Info */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="text-center z-0">
+            <h1 className="text-6xl font-bold text-amber-800 mb-2">CAPITAL CLASH</h1>
+            <p className="text-xl text-amber-700 font-semibold">Rise of the CEOs</p>
+            {currentTurnPlayer && (
+              <div className="mt-4 px-6 py-2 bg-green-500 text-white rounded-lg text-lg font-bold">
+                {currentTurnPlayer.id === currentPlayer.id ? 'Your Turn' : `${currentTurnPlayer.name}'s Turn`}
+              </div>
+            )}
           </div>
         </div>
 
-      {/* MONOPOLY-STYLE BOARD - Perimeter Layout */}
-      <div className="relative bg-gradient-to-br from-amber-50 via-yellow-50 to-amber-100 rounded-xl p-4 border-4 border-amber-800 shadow-2xl">
-        
-        {/* Board Perimeter - All Properties Visible */}
-        <div className="grid grid-cols-6 gap-3">
-          {arrangedDistricts.slice(0, 6).map((district, districtIdx) =>
-            district.tiles.slice(0, 4).map((tile, tileIdx) => (
+        {/* Board Perimeter - Properties arranged in Monopoly style */}
+        <div className="grid grid-cols-6 gap-3 relative z-10">
+          {organizedDistricts.slice(0, 12).map((district, idx) => 
+            district.tiles.map((tile, tileIdx) => (
               <PropertyTile
-                key={tile.id}
+                key={`${district.id}-${tile.id}`}
                 tile={tile}
                 district={district}
                 isOwned={!!tile.owner_id}
@@ -87,89 +98,75 @@ function GameBoard({ tiles, districts, players, currentPlayer, onBuyTile }) {
                 onBuyTile={onBuyTile}
                 currentPlayer={currentPlayer}
                 onConfirm={(tileId, message) => setConfirmState({ tileId, message })}
+                displayName={getDisplayName(tile, district)}
               />
             ))
           )}
         </div>
-
       </div>
-
-      {/* Legend */}
-      <div className="mt-3 flex flex-wrap items-center justify-center gap-4 text-xs font-semibold p-3 bg-card-bg rounded-lg border border-gray-700">
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-8 border-2 border-gray-500 rounded bg-card-bg"></div>
-          <span className="text-gray-300">Available</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-8 border-4 border-purple-400 rounded bg-gray-900"></div>
-          <span className="text-gray-300">Owned</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded-full bg-blue-500"></div>
-          <span className="text-gray-300">Owner Avatar</span>
-        </div>
-      </div>
-    </div>
     </>
   )
 }
 
-// Property Tile Component
-function PropertyTile({ tile, district, isOwned, ownerColor, ownerName, ownerInitial, ownerAvatarColor, isAffordable, onBuyTile, currentPlayer, onConfirm }) {
+// Property Tile Component - Enhanced for Monopoly Style
+function PropertyTile({ tile, district, isOwned, ownerColor, ownerName, ownerInitial, ownerAvatarColor, isAffordable, onBuyTile, currentPlayer, onConfirm, displayName }) {
   const getColor = (districtType) => {
     const colors = {
-      tech_park: 'bg-blue-500',
+      tech_park: 'bg-blue-600',
       downtown: 'bg-yellow-500',
-      industrial: 'bg-gray-500',
-      green_valley: 'bg-green-500',
+      industrial: 'bg-gray-600',
+      green_valley: 'bg-green-600',
       luxury_mile: 'bg-pink-500',
-      harborfront: 'bg-teal-500'
+      harborfront: 'bg-teal-600'
     }
-    return colors[districtType] || 'bg-purple-500'
+    return colors[districtType] || 'bg-purple-600'
   }
   
   const tileColor = district ? getColor(district.type) : 'bg-gray-600'
-  
-  // Remove "Plot X" from the name
-  const displayName = district ? district.name : tile.name.split(' - ')[0]
+  const isMyTurn = currentPlayer && tile.owner_id !== currentPlayer.id
+  const isCurrentPlayerTile = currentPlayer && tile.owner_id === currentPlayer.id
   
   return (
     <div
       onClick={() => {
-        if (!isOwned && isAffordable) {
+        if (!isOwned && isAffordable && currentPlayer) {
           onConfirm(tile.id, `Buy ${displayName} for $${parseInt(tile.purchase_price).toLocaleString()}?`)
         }
       }}
-      className={`relative ${tileColor} rounded border-2 h-20 flex flex-col justify-between p-2 ${
+      className={`relative h-20 rounded-lg border-3 flex flex-col justify-between p-2 ${
         isOwned 
-          ? `border-4 ${ownerColor} opacity-90` 
-          : isAffordable 
-            ? 'border-gray-700 hover:border-neon-blue hover:shadow-xl cursor-pointer hover:scale-105 transition-all'
+          ? `border-4 ${ownerColor} opacity-95 cursor-pointer hover:shadow-xl` 
+          : isAffordable && currentPlayer
+            ? 'border-gray-700 hover:border-green-500 hover:shadow-xl cursor-pointer transform hover:scale-105 transition-all'
             : 'border-gray-800 opacity-50 cursor-not-allowed'
-      }`}
+      } ${tileColor} text-white`}
       title={isOwned ? `Owned by ${ownerName}` : `${displayName} - $${parseInt(tile.purchase_price).toLocaleString()}`}
     >
-      <div className="text-white text-[10px] font-bold text-center px-1 leading-tight">
+      {/* District Color Bar */}
+      <div className={`absolute top-0 left-0 right-0 h-1 ${tileColor}`}></div>
+      
+      {/* Property Name */}
+      <div className="text-white text-[10px] font-bold text-center leading-tight mt-1">
         {displayName}
       </div>
-      <div className="text-white text-[8px] font-bold text-center mt-0.5">
-        ${parseInt(tile.purchase_price).toLocaleString().slice(0, -3)}k
-      </div>
-      {isOwned && (
-        <div className="absolute bottom-0.5 right-0.5 flex items-center gap-1">
-          <div className={`${ownerAvatarColor} text-white w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold`}>
+      
+      {/* Price or Owner Info */}
+      {isOwned ? (
+        <div className="flex items-center justify-center gap-1 mt-1">
+          <div className={`${ownerAvatarColor} text-white w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold`}>
             {ownerInitial}
           </div>
-          <Building className="w-3 h-3 text-purple-300" />
+          {isCurrentPlayerTile && (
+            <span className="text-[8px] text-yellow-300">MINE</span>
+          )}
+        </div>
+      ) : (
+        <div className="text-white text-[9px] font-bold text-center">
+          ${parseInt(tile.purchase_price).toLocaleString().slice(0, -3)}k
         </div>
       )}
     </div>
   )
-}
-
-// Corner Tile Component (not used anymore)
-function CornerTile({ text }) {
-  return null
 }
 
 export default GameBoard

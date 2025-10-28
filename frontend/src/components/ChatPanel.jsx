@@ -104,17 +104,17 @@ function ChatPanel({ gameId, playerId, onNotification }) {
   }
 
   return (
-    <div className="glass rounded-xl p-6 card-glow">
-      <div className="flex items-center justify-between mb-4">
+    <div className="glass rounded-xl p-4 card-glow">
+      <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <MessageCircle className="w-6 h-6 text-neon-blue" />
-          <h3 className="text-xl font-bold">Chat & Actions</h3>
+          <MessageCircle className="w-5 h-5 text-neon-blue" />
+          <h3 className="text-lg font-bold">Chat & Actions</h3>
         </div>
         
-        <div className="flex gap-2">
+        <div className="flex gap-1">
           <button
             onClick={() => setChatMode('chat')}
-            className={`px-3 py-1 rounded-lg text-sm font-semibold ${
+            className={`px-2 py-1 rounded text-xs font-semibold ${
               chatMode === 'chat' ? 'bg-neon-blue text-white' : 'bg-card-bg text-gray-400'
             }`}
           >
@@ -122,36 +122,29 @@ function ChatPanel({ gameId, playerId, onNotification }) {
           </button>
           <button
             onClick={() => setChatMode('ai_action')}
-            className={`px-3 py-1 rounded-lg text-sm font-semibold ${
+            className={`px-2 py-1 rounded text-xs font-semibold flex items-center ${
               chatMode === 'ai_action' ? 'bg-neon-purple text-white' : 'bg-card-bg text-gray-400'
             }`}
           >
-            <Bot className="w-4 h-4 inline mr-1" />
-            AI Action
+            <Bot className="w-3 h-3 mr-1" />
+            AI
           </button>
         </div>
       </div>
 
       {chatMode === 'ai_action' && (
-        <div className="bg-neon-purple bg-opacity-10 border-2 border-neon-purple rounded-lg p-3 mb-3">
-          <p className="text-sm text-gray-300 mb-2">
-            🤖 <strong>AI Mode:</strong> The AI will execute your commands and affect the game!
+        <div className="bg-neon-purple bg-opacity-10 border border-neon-purple rounded-lg p-2 mb-2">
+          <p className="text-xs text-gray-300">
+            🤖 <strong>AI Mode:</strong> The AI will execute your commands!
           </p>
-          <div className="text-xs space-y-1">
-            <strong>Example Actions:</strong>
-            <br />• "Invest $200k in my company" → Increases company value
-            <br />• "Launch a new tech startup" → Creates new company
-            <br />• "Run a PR campaign" → Boosts reputation
-            <br />• Any creative action you can imagine!
-          </div>
         </div>
       )}
 
-      <div className="space-y-2 max-h-64 overflow-y-auto mb-3 custom-scrollbar">
+      <div className="space-y-2 max-h-64 overflow-y-auto mb-2 custom-scrollbar">
         {messages.length === 0 ? (
-          <div className="text-center text-gray-500 py-8">
-            <MessageCircle className="w-12 h-12 mx-auto mb-3 opacity-50" />
-            <p>No messages yet. Start chatting or interact with AI!</p>
+          <div className="text-center text-gray-500 py-6">
+            <MessageCircle className="w-8 h-8 mx-auto mb-2 opacity-50" />
+            <p className="text-xs">No messages yet. Start chatting or interact with AI!</p>
           </div>
         ) : (
           messages.map((msg, idx) => (
@@ -164,13 +157,12 @@ function ChatPanel({ gameId, playerId, onNotification }) {
               }`}
             >
               <div className="flex items-start gap-2">
-                {msg.messageType === 'action' && <Bot className="w-4 h-4 text-neon-purple mt-1" />}
+                {msg.messageType === 'action' && <Bot className="w-3 h-3 text-neon-purple mt-1" />}
                 <div className="flex-1">
                   <p className="text-xs text-gray-400">
                     <strong className="text-neon-blue">{msg.playerName}</strong>
-                    {msg.companyName && <span className="text-gray-500"> • {msg.companyName}</span>}
                   </p>
-                  <p className="text-sm mt-1">{msg.message}</p>
+                  <p className="text-xs mt-1">{msg.message}</p>
                 </div>
               </div>
             </div>
@@ -192,13 +184,13 @@ function ChatPanel({ gameId, playerId, onNotification }) {
           value={inputMessage}
           onChange={(e) => setInputMessage(e.target.value)}
           placeholder={chatMode === 'ai_action' ? 'Describe your action...' : 'Type a message...'}
-          className="flex-1 px-4 py-2 rounded-lg"
+          className="flex-1 px-3 py-2 rounded-lg text-sm bg-background border border-gray-600"
         />
         <button
           type="submit"
-          className="btn-primary px-4 py-2 rounded-lg"
+          className="btn-primary px-3 py-2 rounded-lg"
         >
-          <Send className="w-5 h-5" />
+          <Send className="w-4 h-4" />
         </button>
       </form>
     </div>
@@ -206,4 +198,3 @@ function ChatPanel({ gameId, playerId, onNotification }) {
 }
 
 export default ChatPanel
-

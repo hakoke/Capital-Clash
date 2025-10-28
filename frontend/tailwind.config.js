@@ -12,6 +12,7 @@ export default {
         'neon-pink': '#FF006E',
         'dark-bg': '#0A0E27',
         'card-bg': '#1A1F3A',
+        'background': '#1A1F3A',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],

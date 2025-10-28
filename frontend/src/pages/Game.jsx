@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import axios from 'axios'
 import GameBoard from '../components/GameBoard'
-import PlayerPanel from '../components/PlayerPanel'
+import PlayerList from '../components/PlayerList'
 import NewsPanel from '../components/NewsPanel'
 import ActionPanel from '../components/ActionPanel'
 import ChatPanel from '../components/ChatPanel'
@@ -53,7 +53,7 @@ function Game() {
 
       // Fetch news
       const newsRes = await axios.get(`/api/ai/news/${gameId}`)
-      setNews(newsRes.data.news.slice(0, 5))
+      setNews(newsRes.data.news.slice(0, 3))
     } catch (error) {
       console.error('Error fetching game data:', error)
     }
@@ -124,8 +124,10 @@ function Game() {
     return <div className="min-h-screen flex items-center justify-center"><div className="text-xl">Loading game...</div></div>
   }
 
+  const isMyTurn = currentTurnPlayer && currentPlayer && currentTurnPlayer.id === currentPlayer.id
+
   return (
-    <div className="min-h-screen p-4">
+    <div className="min-h-screen p-4 overflow-hidden">
       {notification && (
         <Notification 
           message={notification.message} 
@@ -134,41 +136,72 @@ function Game() {
         />
       )}
       
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Left Column - Game Board */}
-        <div className="lg:col-span-2 space-y-4">
-          <GameBoard 
-            tiles={tiles} 
-            districts={districts}
-            players={players}
-            currentPlayer={currentPlayer}
-            onBuyTile={(tileId) => handleAction('buy_tile', { tileId })}
-          />
+      {/* Main Game Layout - Monopoly Style */}
+      <div className="max-w-[1600px] mx-auto h-[calc(100vh-2rem)]">
+        
+        {/* Top Bar - Quick Info */}
+        <div className="flex items-center justify-between mb-4 glass rounded-lg px-6 py-3">
+          <div className="flex items-center gap-4">
+            <h1 className="text-2xl font-bold">💼 Capital Clash</h1>
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-neon-blue font-bold">${parseInt(currentPlayer.capital).toLocaleString()}</span>
+              <span className="text-gray-500">•</span>
+              <span className="text-neon-purple font-bold">{currentPlayer.company_name}</span>
+            </div>
+          </div>
           
-          {/* Action Panel */}
-          <ActionPanel 
-            player={currentPlayer}
-            availableTiles={tiles.filter(t => !t.owner_id)}
-            onAction={handleAction}
-            onAISimulation={handleAISimulation}
-            game={game}
-            onEndRound={handleEndRound}
-            onNotification={showNotification}
-          />
+          {game.phase === 'player_phase' && isMyTurn && (
+            <button
+              onClick={handleEndRound}
+              className="btn-primary px-6 py-3 rounded-lg font-bold text-lg transition-all hover:scale-105 flex items-center gap-2 shadow-2xl animate-pulse"
+            >
+              <span>⏭️</span>
+              End My Turn
+            </button>
+          )}
         </div>
 
-        {/* Right Column - Player Info, Chat, News */}
-        <div className="space-y-4">
-          <PlayerPanel 
-            player={currentPlayer}
-            players={players}
-            game={game}
-            currentTurnPlayer={currentTurnPlayer}
-          />
+        {/* Main Game Area - Grid Layout */}
+        <div className="grid grid-cols-12 gap-4 h-[calc(100%-4rem)]">
+          
+          {/* Left Column - Player List */}
+          <div className="col-span-2 space-y-4 overflow-y-auto custom-scrollbar">
+            <PlayerList 
+              players={players}
+              currentPlayer={currentPlayer}
+              currentTurnPlayer={currentTurnPlayer}
+              game={game}
+            />
+          </div>
 
-          <ChatPanel gameId={gameId} playerId={currentPlayer?.id} onNotification={showNotification} />
+          {/* Center - Game Board */}
+          <div className="col-span-6">
+            <GameBoard 
+              tiles={tiles} 
+              districts={districts}
+              players={players}
+              currentPlayer={currentPlayer}
+              currentTurnPlayer={currentTurnPlayer}
+              onBuyTile={(tileId) => handleAction('buy_tile', { tileId })}
+            />
+          </div>
 
-          <NewsPanel news={news} />
+          {/* Right Column - Actions, Chat, News */}
+          <div className="col-span-4 space-y-4 overflow-y-auto custom-scrollbar">
+            <ActionPanel 
+              player={currentPlayer}
+              onAction={handleAction}
+              onAISimulation={handleAISimulation}
+              game={game}
+              onEndRound={handleEndRound}
+              onNotification={showNotification}
+              isMyTurn={isMyTurn}
+            />
+
+            <ChatPanel gameId={gameId} playerId={currentPlayer?.id} onNotification={showNotification} />
+
+            <NewsPanel news={news} />
+          </div>
         </div>
       </div>
     </div>
@@ -176,4 +209,3 @@ function Game() {
 }
 
 export default Game
-
