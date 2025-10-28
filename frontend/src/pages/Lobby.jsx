@@ -24,6 +24,7 @@ function Lobby() {
   const [currentPlayerId, setCurrentPlayerId] = useState(null)
   const [linkCopied, setLinkCopied] = useState(false)
   const [showColorSelection, setShowColorSelection] = useState(false)
+  const [showNameInput, setShowNameInput] = useState(false)
   const [showAdBlocker, setShowAdBlocker] = useState(true)
   const [maxPlayers, setMaxPlayers] = useState(4)
 
@@ -33,17 +34,10 @@ function Lobby() {
     return () => clearInterval(interval)
   }, [])
 
-  // Show color selection overlay if not joined
+  // Show name input first if not joined
   useEffect(() => {
-    if (game && !isPlayerInGame) {
-      // First show name input
-      if (!playerName) {
-        const name = prompt('Enter your name:')
-        if (name) {
-          setPlayerName(name)
-          setShowColorSelection(true)
-        }
-      }
+    if (game && !isPlayerInGame && !playerName) {
+      setShowNameInput(true)
     }
   }, [game])
 
@@ -71,6 +65,15 @@ function Lobby() {
     } catch (error) {
       console.error('Error fetching game:', error)
     }
+  }
+
+  const handleNameSubmit = () => {
+    if (!playerName.trim()) {
+      alert('Please enter your name')
+      return
+    }
+    setShowNameInput(false)
+    setShowColorSelection(true)
   }
 
   const joinGame = async () => {
@@ -150,7 +153,7 @@ function Lobby() {
     return map
   }, [players])
 
-  return (
+    return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-purple-950 relative">
       {/* Blurred game board background */}
       <div className="absolute inset-0 bg-gradient-to-br from-purple-950/80 via-blue-950/80 to-purple-900/80 backdrop-blur-3xl">
@@ -159,7 +162,7 @@ function Lobby() {
           backgroundSize: 'contain',
           backgroundRepeat: 'repeat'
         }} />
-      </div>
+        </div>
 
       {/* Header */}
       <div className="relative z-20 px-6 py-4 flex items-center justify-between">
@@ -167,16 +170,16 @@ function Lobby() {
         <div className="flex items-center gap-4">
           <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center">
             <MessageCircle className="w-5 h-5 text-white" />
-          </div>
+              </div>
           <div className="w-10 h-10 rounded-full bg-gray-600 flex items-center justify-center">
             <HelpCircle className="w-5 h-5 text-white" />
-          </div>
+              </div>
           <div className="w-10 h-10 rounded-full bg-gray-600 flex items-center justify-center">
             <Volume2 className="w-5 h-5 text-white" />
-          </div>
+            </div>
           <div className="w-10 h-10 rounded-full bg-gray-600 flex items-center justify-center">
             <Search className="w-5 h-5 text-white" />
-          </div>
+            </div>
         </div>
       </div>
 
@@ -205,12 +208,12 @@ function Lobby() {
                 {linkCopied ? 'Copied' : 'Copy'}
               </button>
             </div>
-          </div>
+            </div>
 
           {/* Ad blocker placeholder */}
           <div className="mb-6 border-2 border-dashed border-purple-600 rounded-lg p-4 text-center">
             <p className="text-purple-300 text-sm">Disable your ad blocker to support poordown.io</p>
-          </div>
+              </div>
 
           {/* Chat */}
           <div className="mb-6">
@@ -222,8 +225,8 @@ function Lobby() {
             <div className="flex flex-col items-center justify-center p-8 border border-purple-700 rounded-lg bg-purple-950/50">
               <MessageCircle className="w-8 h-8 text-gray-500 mb-2" />
               <p className="text-gray-500 text-sm">No messages yet</p>
+              </div>
             </div>
-          </div>
 
           {/* Ad blocker notice */}
           {showAdBlocker && (
@@ -237,9 +240,9 @@ function Lobby() {
                 <button onClick={() => setShowAdBlocker(false)} className="text-white hover:text-gray-300">
                   <X className="w-4 h-4" />
                 </button>
+                </div>
               </div>
-            </div>
-          )}
+            )}
         </div>
 
         {/* Center - Blurred background */}
@@ -264,7 +267,7 @@ function Lobby() {
                     <div className="flex-1">
                       <p className="text-white font-semibold text-sm">Maximum players</p>
                       <p className="text-gray-400 text-xs">How many players can join the game</p>
-                    </div>
+              </div>
                   </div>
                   <select 
                     value={maxPlayers}
@@ -277,7 +280,7 @@ function Lobby() {
                     <option value="5">5</option>
                     <option value="6">6</option>
                   </select>
-                </div>
+            </div>
               </div>
 
               {/* Private room */}
@@ -288,11 +291,11 @@ function Lobby() {
                     <div className="flex-1">
                       <p className="text-white font-semibold text-sm">Private room</p>
                       <p className="text-gray-400 text-xs">Private rooms can be accessed using the room URL only</p>
-                    </div>
-                  </div>
+              </div>
+            </div>
                   <div className="w-14 h-7 bg-purple-600 rounded-full relative cursor-pointer">
                     <div className="absolute right-1 top-1 w-5 h-5 bg-white rounded-full"></div>
-                  </div>
+                </div>
                 </div>
               </div>
 
@@ -326,8 +329,8 @@ function Lobby() {
                 </div>
                 <button className="mt-2 text-purple-400 text-xs hover:text-purple-300">Browse maps &gt;</button>
               </div>
-            </div>
-          </div>
+                </div>
+              </div>
 
           {/* Gameplay rules */}
           <div>
@@ -335,50 +338,50 @@ function Lobby() {
             <div className="space-y-4">
               {isHost && game.status === 'waiting' && (
                 <>
-                  <GameSettingToggle
-                    icon="💰"
+                <GameSettingToggle
+                  icon="💰"
                     title="x2 rent on full-set properties"
                     description="If a player owns a full property set, the base rent payment will be doubled"
-                    setting="double_rent_on_full_set"
-                    gameId={gameId}
-                    game={game}
-                  />
+                  setting="double_rent_on_full_set"
+                  gameId={gameId}
+                  game={game}
+                />
 
-                  <GameSettingToggle
-                    icon="🏖️"
+                <GameSettingToggle
+                  icon="🏖️"
                     title="Vacation cash"
                     description="If a player lands on Vacation, all collected money from taxes and bank payments will be earned"
-                    setting="vacation_cash"
-                    gameId={gameId}
-                    game={game}
-                  />
+                  setting="vacation_cash"
+                  gameId={gameId}
+                  game={game}
+                />
 
-                  <GameSettingToggle
-                    icon="🔨"
+                <GameSettingToggle
+                  icon="🔨"
                     title="Auction"
                     description="If someone skips purchasing the property landed on, it will be sold to the highest bidder"
-                    setting="auction_enabled"
-                    gameId={gameId}
-                    game={game}
-                  />
+                  setting="auction_enabled"
+                  gameId={gameId}
+                  game={game}
+                />
 
-                  <GameSettingToggle
-                    icon="⚖️"
+                <GameSettingToggle
+                  icon="⚖️"
                     title="Don't collect rent while in prison"
                     description="Rent will not be collected when landing on properties whose owners are in prison"
-                    setting="no_rent_in_prison"
-                    gameId={gameId}
-                    game={game}
-                  />
+                  setting="no_rent_in_prison"
+                  gameId={gameId}
+                  game={game}
+                />
 
-                  <GameSettingToggle
-                    icon="🏠"
+                <GameSettingToggle
+                  icon="🏠"
                     title="Mortgage"
                     description="Mortgage properties to earn 50% of their cost, but you won't get paid rent when players land on them"
-                    setting="mortgage_enabled"
-                    gameId={gameId}
-                    game={game}
-                  />
+                  setting="mortgage_enabled"
+                  gameId={gameId}
+                  game={game}
+                />
                 </>
               )}
             </div>
@@ -398,6 +401,48 @@ function Lobby() {
           )}
         </div>
       </div>
+
+      {/* Name input modal */}
+      <AnimatePresence>
+        {showNameInput && !isPlayerInGame && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-purple-900 rounded-2xl p-8 max-w-md w-full mx-4 border border-purple-700"
+            >
+              <h2 className="text-white text-xl font-semibold mb-6">Enter your name</h2>
+              
+              <div className="mb-6">
+                <label className="block text-purple-300 text-sm font-semibold mb-2">Your name</label>
+                <input
+                  type="text"
+                  value={playerName}
+                  onChange={(e) => setPlayerName(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleNameSubmit()}
+                  placeholder="Enter your name"
+                  className="w-full bg-purple-950 border border-purple-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
+                  autoFocus
+                />
+                  </div>
+
+              <button
+                onClick={handleNameSubmit}
+                disabled={!playerName.trim()}
+                className="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition-colors"
+              >
+                Continue
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Color selection overlay modal */}
       <AnimatePresence>
@@ -450,13 +495,13 @@ function Lobby() {
                           <span className="text-2xl">✓</span>
                         </motion.div>
                       )}
-                    </button>
+                        </button>
                   )
                 })}
               </div>
 
               {/* Join game button */}
-              <button
+                        <button
                 onClick={joinGame}
                 disabled={loading || !selectedColor}
                 className="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition-colors mb-3"
@@ -468,7 +513,7 @@ function Lobby() {
               <button className="w-full border border-purple-600 hover:bg-purple-800 text-purple-400 font-semibold py-2 rounded-lg transition-colors flex items-center justify-center gap-2">
                 <div className="text-lg">🛒</div>
                 Get more appearances
-              </button>
+                        </button>
             </motion.div>
           </motion.div>
         )}
@@ -492,7 +537,7 @@ function Lobby() {
           </div>
         </div>
       )}
-    </div>
+      </div>
   )
 }
 
