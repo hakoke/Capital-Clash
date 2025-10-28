@@ -8,16 +8,22 @@ const __dirname = path.dirname(__filename);
 
 async function setupDatabase() {
   try {
-    console.log('🔄 Setting up database schema...');
+    console.log('🔄 Setting up Monopoly database schema...');
 
     // Read monopoly schema file
     const schemaPath = path.join(__dirname, 'schema_monopoly.sql');
     const schema = fs.readFileSync(schemaPath, 'utf8');
 
-    // Execute schema
-    await pool.query(schema);
+    // Execute schema (split by semicolons for PostgreSQL)
+    const statements = schema.split(';').filter(s => s.trim());
+    
+    for (const statement of statements) {
+      if (statement.trim()) {
+        await pool.query(statement);
+      }
+    }
 
-    console.log('✅ Database schema created successfully!');
+    console.log('✅ Monopoly database schema created successfully!');
     
     // Test connection
     const result = await pool.query('SELECT NOW()');

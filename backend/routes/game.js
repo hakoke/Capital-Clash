@@ -1,7 +1,13 @@
 import express from 'express';
 import pool from '../database/index.js';
 import { v4 as uuidv4 } from 'uuid';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { MONOPOLY_PROPERTIES } from './monopoly-properties.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 
@@ -122,6 +128,23 @@ router.post('/:gameId/start', async (req, res) => {
         success: false,
         error: 'Need at least 2 players to start'
       });
+    }
+
+    // Check if properties table exists, if not create it
+    try {
+      await pool.query('SELECT 1 FROM properties LIMIT 1');
+    } catch (err) {
+      // Table doesn't exist, initialize it
+      console.log('Initializing Monopoly schema...');
+      const schemaPath = path.join(__dirname, 'schema_monopoly.sql');
+      const schema = fs.readFileSync(schemaPath, 'utf8');
+      const statements = schema.split(';').filter(s => s.trim());
+      for (const statement of statements) {
+        if (statement.trim()) {
+          await pool.query(statement);
+        }
+      }
+      console.log('Schema initialized');
     }
 
     // Initialize board if not already done
