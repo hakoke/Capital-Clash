@@ -1,7 +1,8 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import axios from 'axios'
-import { Users, Copy, Check, Crown, Settings, MessageCircle, Volume2, Search, HelpCircle, X, ChevronRight, Info, Bot } from 'lucide-react'
+import { io } from 'socket.io-client'
+import { Users, Copy, Check, Crown, Settings, MessageCircle, Volume2, Search, HelpCircle, X, ChevronRight, Info, Bot, Send } from 'lucide-react'
 import { PLAYER_COLORS } from '../utils/monopolyConstants.js'
 import GameSettingToggle from '../components/GameSettingToggle.jsx'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -27,12 +28,60 @@ function Lobby() {
   const [showNameInput, setShowNameInput] = useState(false)
   const [showAdBlocker, setShowAdBlocker] = useState(true)
   const [maxPlayers, setMaxPlayers] = useState(4)
+  const [chatMessages, setChatMessages] = useState([])
+  const [chatInput, setChatInput] = useState('')
+
+  const socketRef = useRef(null)
 
   useEffect(() => {
     fetchGameData()
     const interval = setInterval(fetchGameData, 2000)
-    return () => clearInterval(interval)
-  }, [])
+
+    // Setup socket connection for chat
+    socketRef.current = io()
+    
+    if (gameId) {
+      socketRef.current.emit('join_game', gameId)
+    }
+
+    // Listen for incoming chat messages
+    socketRef.current.on('chat_message', (messageRecord) => {
+      setChatMessages(prev => {
+        // Check if message already exists to avoid duplicates
+        const exists = prev.some(msg => msg.timestamp === messageRecord.timestamp && msg.playerName === messageRecord.playerName)
+        if (exists) return prev
+        
+        return [...prev, {
+          playerName: messageRecord.playerName,
+          message: messageRecord.message,
+          timestamp: messageRecord.timestamp
+        }]
+      })
+    })
+
+    return () => {
+      clearInterval(interval)
+      if (socketRef.current) {
+        socketRef.current.disconnect()
+      }
+    }
+  }, [gameId])
+
+  // Load chat history
+  useEffect(() => {
+    const loadChatHistory = async () => {
+      try {
+        const res = await axios.get(`/api/chat/${gameId}/history`)
+        setChatMessages(res.data.messages || [])
+      } catch (error) {
+        console.error('Error loading chat history:', error)
+      }
+    }
+
+    if (gameId) {
+      loadChatHistory()
+    }
+  }, [gameId])
 
   // Load player name from localStorage and show color selection if not joined
   useEffect(() => {
@@ -136,6 +185,25 @@ function Lobby() {
     }
   }
 
+  const sendChatMessage = async (e) => {
+    e.preventDefault()
+    if (!chatInput.trim() || !currentPlayerId) return
+
+    try {
+      // Send via API - backend will broadcast via socket
+      await axios.post('/api/chat/message', {
+        gameId,
+        playerId: currentPlayerId,
+        message: chatInput,
+        messageType: 'chat'
+      })
+
+      setChatInput('')
+    } catch (error) {
+      console.error('Error sending message:', error)
+    }
+  }
+
   const isHost = isPlayerInGame && players.length > 0 && players.find(p => p.order_in_game === 1)?.id === currentPlayerId
   const maxPlayersValue = maxPlayers
 
@@ -218,9 +286,43 @@ function Lobby() {
               <h2 className="text-white font-semibold">Chat</h2>
               <Search className="w-4 h-4 text-gray-400" />
             </div>
-            <div className="flex flex-col items-center justify-center p-8 rounded-lg bg-[#2a0f3f]">
-              <MessageCircle className="w-8 h-8 text-gray-500 mb-2" />
-              <p className="text-gray-500 text-sm">No messages yet</p>
+            <div className="rounded-lg bg-[#2a0f3f] max-h-60 flex flex-col">
+              {/* Messages */}
+              <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                {chatMessages.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-full text-center">
+                    <MessageCircle className="w-8 h-8 text-gray-500 mb-2" />
+                    <p className="text-gray-500 text-sm">No messages yet</p>
+                  </div>
+                ) : (
+                  chatMessages.map((msg, idx) => (
+                    <div key={idx} className="text-sm">
+                      <span className="text-purple-400 font-semibold">{msg.playerName}:</span>{' '}
+                      <span className="text-gray-300">{msg.message}</span>
+                    </div>
+                  ))
+                )}
+              </div>
+              {/* Chat input */}
+              {isPlayerInGame && (
+                <form onSubmit={sendChatMessage} className="border-t border-purple-700 p-2">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={chatInput}
+                      onChange={(e) => setChatInput(e.target.value)}
+                      placeholder="Type a message..."
+                      className="flex-1 bg-[#1a0033] text-white text-sm px-3 py-2 rounded-lg border border-purple-700 focus:border-purple-500 focus:outline-none"
+                    />
+                    <button
+                      type="submit"
+                      className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors"
+                    >
+                      <Send className="w-4 h-4" />
+                    </button>
+                  </div>
+                </form>
+              )}
             </div>
           </div>
 
@@ -464,7 +566,7 @@ function Lobby() {
                       disabled={isTaken}
                       className={`
                         w-16 h-16 rounded-full relative mx-auto
-                        ${isSelected ? 'ring-4 ring-purple-400 shadow-2xl' : ''}
+                        ${isSelected ? 'ring-4 ring-purple-400 shadow-2xl scale-110' : ''}
                         ${isTaken ? 'opacity-30 cursor-not-allowed' : 'hover:ring-2 hover:ring-purple-500 cursor-pointer'}
                         transition-all duration-200 border-4
                         ${isSelected ? 'border-purple-400' : 'border-transparent'}
@@ -476,14 +578,18 @@ function Lobby() {
                 })}
               </div>
 
-              {/* Character blob - purple glowing character */}
-              <div className="mb-6 flex items-center justify-end">
-                <div className="w-20 h-20 relative rounded-full bg-gradient-to-br from-purple-600 via-purple-500 to-purple-400 shadow-lg shadow-purple-500/50 flex items-center justify-center border-4 border-purple-400">
-                  <div className="absolute inset-2 bg-white/20 rounded-full"></div>
-                  <div className="absolute top-3 left-3 w-4 h-4 bg-white rounded-full opacity-80"></div>
-                  <div className="absolute top-3 right-3 w-4 h-4 bg-white rounded-full opacity-80"></div>
+              {/* Selected player appearance preview */}
+              {selectedColor && (
+                <div className="mb-6 flex items-center justify-end">
+                  <div className="relative">
+                    <div 
+                      className="w-20 h-20 rounded-full border-4 border-purple-400 shadow-2xl shadow-purple-400/50"
+                      style={{ backgroundColor: PLAYER_COLORS.find(c => c.name === selectedColor)?.hex }}
+                    >
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Join game button */}
               <button

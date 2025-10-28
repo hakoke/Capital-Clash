@@ -18,8 +18,15 @@ router.post('/message', async (req, res) => {
     const playerName = playerResult.rows[0]?.name || 'Unknown';
     const companyName = playerResult.rows[0]?.company_name || '';
 
+    // Save message to database
+    const messageId = uuidv4();
+    await pool.query(
+      'INSERT INTO chat_messages (id, game_id, player_id, message, message_type, created_at) VALUES ($1, $2, $3, $4, $5, $6)',
+      [messageId, gameId, playerId, message, messageType, new Date()]
+    );
+
     const messageRecord = {
-      id: uuidv4(),
+      id: messageId,
       gameId,
       playerId,
       playerName,
@@ -48,16 +55,22 @@ router.get('/:gameId/history', async (req, res) => {
     const { gameId } = req.params;
     
     const result = await pool.query(
-      `SELECT c.*, p.name as player_name, p.company_name
+      `SELECT c.id, c.message, c.message_type, c.created_at, p.name as player_name, p.company_name
        FROM chat_messages c
        JOIN players p ON c.player_id = p.id
        WHERE c.game_id = $1
-       ORDER BY c.created_at DESC
+       ORDER BY c.created_at ASC
        LIMIT 100`,
       [gameId]
     );
 
-    res.json({ success: true, messages: result.rows });
+    const messages = result.rows.map(row => ({
+      playerName: row.player_name || 'Unknown',
+      message: row.message,
+      timestamp: row.created_at
+    }));
+
+    res.json({ success: true, messages });
   } catch (error) {
     console.error('Error fetching chat:', error);
     res.status(500).json({ success: false, error: error.message });
