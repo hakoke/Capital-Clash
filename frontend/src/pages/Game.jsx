@@ -6,6 +6,7 @@ import PlayerList from '../components/PlayerList'
 import NewsPanel from '../components/NewsPanel'
 import ActionPanel from '../components/ActionPanel'
 import ChatPanel from '../components/ChatPanel'
+import AIExecutionPanel from '../components/AIExecutionPanel'
 import Notification from '../components/Notification'
 
 function Game() {
@@ -137,10 +138,10 @@ function Game() {
       )}
       
       {/* Main Game Layout - Monopoly Style */}
-      <div className="max-w-[1600px] mx-auto h-[calc(100vh-2rem)]">
+      <div className="max-w-[1800px] mx-auto h-[calc(100vh-2rem)]">
         
         {/* Top Bar - Quick Info */}
-        <div className="flex items-center justify-between mb-4 glass rounded-lg px-6 py-3">
+        <div className="flex items-center justify-between mb-3 glass rounded-lg px-6 py-2">
           <div className="flex items-center gap-4">
             <h1 className="text-2xl font-bold">💼 Capital Clash</h1>
             <div className="flex items-center gap-2 text-sm">
@@ -153,7 +154,7 @@ function Game() {
           {game.phase === 'player_phase' && isMyTurn && (
             <button
               onClick={handleEndRound}
-              className="btn-primary px-6 py-3 rounded-lg font-bold text-lg transition-all hover:scale-105 flex items-center gap-2 shadow-2xl animate-pulse"
+              className="btn-primary px-5 py-2 rounded-lg font-bold text-base transition-all hover:scale-105 flex items-center gap-2 shadow-2xl animate-pulse"
             >
               <span>⏭️</span>
               End My Turn
@@ -162,15 +163,20 @@ function Game() {
         </div>
 
         {/* Main Game Area - Grid Layout */}
-        <div className="grid grid-cols-12 gap-4 h-[calc(100%-4rem)]">
+        <div className="grid grid-cols-12 gap-3 h-[calc(100%-4.5rem)]">
           
-          {/* Left Column - Player List */}
+          {/* Left Column - Player List & AI Execution */}
           <div className="col-span-2 space-y-4 overflow-y-auto custom-scrollbar">
             <PlayerList 
               players={players}
               currentPlayer={currentPlayer}
               currentTurnPlayer={currentTurnPlayer}
               game={game}
+            />
+            
+            <AIExecutionPanel 
+              playerId={currentPlayer?.id} 
+              onNotification={showNotification}
             />
           </div>
 

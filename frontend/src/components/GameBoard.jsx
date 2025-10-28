@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import ConfirmDialog from './ConfirmDialog'
+import { Building2, Factory, ShoppingBag, Leaf, Sparkles, Anchor } from 'lucide-react'
 
 function GameBoard({ tiles, districts, players, currentPlayer, currentTurnPlayer, onBuyTile }) {
   const [confirmState, setConfirmState] = useState(null)
@@ -14,6 +15,18 @@ function GameBoard({ tiles, districts, players, currentPlayer, currentTurnPlayer
       harborfront: 'bg-teal-600'
     }
     return colors[districtType] || 'bg-purple-600'
+  }
+
+  const getDistrictIcon = (districtType) => {
+    const icons = {
+      tech_park: <Sparkles className="w-4 h-4" />,
+      downtown: <Building2 className="w-4 h-4" />,
+      industrial: <Factory className="w-4 h-4" />,
+      green_valley: <Leaf className="w-4 h-4" />,
+      luxury_mile: <ShoppingBag className="w-4 h-4" />,
+      harborfront: <Anchor className="w-4 h-4" />
+    }
+    return icons[districtType] || <Building2 className="w-4 h-4" />
   }
 
   const getPlayerName = (ownerId) => {
@@ -38,20 +51,25 @@ function GameBoard({ tiles, districts, players, currentPlayer, currentTurnPlayer
     return colors[player.order_in_game % colors.length] || 'bg-gray-600'
   }
 
-  // Group tiles by district and organize for display
+  // Organize tiles by district
   const organizedDistricts = districts.map(district => ({
     ...district,
     tiles: tiles.filter(t => t.district_id === district.id).sort((a, b) => a.order_in_district - b.order_in_district)
   })).sort((a, b) => a.order_on_board - b.order_on_board)
 
-  // Total tiles across all districts (12 districts * 3 tiles = 36)
-  // Arrange in a perimeter similar to Monopoly
-  // Top row, right column, bottom row (reversed), left column (reversed)
-  
-  // Simplify: Show all districts in a grid with their tiles grouped together
+  // Create perimeter tiles: flatten all tiles
+  let perimeterTiles = []
+  organizedDistricts.forEach((district) => {
+    district.tiles.forEach((tile) => {
+      perimeterTiles.push({ tile, district })
+    })
+  })
+
+  // Arrange for display: take first 24 tiles for perimeter (6 per side)
+  const displayedTiles = perimeterTiles.slice(0, 24)
+
   const getDisplayName = (tile, district) => {
-    // Remove "Plot X" from the name
-    return district ? district.name.replace(' - Plot 1', '').replace(' - Plot 2', '').replace(' - Plot 3', '') : tile.name.split(' - ')[0]
+    return district ? district.name : tile.name.split(' - ')[0]
   }
 
   return (
@@ -67,26 +85,16 @@ function GameBoard({ tiles, districts, players, currentPlayer, currentTurnPlayer
         />
       )}
       
-      <div className="bg-gradient-to-br from-amber-50 via-yellow-50 to-amber-100 rounded-2xl p-6 border-4 border-amber-800 shadow-2xl relative">
-        {/* Center Area - Logo and Game Info */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="text-center z-0">
-            <h1 className="text-6xl font-bold text-amber-800 mb-2">CAPITAL CLASH</h1>
-            <p className="text-xl text-amber-700 font-semibold">Rise of the CEOs</p>
-            {currentTurnPlayer && (
-              <div className="mt-4 px-6 py-2 bg-green-500 text-white rounded-lg text-lg font-bold">
-                {currentTurnPlayer.id === currentPlayer.id ? 'Your Turn' : `${currentTurnPlayer.name}'s Turn`}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Board Perimeter - Properties arranged in Monopoly style */}
-        <div className="grid grid-cols-6 gap-3 relative z-10">
-          {organizedDistricts.slice(0, 12).map((district, idx) => 
-            district.tiles.map((tile, tileIdx) => (
+      <div className="relative bg-gradient-to-br from-amber-50 via-yellow-50 to-amber-100 rounded-xl border-4 border-amber-800 shadow-2xl p-6">
+        
+        {/* BOARD LAYOUT */}
+        <div className="relative min-h-[600px]">
+          
+          {/* TOP ROW */}
+          <div className="flex justify-center gap-2 mb-2">
+            {displayedTiles.slice(0, 8).map(({ tile, district }) => (
               <PropertyTile
-                key={`${district.id}-${tile.id}`}
+                key={`top-${tile.id}`}
                 tile={tile}
                 district={district}
                 isOwned={!!tile.owner_id}
@@ -99,31 +107,112 @@ function GameBoard({ tiles, districts, players, currentPlayer, currentTurnPlayer
                 currentPlayer={currentPlayer}
                 onConfirm={(tileId, message) => setConfirmState({ tileId, message })}
                 displayName={getDisplayName(tile, district)}
+                tileColor={getDistrictColor(district.type)}
+                icon={getDistrictIcon(district.type)}
+                orientation="horizontal"
               />
-            ))
-          )}
+            ))}
+          </div>
+
+          {/* MIDDLE SECTION */}
+          <div className="flex justify-between gap-2">
+            
+            {/* LEFT SIDE */}
+            <div className="flex flex-col gap-2">
+              {displayedTiles.slice(8, 11).reverse().map(({ tile, district }) => (
+                <PropertyTile
+                  key={`left-${tile.id}`}
+                  tile={tile}
+                  district={district}
+                  isOwned={!!tile.owner_id}
+                  ownerColor={getOwnerColor(tile.owner_id)}
+                  ownerName={getPlayerName(tile.owner_id)}
+                  ownerInitial={getInitial(getPlayerName(tile.owner_id))}
+                  ownerAvatarColor={getAvatarColor(tile.owner_id)}
+                  isAffordable={parseFloat(currentPlayer?.capital || 0) >= parseFloat(tile.purchase_price)}
+                  onBuyTile={onBuyTile}
+                  currentPlayer={currentPlayer}
+                  onConfirm={(tileId, message) => setConfirmState({ tileId, message })}
+                  displayName={getDisplayName(tile, district)}
+                  tileColor={getDistrictColor(district.type)}
+                  icon={getDistrictIcon(district.type)}
+                  orientation="vertical"
+                />
+              ))}
+            </div>
+
+            {/* CENTER AREA */}
+            <div className="flex-1 mx-4 flex items-center justify-center bg-gradient-to-br from-yellow-100 to-amber-50 rounded-xl border-2 border-amber-700 shadow-inner">
+              <div className="text-center p-4">
+                <h1 className="text-4xl font-bold text-amber-800 mb-1">CAPITAL CLASH</h1>
+                <p className="text-lg text-amber-700 font-semibold mb-3">Rise of the CEOs</p>
+                {currentTurnPlayer && (
+                  <div className="px-4 py-2 bg-green-500 text-white rounded-lg font-bold inline-block">
+                    {currentTurnPlayer.id === currentPlayer.id ? 'Your Turn' : `${currentTurnPlayer.name}'s Turn`}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* RIGHT SIDE */}
+            <div className="flex flex-col gap-2">
+              {displayedTiles.slice(11, 14).map(({ tile, district }) => (
+                <PropertyTile
+                  key={`right-${tile.id}`}
+                  tile={tile}
+                  district={district}
+                  isOwned={!!tile.owner_id}
+                  ownerColor={getOwnerColor(tile.owner_id)}
+                  ownerName={getPlayerName(tile.owner_id)}
+                  ownerInitial={getInitial(getPlayerName(tile.owner_id))}
+                  ownerAvatarColor={getAvatarColor(tile.owner_id)}
+                  isAffordable={parseFloat(currentPlayer?.capital || 0) >= parseFloat(tile.purchase_price)}
+                  onBuyTile={onBuyTile}
+                  currentPlayer={currentPlayer}
+                  onConfirm={(tileId, message) => setConfirmState({ tileId, message })}
+                  displayName={getDisplayName(tile, district)}
+                  tileColor={getDistrictColor(district.type)}
+                  icon={getDistrictIcon(district.type)}
+                  orientation="vertical"
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* BOTTOM ROW */}
+          <div className="flex justify-center gap-2 mt-2">
+            {displayedTiles.slice(14, 22).reverse().map(({ tile, district }) => (
+              <PropertyTile
+                key={`bottom-${tile.id}`}
+                tile={tile}
+                district={district}
+                isOwned={!!tile.owner_id}
+                ownerColor={getOwnerColor(tile.owner_id)}
+                ownerName={getPlayerName(tile.owner_id)}
+                ownerInitial={getInitial(getPlayerName(tile.owner_id))}
+                ownerAvatarColor={getAvatarColor(tile.owner_id)}
+                isAffordable={parseFloat(currentPlayer?.capital || 0) >= parseFloat(tile.purchase_price)}
+                onBuyTile={onBuyTile}
+                currentPlayer={currentPlayer}
+                onConfirm={(tileId, message) => setConfirmState({ tileId, message })}
+                displayName={getDisplayName(tile, district)}
+                tileColor={getDistrictColor(district.type)}
+                icon={getDistrictIcon(district.type)}
+                orientation="horizontal"
+              />
+            ))}
+          </div>
         </div>
       </div>
     </>
   )
 }
 
-// Property Tile Component - Enhanced for Monopoly Style
-function PropertyTile({ tile, district, isOwned, ownerColor, ownerName, ownerInitial, ownerAvatarColor, isAffordable, onBuyTile, currentPlayer, onConfirm, displayName }) {
-  const getColor = (districtType) => {
-    const colors = {
-      tech_park: 'bg-blue-600',
-      downtown: 'bg-yellow-500',
-      industrial: 'bg-gray-600',
-      green_valley: 'bg-green-600',
-      luxury_mile: 'bg-pink-500',
-      harborfront: 'bg-teal-600'
-    }
-    return colors[districtType] || 'bg-purple-600'
-  }
-  
-  const tileColor = district ? getColor(district.type) : 'bg-gray-600'
-  const isMyTurn = currentPlayer && tile.owner_id !== currentPlayer.id
+// Property Tile Component
+function PropertyTile({ 
+  tile, district, isOwned, ownerColor, ownerName, ownerInitial, ownerAvatarColor, 
+  isAffordable, onBuyTile, currentPlayer, onConfirm, displayName, tileColor, icon, orientation 
+}) {
   const isCurrentPlayerTile = currentPlayer && tile.owner_id === currentPlayer.id
   
   return (
@@ -133,7 +222,9 @@ function PropertyTile({ tile, district, isOwned, ownerColor, ownerName, ownerIni
           onConfirm(tile.id, `Buy ${displayName} for $${parseInt(tile.purchase_price).toLocaleString()}?`)
         }
       }}
-      className={`relative h-20 rounded-lg border-3 flex flex-col justify-between p-2 ${
+      className={`relative ${
+        orientation === 'vertical' ? 'w-16 h-20' : 'h-16 w-20'
+      } rounded border-3 flex flex-col items-center justify-between p-1 ${
         isOwned 
           ? `border-4 ${ownerColor} opacity-95 cursor-pointer hover:shadow-xl` 
           : isAffordable && currentPlayer
@@ -142,26 +233,30 @@ function PropertyTile({ tile, district, isOwned, ownerColor, ownerName, ownerIni
       } ${tileColor} text-white`}
       title={isOwned ? `Owned by ${ownerName}` : `${displayName} - $${parseInt(tile.purchase_price).toLocaleString()}`}
     >
-      {/* District Color Bar */}
-      <div className={`absolute top-0 left-0 right-0 h-1 ${tileColor}`}></div>
+      {/* District Icon */}
+      <div className="absolute top-0.5 left-0.5 opacity-75">
+        {icon}
+      </div>
       
       {/* Property Name */}
-      <div className="text-white text-[10px] font-bold text-center leading-tight mt-1">
+      <div className={`text-white font-bold text-center leading-tight mt-3 px-0.5 ${
+        orientation === 'vertical' ? 'text-[8px]' : 'text-[9px]'
+      }`}>
         {displayName}
       </div>
       
       {/* Price or Owner Info */}
       {isOwned ? (
-        <div className="flex items-center justify-center gap-1 mt-1">
-          <div className={`${ownerAvatarColor} text-white w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold`}>
+        <div className="flex flex-col items-center gap-0.5 mt-auto mb-1">
+          <div className={`${ownerAvatarColor} text-white w-4 h-4 rounded-full flex items-center justify-center text-[7px] font-bold`}>
             {ownerInitial}
           </div>
           {isCurrentPlayerTile && (
-            <span className="text-[8px] text-yellow-300">MINE</span>
+            <span className="text-[7px] text-yellow-300 font-bold">MINE</span>
           )}
         </div>
       ) : (
-        <div className="text-white text-[9px] font-bold text-center">
+        <div className="text-white text-[8px] font-bold text-center mt-auto mb-1">
           ${parseInt(tile.purchase_price).toLocaleString().slice(0, -3)}k
         </div>
       )}
