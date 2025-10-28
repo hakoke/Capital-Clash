@@ -18,8 +18,8 @@ router.post('/create', async (req, res) => {
     const gameId = uuidv4();
 
     const result = await pool.query(
-      `INSERT INTO games (id, name, status)
-       VALUES ($1, $2, 'waiting')
+      `INSERT INTO games (id, name, status, max_players, starting_cash)
+       VALUES ($1, $2, 'waiting', 4, 1500)
        RETURNING *`,
       [gameId, name]
     );
@@ -187,7 +187,8 @@ router.post('/:gameId/start', async (req, res) => {
         ADD COLUMN IF NOT EXISTS no_rent_in_prison BOOLEAN DEFAULT true,
         ADD COLUMN IF NOT EXISTS mortgage_enabled BOOLEAN DEFAULT true,
         ADD COLUMN IF NOT EXISTS even_build BOOLEAN DEFAULT true,
-        ADD COLUMN IF NOT EXISTS starting_cash DECIMAL(15, 2) DEFAULT 1500.00`);
+        ADD COLUMN IF NOT EXISTS starting_cash DECIMAL(15, 2) DEFAULT 1500.00,
+        ADD COLUMN IF NOT EXISTS max_players INTEGER DEFAULT 4`);
     } catch (err) {
       // Columns might already exist, ignore
     }
@@ -456,7 +457,8 @@ router.post('/:gameId/settings', async (req, res) => {
       'no_rent_in_prison',
       'mortgage_enabled',
       'even_build',
-      'starting_cash'
+      'starting_cash',
+      'max_players'
     ];
     
     if (!validSettings.includes(setting)) {
@@ -468,6 +470,17 @@ router.post('/:gameId/settings', async (req, res) => {
       `UPDATE games SET ${setting} = $1 WHERE id = $2`,
       [value, gameId]
     );
+    
+    // If starting cash changed and game not started, update all players
+    if (setting === 'starting_cash' && value) {
+      const gameResult = await pool.query('SELECT status FROM games WHERE id = $1', [gameId])
+      if (gameResult.rows[0]?.status === 'waiting') {
+        await pool.query(
+          'UPDATE players SET money = $1 WHERE game_id = $2 AND status = $3',
+          [value, gameId, 'active']
+        )
+      }
+    }
     
     res.json({ success: true, message: 'Setting updated' });
   } catch (error) {

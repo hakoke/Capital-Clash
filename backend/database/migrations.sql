@@ -227,3 +227,20 @@ BEGIN
 
 END $$;
 
+-- Create property_auctions table
+CREATE TABLE IF NOT EXISTS property_auctions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    game_id UUID REFERENCES games(id) ON DELETE CASCADE,
+    property_id UUID REFERENCES properties(id) ON DELETE CASCADE,
+    current_bid DECIMAL(15, 2) NOT NULL DEFAULT 0,
+    highest_bidder_id UUID REFERENCES players(id) ON DELETE SET NULL,
+    time_remaining INTEGER NOT NULL DEFAULT 30,
+    status VARCHAR(50) NOT NULL DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    ended_at TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_auctions_game_id ON property_auctions(game_id);
+CREATE INDEX IF NOT EXISTS idx_auctions_property_id ON property_auctions(property_id);
+CREATE INDEX IF NOT EXISTS idx_auctions_status ON property_auctions(status);
+

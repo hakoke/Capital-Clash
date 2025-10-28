@@ -11,16 +11,28 @@ router.post('/join', async (req, res) => {
     
     const playerId = uuidv4();
 
+    // Get game settings
+    const gameResult = await pool.query(
+      'SELECT max_players, starting_cash FROM games WHERE id = $1',
+      [gameId]
+    );
+    const maxPlayers = gameResult.rows[0]?.max_players || 6;
+    const startingCash = gameResult.rows[0]?.starting_cash || 1500;
+    
+    if (gameResult.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Game not found' });
+    }
+
     // Get current player count
     const countResult = await pool.query(
       'SELECT COUNT(*) as count FROM players WHERE game_id = $1',
       [gameId]
     );
-    const order = parseInt(countResult.rows[0].count) + 1;
+    const currentCount = parseInt(countResult.rows[0].count);
+    const order = currentCount + 1;
 
     // Check max players
-    const maxPlayers = 6;
-    if (order > maxPlayers) {
+    if (currentCount >= maxPlayers) {
       return res.status(400).json({
         success: false,
         error: `Maximum ${maxPlayers} players allowed`
@@ -45,7 +57,7 @@ router.post('/join', async (req, res) => {
       `INSERT INTO players (id, game_id, name, color, money, order_in_game, position, can_roll)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING *`,
-      [playerId, gameId, playerName || 'Player ' + order, color, 1500.00, order, 0, false]
+      [playerId, gameId, playerName || 'Player ' + order, color, startingCash, order, 0, false]
     );
 
     res.json({ success: true, player: result.rows[0] });

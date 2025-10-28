@@ -13,6 +13,7 @@ import aiRoutes from './routes/ai.js';
 import playerActionsRoutes from './routes/player-actions.js';
 import chatRoutes from './routes/chat.js';
 import tradingRoutes from './routes/trading.js';
+import auctionRoutes from './routes/auction.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -56,6 +57,7 @@ app.use('/api/player-actions', playerActionsRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/trading', tradingRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/auction', auctionRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

@@ -4,6 +4,7 @@ import axios from 'axios'
 import MonopolyBoard from '../components/MonopolyBoard'
 import Notification from '../components/Notification'
 import PlayerInfoPanel from '../components/PlayerInfoPanel'
+import AuctionPanel from '../components/AuctionPanel'
 
 function MonopolyGame() {
   const { gameId } = useParams()
@@ -15,6 +16,9 @@ function MonopolyGame() {
   const [notification, setNotification] = useState(null)
   const [diceResult, setDiceResult] = useState(null)
   const [showDiceAnimation, setShowDiceAnimation] = useState(false)
+  const [showPurchaseDialog, setShowPurchaseDialog] = useState(false)
+  const [purchaseProperty, setPurchaseProperty] = useState(null)
+  const [showAuction, setShowAuction] = useState(false)
 
   useEffect(() => {
     fetchGameData()
@@ -83,12 +87,9 @@ function MonopolyGame() {
           setDiceResult(null)
           
           if (property && property.price > 0 && !property.owner_id && property.property_type === 'property') {
-            // Offer to buy property
-            setTimeout(() => {
-              if (confirm(`You landed on ${property.name}!\n\nBuy for $${property.price}?`)) {
-                handleBuyProperty(property.id)
-              }
-            }, 500)
+            // Show purchase dialog
+            setPurchaseProperty(property)
+            setShowPurchaseDialog(true)
           }
         }, 2000)
         
@@ -109,12 +110,45 @@ function MonopolyGame() {
       
       if (res.data.success) {
         showNotification('✓ Property purchased!', 'success')
+        setShowPurchaseDialog(false)
+        setPurchaseProperty(null)
         fetchGameData()
       }
     } catch (error) {
       console.error('Error buying property:', error)
       showNotification('Error: ' + (error.response?.data?.error || error.message), 'error')
     }
+  }
+
+  const handleStartAuction = async () => {
+    if (!purchaseProperty) return
+    
+    try {
+      // Check if auction is enabled
+      if (game.auction_enabled) {
+        // Create auction
+        const res = await axios.post('/api/auction/create', {
+          gameId,
+          propertyId: purchaseProperty.id,
+          startingBid: Math.floor(purchaseProperty.price * 0.5)
+        })
+        
+        purchaseProperty.auctionId = res.data.auction.id
+        setShowPurchaseDialog(false)
+        setShowAuction(true)
+      } else {
+        setShowPurchaseDialog(false)
+        setPurchaseProperty(null)
+      }
+    } catch (error) {
+      console.error('Error starting auction:', error)
+      showNotification('Error starting auction: ' + (error.response?.data?.error || error.message), 'error')
+    }
+  }
+
+  const handleSkipProperty = () => {
+    setShowPurchaseDialog(false)
+    setPurchaseProperty(null)
   }
 
   const handleEndTurn = async () => {
@@ -135,7 +169,7 @@ function MonopolyGame() {
   const isMyTurn = currentTurnPlayer && currentPlayer && currentTurnPlayer.id === currentPlayer.id
 
   return (
-    <div className="h-screen overflow-hidden bg-gray-100">
+    <div className="h-screen overflow-hidden bg-[#1a0033]">
       {notification && (
         <Notification 
           message={notification.message} 
@@ -173,33 +207,33 @@ function MonopolyGame() {
       <div className="h-full">
         
         {/* Top Bar - Player Info */}
-        <div className="flex items-center justify-between px-3 md:px-4 py-2 bg-white border-b shadow-sm">
+        <div className="flex items-center justify-between px-3 md:px-4 py-2 bg-[#3a1552] border-b border-purple-700 shadow-sm">
           <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
-            <h1 className="text-base md:text-xl font-bold">🎲</h1>
-            <div className="hidden md:flex items-center gap-2 text-sm min-w-0">
+            <h1 className="text-base md:text-xl font-bold text-white">🎲 lazydown.oi</h1>
+            <div className="hidden md:flex items-center gap-2 text-sm min-w-0 text-white">
               <span 
                 className="w-5 h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0"
                 style={{ backgroundColor: currentPlayer.color }}
               >
                 {currentPlayer.name.charAt(0).toUpperCase()}
               </span>
-              <span className="font-semibold truncate">{currentPlayer.name}</span>
+              <span className="font-semibold truncate text-white">{currentPlayer.name}</span>
               <span className="text-gray-400">•</span>
-              <span className="text-green-600 font-bold">${parseInt(currentPlayer.money || 0).toLocaleString()}</span>
+              <span className="text-green-400 font-bold">${parseInt(currentPlayer.money || 0).toLocaleString()}</span>
             </div>
             <div className="md:hidden flex items-center gap-2">
-              <span className="text-green-600 font-bold text-sm">${parseInt(currentPlayer.money || 0).toLocaleString()}</span>
+              <span className="text-green-400 font-bold text-sm">${parseInt(currentPlayer.money || 0).toLocaleString()}</span>
             </div>
           </div>
           
-          <div className="flex items-center gap-2 md:gap-4 text-xs md:text-sm flex-shrink-0">
+          <div className="flex items-center gap-2 md:gap-4 text-xs md:text-sm flex-shrink-0 text-white">
             <div className="hidden sm:inline">
-              <span className="text-gray-500">Props: </span>
-              <span className="font-bold text-blue-600">{properties.filter(p => p.owner_id === currentPlayer.id).length}</span>
+              <span className="text-gray-300">Props: </span>
+              <span className="font-bold text-blue-400">{properties.filter(p => p.owner_id === currentPlayer.id).length}</span>
             </div>
-            <div className="w-px h-4 bg-gray-300"></div>
+            <div className="w-px h-4 bg-gray-500"></div>
             <div>
-              <span className="text-gray-500">Pos: </span>
+              <span className="text-gray-300">Pos: </span>
               <span className="font-bold">{currentPlayer.position}/39</span>
             </div>
           </div>
@@ -231,6 +265,7 @@ function MonopolyGame() {
                 onBuyProperty={handleBuyProperty}
                 onRollDice={handleRollDice}
                 onEndTurn={handleEndTurn}
+                purchaseProperty={purchaseProperty}
               />
             </div>
           </div>
@@ -238,8 +273,8 @@ function MonopolyGame() {
           {/* Right Sidebar - Game Actions */}
           <div className="hidden md:block md:col-span-3 h-full overflow-y-auto">
             <div className="h-full p-2">
-              <div className="bg-white rounded-lg shadow-lg p-4 min-h-full">
-                <h3 className="text-lg font-bold mb-4">🎮 Actions</h3>
+              <div className="bg-[#3a1552] rounded-lg shadow-lg p-4 min-h-full border border-purple-700">
+                <h3 className="text-lg font-bold mb-4 text-white">🎮 Actions</h3>
                 
                 {isMyTurn && currentPlayer.can_roll && (
                   <button
@@ -262,23 +297,23 @@ function MonopolyGame() {
                 )}
 
                 {!isMyTurn && currentTurnPlayer && (
-                  <div className="bg-gray-100 rounded-lg p-4 text-center">
-                    <div className="text-sm text-gray-600 mb-2">Current Turn</div>
+                  <div className="bg-[#2a0f3f] rounded-lg p-4 text-center border border-purple-700">
+                    <div className="text-sm text-gray-300 mb-2">Current Turn</div>
                     <div className="flex items-center justify-center gap-2">
                       <span 
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-white"
+                        className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold"
                         style={{ backgroundColor: currentTurnPlayer.color }}
                       >
                         {currentTurnPlayer.name.charAt(0).toUpperCase()}
                       </span>
-                      <span className="text-lg font-bold">{currentTurnPlayer.name}</span>
+                      <span className="text-lg font-bold text-white">{currentTurnPlayer.name}</span>
                     </div>
                   </div>
                 )}
 
-                <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                  <div className="text-xs font-semibold text-yellow-800 mb-2">💡 How to Play</div>
-                  <ul className="text-xs text-yellow-700 space-y-1">
+                <div className="mt-6 bg-[#2a0f3f] border border-purple-700 rounded-lg p-3">
+                  <div className="text-xs font-semibold text-purple-300 mb-2">💡 How to Play</div>
+                  <ul className="text-xs text-gray-300 space-y-1">
                     <li>🎲 <b>Roll Dice</b> to move</li>
                     <li>💰 <b>Buy</b> unowned properties</li>
                     <li>🏠 <b>Pay rent</b> on owned spaces</li>
@@ -287,9 +322,9 @@ function MonopolyGame() {
                   </ul>
                 </div>
 
-                <div className="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-3">
-                  <div className="text-xs font-semibold text-blue-800 mb-2">📊 Quick Stats</div>
-                  <div className="text-xs text-blue-700 space-y-1">
+                <div className="mt-3 bg-[#2a0f3f] border border-purple-700 rounded-lg p-3">
+                  <div className="text-xs font-semibold text-purple-300 mb-2">📊 Quick Stats</div>
+                  <div className="text-xs text-gray-300 space-y-1">
                     <div className="flex justify-between">
                       <span>Net Worth:</span>
                       <b>${(parseInt(currentPlayer.money || 0) + 
@@ -311,7 +346,7 @@ function MonopolyGame() {
           </div>
 
           {/* Mobile Action Bar */}
-          <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg p-4">
+          <div className="md:hidden fixed bottom-0 left-0 right-0 bg-[#3a1552] border-t border-purple-700 shadow-lg p-4">
             {isMyTurn && currentPlayer.can_roll && (
               <button
                 onClick={handleRollDice}
@@ -329,13 +364,69 @@ function MonopolyGame() {
               </button>
             )}
             {!isMyTurn && (
-              <div className="text-center py-2 text-gray-600">
+              <div className="text-center py-2 text-gray-300">
                 {currentTurnPlayer?.name}'s turn
               </div>
             )}
           </div>
         </div>
       </div>
+
+      {/* Purchase Dialog */}
+      {showPurchaseDialog && purchaseProperty && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4">
+          <div className="bg-[#3a1552] rounded-2xl p-6 max-w-md w-full shadow-2xl border border-purple-700">
+            <h2 className="text-2xl font-bold text-white mb-4">Purchase Property</h2>
+            <div className="bg-[#2a0f3f] rounded-lg p-4 mb-4">
+              <h3 className="text-xl font-semibold text-white mb-2">{purchaseProperty.name}</h3>
+              <p className="text-purple-400 text-2xl font-bold">${purchaseProperty.price}</p>
+            </div>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={() => handleBuyProperty(purchaseProperty.id)}
+                className="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-lg transition-colors"
+              >
+                💰 Buy for ${purchaseProperty.price}
+              </button>
+              {game?.auction_enabled && (
+                <button
+                  onClick={handleStartAuction}
+                  className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-lg transition-colors"
+                >
+                  🔨 Start Auction
+                </button>
+              )}
+              <button
+                onClick={handleSkipProperty}
+                className="px-6 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 rounded-lg transition-colors"
+              >
+                Skip
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Auction Panel */}
+      {showAuction && purchaseProperty && (
+        <AuctionPanel
+          gameId={gameId}
+          property={purchaseProperty}
+          players={players}
+          currentPlayerId={currentPlayer.id}
+          onClose={() => {
+            setShowAuction(false)
+            setPurchaseProperty(null)
+            fetchGameData()
+          }}
+          onComplete={() => {
+            setShowAuction(false)
+            setPurchaseProperty(null)
+            fetchGameData()
+          }}
+        />
+      )}
     </div>
   )
 }

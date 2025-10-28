@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { COLOR_GROUPS } from '../utils/monopolyConstants.js'
 
-function MonopolyBoard({ properties, players, currentPlayer, currentTurnPlayer, onBuyProperty, onRollDice, onEndTurn }) {
+function MonopolyBoard({ properties, players, currentPlayer, currentTurnPlayer, onBuyProperty, onRollDice, onEndTurn, purchaseProperty }) {
   const [selectedProperty, setSelectedProperty] = useState(null)
   const [diceRoll, setDiceRoll] = useState(null)
   const [showDiceAnimation, setShowDiceAnimation] = useState(false)
@@ -62,7 +62,7 @@ function MonopolyBoard({ properties, players, currentPlayer, currentTurnPlayer, 
           rounded
         `}
         style={{
-          backgroundColor: isOwned ? (isMyProperty ? '#D1FAE5' : '#FEE2E2') : 'white',
+          backgroundColor: isOwned ? (isMyProperty ? '#2a0f3f' : '#1a0033') : '#3a1552',
           borderColor: isOwned && owner ? owner.color : property.property_type === 'property' ? propertyColor : '#374151',
           borderWidth: isOwned ? '3px' : '2px'
         }}
@@ -78,20 +78,20 @@ function MonopolyBoard({ properties, players, currentPlayer, currentTurnPlayer, 
 
         {/* Property Name */}
         <div className="px-0.5 pt-2 md:pt-3 text-center leading-tight">
-          <div className={`font-bold ${property.name.length > 12 ? 'text-[6px] md:text-[7px]' : 'text-[7px] md:text-[8px]'}`}>
+          <div className={`font-bold text-white ${property.name.length > 12 ? 'text-[6px] md:text-[7px]' : 'text-[7px] md:text-[8px]'}`}>
             {getDisplayName(property.name)}
           </div>
           
           {/* Price */}
           {property.price > 0 && (
-            <div className="text-[6px] md:text-[7px] font-semibold mt-0.5 text-green-600">
+            <div className="text-[6px] md:text-[7px] font-semibold mt-0.5 text-purple-300">
               ${property.price}
             </div>
           )}
 
           {/* Special Space Labels */}
           {!property.price && (
-            <div className="text-[6px] md:text-[7px] font-bold mt-0.5 text-gray-600">
+            <div className="text-[6px] md:text-[7px] font-bold mt-0.5 text-purple-300">
               {property.property_type?.replace('_', ' ').substring(0, 8).toUpperCase()}
             </div>
           )}
@@ -237,7 +237,7 @@ function MonopolyBoard({ properties, players, currentPlayer, currentTurnPlayer, 
         </div>
       )}
 
-      <div className="relative bg-gradient-to-br from-amber-50 via-amber-100 to-yellow-50 rounded-lg border-4 border-amber-700 shadow-xl p-1 md:p-2 h-full overflow-hidden">
+      <div className="relative bg-[#1a0033] rounded-lg border-2 border-purple-700 shadow-xl p-1 md:p-2 h-full overflow-hidden">
         
         {/* Top Row: Position 31-39 (right to left) - Park Place thru Chance */}
         <div className="flex mb-0.5 md:mb-1 justify-center flex-wrap">
@@ -252,43 +252,65 @@ function MonopolyBoard({ properties, players, currentPlayer, currentTurnPlayer, 
             {leftColumn.map((prop, idx) => prop && renderProperty(prop, idx))}
           </div>
 
-          {/* Center Board */}
-          <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-green-50 via-emerald-50 to-green-100 rounded-lg border-2 border-green-600 shadow-inner min-w-0 p-2 md:p-4">
+          {/* Center Board - Dark purple theme like richup.io */}
+          <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 rounded-lg border-2 border-purple-600 shadow-inner min-w-0 p-2 md:p-4 relative">
             <div className="text-center w-full">
-              <h1 className="text-2xl md:text-4xl font-bold mb-1 bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-emerald-600">
-                🎲 MONOPOLY
-              </h1>
-              <p className="text-xs md:text-sm text-gray-600 mb-2 md:mb-4">The Classic Game</p>
-              
-              {/* Central Game Area */}
-              <div className="grid grid-cols-2 gap-2 md:gap-4 max-w-xs md:max-w-md mx-auto mt-2 md:mt-4">
-                {/* Free Parking */}
-                <div className="bg-yellow-100 border-2 border-yellow-400 rounded-lg p-2 md:p-3 text-center">
-                  <div className="text-lg md:text-2xl mb-1">🅿️</div>
-                  <div className="text-[8px] md:text-xs font-bold text-yellow-800">PARKING</div>
+              {/* Dice Display */}
+              <div className="flex items-center justify-center gap-4 mb-4">
+                <div className="w-16 h-16 bg-white rounded-xl flex items-center justify-center text-3xl font-bold shadow-lg border-2 border-gray-300">
+                  3
                 </div>
-                
-                {/* GO Space */}
-                <div className="bg-green-200 border-2 border-green-600 rounded-lg p-2 md:p-3 text-center">
-                  <div className="text-lg md:text-2xl mb-1">🏁</div>
-                  <div className="text-[8px] md:text-xs font-bold text-green-800">GO</div>
+                <div className="w-16 h-16 bg-white rounded-xl flex items-center justify-center text-3xl font-bold shadow-lg border-2 border-gray-300">
+                  3
                 </div>
               </div>
+              
+              {/* Roll Button */}
+              <button
+                onClick={onRollDice}
+                disabled={!isMyTurn || !currentPlayer?.can_roll}
+                className="bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 px-8 rounded-lg transition-colors shadow-lg mb-3"
+              >
+                Roll the dice
+              </button>
+              
+              {/* End Turn Button */}
+              {!currentPlayer?.can_roll && isMyTurn && (
+                <button
+                  onClick={onEndTurn}
+                  className="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-6 rounded-lg transition-colors mb-3"
+                >
+                  End turn
+                </button>
+              )}
+              
+              {/* Property Preview */}
+              {purchaseProperty && (
+                <div className="mt-4">
+                  <button
+                    onClick={() => onBuyProperty(purchaseProperty.id)}
+                    className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg flex items-center gap-2 mx-auto"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    Buy for ${purchaseProperty.price}
+                  </button>
+                </div>
+              )}
               
               {/* Player Turn Indicator */}
-              <div className="mt-2 md:mt-4">
-                {currentTurnPlayer && (
-                  <div className="inline-flex items-center gap-2 md:gap-3 bg-white px-2 md:px-4 py-1 md:py-2 rounded-full shadow-md border-2" style={{ borderColor: currentTurnPlayer.color }}>
-                    <span 
-                      className="w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-white font-bold text-xs md:text-sm"
-                      style={{ backgroundColor: currentTurnPlayer.color }}
-                    >
-                      {currentTurnPlayer.name.charAt(0).toUpperCase()}
-                    </span>
-                    <span className="font-bold text-sm md:text-lg">{currentTurnPlayer.name}'s Turn</span>
-                  </div>
-                )}
-              </div>
+              {currentTurnPlayer && (
+                <div className="mt-4 flex items-center justify-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
+                  <span 
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold"
+                    style={{ backgroundColor: currentTurnPlayer.color }}
+                  >
+                    {currentTurnPlayer.name.charAt(0).toUpperCase()}
+                  </span>
+                  <span className="font-bold text-white">{currentTurnPlayer.name}'s Turn</span>
+                </div>
+              )}
             </div>
           </div>
 

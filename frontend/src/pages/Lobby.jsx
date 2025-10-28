@@ -32,6 +32,7 @@ function Lobby() {
   const [chatInput, setChatInput] = useState('')
   const [startingCash, setStartingCash] = useState(1500)
   const [customStartingCash, setCustomStartingCash] = useState('')
+  const [maxPlayersDb, setMaxPlayersDb] = useState(4)
 
   const socketRef = useRef(null)
 
@@ -108,6 +109,15 @@ function Lobby() {
       const res = await axios.get(`/api/game/${gameId}`)
       setGame(res.data.game)
       setPlayers(res.data.players)
+      
+      // Update settings from database
+      if (res.data.game.max_players) {
+        setMaxPlayers(res.data.game.max_players)
+        setMaxPlayersDb(res.data.game.max_players)
+      }
+      if (res.data.game.starting_cash) {
+        setStartingCash(res.data.game.starting_cash)
+      }
       
       // Check if localStorage has a player ID for this game
       const savedPlayerId = localStorage.getItem(`player_${gameId}`)
@@ -411,7 +421,15 @@ function Lobby() {
                     </div>
                     <select 
                       value={maxPlayers}
-                      onChange={(e) => setMaxPlayers(parseInt(e.target.value))}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value)
+                        setMaxPlayers(val)
+                        // Save to database immediately
+                        axios.post(`/api/game/${gameId}/settings`, {
+                          setting: 'max_players',
+                          value: val
+                        }).catch(err => console.error('Error saving max players:', err))
+                      }}
                       className="bg-[#2a0f3f] text-white text-sm px-3 py-1.5 rounded-lg border border-purple-700"
                     >
                       <option value="2">2</option>
@@ -435,12 +453,18 @@ function Lobby() {
                     </div>
                     <select 
                       value={startingCash === 'custom' ? 'custom' : startingCash}
-                      onChange={(e) => {
+                      onChange={async (e) => {
                         const val = e.target.value
                         if (val === 'custom') {
                           setStartingCash('custom')
                         } else {
-                          setStartingCash(parseInt(val))
+                          const numVal = parseInt(val)
+                          setStartingCash(numVal)
+                          // Save to database immediately
+                          await axios.post(`/api/game/${gameId}/settings`, {
+                            setting: 'starting_cash',
+                            value: numVal
+                          }).catch(err => console.error('Error saving starting cash:', err))
                         }
                       }}
                       className="bg-[#2a0f3f] text-white text-sm px-3 py-1.5 rounded-lg border border-purple-700"
@@ -458,6 +482,15 @@ function Lobby() {
                         type="number"
                         value={customStartingCash}
                         onChange={(e) => setCustomStartingCash(e.target.value)}
+                        onBlur={async () => {
+                          if (customStartingCash) {
+                            const val = parseInt(customStartingCash)
+                            await axios.post(`/api/game/${gameId}/settings`, {
+                              setting: 'starting_cash',
+                              value: val
+                            }).catch(err => console.error('Error saving starting cash:', err))
+                          }
+                        }}
                         placeholder="Enter custom amount"
                         className="w-full bg-[#1a0033] text-white text-sm px-3 py-2 rounded-lg border border-purple-700 focus:border-purple-500 focus:outline-none"
                       />
