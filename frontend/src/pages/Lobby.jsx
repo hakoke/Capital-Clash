@@ -389,29 +389,19 @@ function Lobby() {
             <div className="relative z-10" style={{ 
               maxWidth: '380px',
               backdropFilter: 'blur(12px)',
-              background: 'rgba(13, 10, 24, 0.75)',
+              background: 'rgba(13, 10, 24, 0.85)',
               borderRadius: '12px',
               padding: '32px',
-              boxShadow: '0 0 60px rgba(0, 255, 255, 0.08), inset 0 0 40px rgba(0,0,0,0.5), inset 0 0 60px rgba(0,255,255,0.02)',
+              boxShadow: '0 0 60px rgba(0, 255, 255, 0.08), inset 0 0 40px rgba(0,0,0,0.6), inset 0 0 80px rgba(0,255,255,0.03)',
               border: 'none'
             }}>
                 <div style={{
                   position: 'absolute',
                   inset: 0,
                   borderRadius: '12px',
-                  background: 'radial-gradient(circle at center, rgba(35,30,60,0.7) 0%, rgba(10,8,20,0.55) 80%)',
+                  background: 'radial-gradient(circle at center, rgba(35,30,60,0.6) 0%, rgba(10,8,20,0.45) 80%)',
                   pointerEvents: 'none',
-                  opacity: 0.7
-                }}></div>
-                
-                {/* Light spill effect from avatars */}
-                <div style={{
-                  position: 'absolute',
-                  inset: 0,
-                  borderRadius: '12px',
-                  background: 'radial-gradient(circle, rgba(0,255,255,0.06) 0%, transparent 70%)',
-                  pointerEvents: 'none',
-                  opacity: 0.4
+                  opacity: 0.8
                 }}></div>
                 
                 <div style={{ position: 'relative', zIndex: 1 }}>
@@ -430,45 +420,36 @@ function Lobby() {
                           onClick={() => !isTaken && setSelectedColor(colorObj.name)}
                           disabled={isTaken}
                           className={`
-                            relative rounded-full transition-all duration-200 flex items-center justify-center overflow-hidden
-                            ${isTaken ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer'}
+                            relative rounded-full transition-all duration-300 flex items-center justify-center overflow-hidden
+                            ${isTaken ? 'opacity-20 cursor-not-allowed' : 'cursor-pointer'}
                           `}
                           style={{ 
                             width: '72px', 
                             height: '72px',
-                            background: isTaken 
-                              ? 'transparent' 
-                              : `radial-gradient(circle at 30% 25%, rgba(255,255,255,0.12) 2%, ${colorObj.hex} 90%)`,
+                            background: isTaken ? '#222' : colorObj.hex,
                             boxShadow: isSelected 
-                              ? '0 0 25px rgba(0, 230, 255, 0.5), inset 0 0 15px rgba(255,255,255,0.05)' 
-                              : 'none',
-                            transition: 'all 0.2s ease',
-                            border: isSelected ? 'none' : 'none'
+                              ? '0 0 30px rgba(100, 200, 255, 0.6), inset 0 0 20px rgba(255,255,255,0.1)' 
+                              : '0 4px 12px rgba(0,0,0,0.2)',
+                            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                            border: isSelected ? '2px solid rgba(100, 200, 255, 0.5)' : 'none',
+                            transform: isSelected ? 'scale(1.05)' : 'scale(1)'
                           }}
                           onMouseEnter={(e) => !isTaken && !isSelected && Object.assign(e.currentTarget.style, {
-                            transform: 'scale(1.08)',
-                            filter: 'brightness(1.15)',
+                            transform: 'scale(1.1)',
+                            filter: 'brightness(1.2)',
                             transition: 'all 0.2s ease'
                           })}
-                          onMouseLeave={(e) => Object.assign(e.currentTarget.style, {
+                          onMouseLeave={(e) => !isSelected && Object.assign(e.currentTarget.style, {
                             transform: 'scale(1)',
                             filter: 'brightness(1)',
                             transition: 'all 0.2s ease'
                           })}
                         >
-                          {/* Eyes - ONLY show on selected avatar, positioned higher (like RichUp) */}
+                          {/* Eyes - ONLY show on selected avatar */}
                           {isSelected && (
-                            <div className="absolute" style={{ top: '20px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '8px' }}>
-                              <div className="w-5 h-5 bg-white rounded-full" style={{ opacity: 1 }}>
-                                <div className="w-3 h-3 bg-black rounded-full" style={{ margin: '4px', position: 'relative' }}>
-                                  <div className="w-1.5 h-1.5 bg-white rounded-full" style={{ position: 'absolute', top: '2px', right: '2px' }}></div>
-                                </div>
-                              </div>
-                              <div className="w-5 h-5 bg-white rounded-full" style={{ opacity: 1 }}>
-                                <div className="w-3 h-3 bg-black rounded-full" style={{ margin: '4px', position: 'relative' }}>
-                                  <div className="w-1.5 h-1.5 bg-white rounded-full" style={{ position: 'absolute', top: '2px', right: '2px' }}></div>
-                                </div>
-                              </div>
+                            <div className="absolute" style={{ top: '22px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '10px' }}>
+                              <div className="w-4 h-4 rounded-full" style={{ background: 'rgba(0,0,0,0.3)' }}></div>
+                              <div className="w-4 h-4 rounded-full" style={{ background: 'rgba(0,0,0,0.3)' }}></div>
                             </div>
                           )}
                         </button>
