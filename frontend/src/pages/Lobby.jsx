@@ -389,19 +389,19 @@ function Lobby() {
             <div className="relative z-10" style={{ 
               maxWidth: '380px',
               backdropFilter: 'blur(12px)',
-              background: 'rgba(13, 10, 24, 0.8)',
+              background: 'rgba(13, 10, 24, 0.75)',
               borderRadius: '12px',
               padding: '32px',
-              boxShadow: '0 0 60px rgba(0, 255, 255, 0.08), inset 0 0 40px rgba(0,0,0,0.6), inset 0 0 80px rgba(0,255,255,0.03)',
+              boxShadow: '0 0 60px rgba(0, 255, 255, 0.08), inset 0 0 40px rgba(0,0,0,0.5), inset 0 0 60px rgba(0,255,255,0.02)',
               border: 'none'
             }}>
                 <div style={{
                   position: 'absolute',
                   inset: 0,
                   borderRadius: '12px',
-                  background: 'radial-gradient(circle at center, rgba(35,30,60,0.9) 0%, rgba(10,8,20,0.8) 80%)',
+                  background: 'radial-gradient(circle at center, rgba(35,30,60,0.7) 0%, rgba(10,8,20,0.55) 80%)',
                   pointerEvents: 'none',
-                  opacity: 0.85
+                  opacity: 0.7
                 }}></div>
                 
                 {/* Light spill effect from avatars */}
@@ -409,9 +409,9 @@ function Lobby() {
                   position: 'absolute',
                   inset: 0,
                   borderRadius: '12px',
-                  background: 'radial-gradient(circle, rgba(0,255,255,0.08) 0%, transparent 70%)',
+                  background: 'radial-gradient(circle, rgba(0,255,255,0.06) 0%, transparent 70%)',
                   pointerEvents: 'none',
-                  opacity: 0.5
+                  opacity: 0.4
                 }}></div>
                 
                 <div style={{ position: 'relative', zIndex: 1 }}>
