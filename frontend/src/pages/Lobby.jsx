@@ -34,10 +34,14 @@ function Lobby() {
     return () => clearInterval(interval)
   }, [])
 
-  // Show name input first if not joined
+  // Load player name from localStorage and show color selection if not joined
   useEffect(() => {
-    if (game && !isPlayerInGame && !playerName) {
-      setShowNameInput(true)
+    if (game && !isPlayerInGame) {
+      const tempName = localStorage.getItem(`tempPlayerName_${gameId}`)
+      if (tempName && !playerName) {
+        setPlayerName(tempName)
+        setShowColorSelection(true)
+      }
     }
   }, [game])
 
@@ -154,9 +158,9 @@ function Lobby() {
   if (!game) return <div className="min-h-screen flex items-center justify-center bg-purple-950"><div className="text-xl text-white">Loading...</div></div>
 
     return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-purple-950 relative">
+    <div className="min-h-screen bg-[#280040] relative">
       {/* Blurred game board background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-purple-950/80 via-blue-950/80 to-purple-900/80 backdrop-blur-3xl">
+      <div className="absolute inset-0 bg-[#280040] backdrop-blur-3xl">
         <div className="w-full h-full opacity-30" style={{
           backgroundImage: `url('data:image/svg+xml,${encodeURIComponent('<svg width="400" height="400" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="50" height="50" fill="%23FFD700"/><rect x="50" y="0" width="50" height="50" fill="%23DC143C"/><rect x="100" y="0" width="50" height="50" fill="%234169E1"/><rect x="150" y="0" width="50" height="50" fill="%23228B22"/><rect x="200" y="0" width="50" height="50" fill="%23FF8C00"/><rect x="250" y="0" width="50" height="50" fill="%23DC143C"/><rect x="300" y="0" width="50" height="50" fill="%23FFD700"/><rect x="350" y="0" width="50" height="50" fill="%23FF69B4"/></svg>')}')`,
           backgroundSize: 'contain',
@@ -186,7 +190,7 @@ function Lobby() {
       {/* Main content */}
       <div className="relative z-10 flex h-[calc(100vh-80px)]">
         {/* Left Panel - Share and Chat */}
-        <div className="w-1/3 bg-purple-900/80 backdrop-blur-lg p-6 border-r border-purple-800">
+        <div className="w-1/3 bg-[#3a1552] backdrop-blur-lg p-6 border-r border-purple-800">
           {/* Share this game */}
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-3">
@@ -249,10 +253,28 @@ function Lobby() {
         <div className="w-1/3 relative"></div>
 
         {/* Right Panel - Settings */}
-        <div className="w-1/3 bg-purple-900/80 backdrop-blur-lg p-6 border-l border-purple-800 overflow-y-auto">
-          {/* Waiting for players */}
+        <div className="w-1/3 bg-[#3a1552] backdrop-blur-lg p-6 border-l border-purple-800 overflow-y-auto">
+          {/* Waiting for players or Players list */}
           <div className="mb-6">
-            <h2 className="text-white font-semibold mb-6">Waiting for players...</h2>
+            {players.length > 0 ? (
+              <div className="bg-purple-950/50 rounded-lg p-4 border border-purple-700 mb-4">
+                <h3 className="text-white font-semibold mb-3">Players ({players.length}/{maxPlayersValue})</h3>
+                <div className="space-y-2">
+                  {players.map(player => (
+                    <div key={player.id} className="flex items-center gap-2 bg-purple-950/50 rounded p-2">
+                      <div 
+                        className="w-8 h-8 rounded-full"
+                        style={{ backgroundColor: player.color || '#999' }}
+                      />
+                      <span className="text-white text-sm">{player.name}</span>
+                      {player.order_in_game === 1 && <Crown className="w-4 h-4 text-yellow-300" />}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <h2 className="text-white font-semibold mb-6">Waiting for players...</h2>
+            )}
           </div>
 
           {/* Game settings */}
@@ -402,48 +424,6 @@ function Lobby() {
         </div>
       </div>
 
-      {/* Name input modal */}
-      <AnimatePresence>
-        {showNameInput && !isPlayerInGame && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-purple-900 rounded-2xl p-8 max-w-md w-full mx-4 border border-purple-700"
-            >
-              <h2 className="text-white text-xl font-semibold mb-6">Enter your name</h2>
-              
-              <div className="mb-6">
-                <label className="block text-purple-300 text-sm font-semibold mb-2">Your name</label>
-                <input
-                  type="text"
-                  value={playerName}
-                  onChange={(e) => setPlayerName(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleNameSubmit()}
-                  placeholder="Enter your name"
-                  className="w-full bg-purple-950 border border-purple-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
-                  autoFocus
-                />
-                  </div>
-
-              <button
-                onClick={handleNameSubmit}
-                disabled={!playerName.trim()}
-                className="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition-colors"
-              >
-                Continue
-              </button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* Color selection overlay modal */}
       <AnimatePresence>
         {showColorSelection && !isPlayerInGame && (
@@ -457,19 +437,16 @@ function Lobby() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-purple-900 rounded-2xl p-8 max-w-lg w-full mx-4 border border-purple-700"
+              className="bg-[#3a1552] rounded-2xl p-8 max-w-lg w-full mx-4 border border-purple-700"
             >
               <h2 className="text-white text-xl font-semibold mb-6">Select your player appearance:</h2>
               
-              {/* Color grid - 3x3 circle tokens */}
-              <div className="grid grid-cols-3 gap-4 mb-6">
+              {/* Color grid - large circles matching screenshot */}
+              <div className="grid grid-cols-3 gap-6 mb-8">
                 {PLAYER_COLORS.map((colorObj, idx) => {
                   const takenPlayer = playerByColor.get(colorObj.name)
                   const isSelected = selectedColor === colorObj.name
                   const isTaken = Boolean(takenPlayer)
-
-                  // Add a special purple blob character
-                  const isPurple = colorObj.name === 'purple'
                   
                   return (
                     <button
@@ -477,67 +454,42 @@ function Lobby() {
                       onClick={() => !isTaken && setSelectedColor(colorObj.name)}
                       disabled={isTaken}
                       className={`
-                        aspect-square flex items-center justify-center rounded-full relative
-                        ${isSelected ? 'ring-4 ring-purple-500 ring-offset-2 ring-offset-purple-900' : ''}
+                        w-20 h-20 rounded-full relative mx-auto
+                        ${isSelected ? 'ring-4 ring-purple-400 shadow-2xl scale-110' : ''}
                         ${isTaken ? 'opacity-30 cursor-not-allowed' : 'hover:scale-110 cursor-pointer'}
-                        transition-all duration-200
+                        transition-all duration-200 border-4
+                        ${isSelected ? 'border-purple-400' : 'border-transparent'}
                       `}
-                      style={{
-                        background: isPurple ? 'linear-gradient(135deg, #9B30FF, #8B00FF)' : colorObj.hex
-                      }}
+                      style={{ backgroundColor: colorObj.hex }}
                     >
                       {isSelected && (
                         <motion.div
                           initial={{ scale: 0 }}
                           animate={{ scale: 1 }}
-                          className="absolute inset-0 flex items-center justify-center"
+                          className="absolute -top-1 -right-1 bg-yellow-400 text-gray-900 rounded-full w-6 h-6 flex items-center justify-center font-bold text-xs shadow-lg"
                         >
-                          <span className="text-2xl">✓</span>
+                          ✓
                         </motion.div>
                       )}
-                        </button>
+                    </button>
                   )
                 })}
               </div>
 
               {/* Join game button */}
-                        <button
+              <button
                 onClick={joinGame}
                 disabled={loading || !selectedColor}
-                className="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition-colors mb-3"
+                className="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-4 rounded-xl transition-colors shadow-lg"
               >
                 {loading ? 'Joining...' : 'Join game'}
               </button>
-
-              {/* Get more appearances button */}
-              <button className="w-full border border-purple-600 hover:bg-purple-800 text-purple-400 font-semibold py-2 rounded-lg transition-colors flex items-center justify-center gap-2">
-                <div className="text-lg">🛒</div>
-                Get more appearances
-                        </button>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Players list overlay */}
-      {isPlayerInGame && (
-        <div className="absolute top-20 right-8 z-30 bg-purple-900/90 backdrop-blur-lg rounded-lg p-4 border border-purple-700 max-h-[400px] overflow-y-auto">
-          <h3 className="text-white font-semibold mb-3">Players ({players.length}/{maxPlayersValue})</h3>
-          <div className="space-y-2">
-            {players.map(player => (
-              <div key={player.id} className="flex items-center gap-2 bg-purple-950/50 rounded p-2">
-                <div 
-                  className="w-6 h-6 rounded-full"
-                  style={{ background: player.color || '#999' }}
-                />
-                <span className="text-white text-sm">{player.name}</span>
-                {player.order_in_game === 1 && <Crown className="w-4 h-4 text-yellow-300" />}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-      </div>
+    </div>
   )
 }
 

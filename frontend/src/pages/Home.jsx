@@ -3,10 +3,18 @@ import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 
 function Home() {
+  const [playerName, setPlayerName] = useState('')
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
 
-  const createGame = async () => {
+  const createGame = async (e) => {
+    e.preventDefault()
+    
+    if (!playerName.trim()) {
+      alert('Please enter your name')
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -20,6 +28,9 @@ function Home() {
 
       // Initialize board
       await axios.post(`/api/game/${gameId}/initialize-board`)
+
+      // Store name for lobby
+      localStorage.setItem(`tempPlayerName_${gameId}`, playerName)
 
       // Navigate to lobby where user will select name and color
       navigate(`/lobby/${gameId}`)
@@ -51,13 +62,28 @@ function Home() {
         </div>
       
         <div className="glass rounded-3xl p-8 border border-white/10 shadow-2xl animate-fade-in">
-          <button
-            onClick={createGame}
-            disabled={loading}
-            className="w-full bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 hover:from-purple-500 hover:via-pink-500 hover:to-purple-500 text-white font-bold py-4 px-8 rounded-xl text-lg shadow-2xl transition-all hover:scale-105 flex items-center justify-center gap-2 hover:shadow-purple-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? '⏳ Creating...' : '→ Create Game'}
-          </button>
+          <form onSubmit={createGame} className="space-y-6">
+            <div>
+              <label className="block text-white text-sm font-semibold mb-3 uppercase tracking-wide">Your Name</label>
+              <input
+                type="text"
+                value={playerName}
+                onChange={(e) => setPlayerName(e.target.value)}
+                placeholder="Enter your name"
+                className="w-full bg-white/10 backdrop-blur-sm border-2 border-white/20 rounded-xl px-6 py-4 text-white text-lg placeholder-white/40 focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
+                required
+                autoFocus
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading || !playerName.trim()}
+              className="w-full bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 hover:from-purple-500 hover:via-pink-500 hover:to-purple-500 text-white font-bold py-4 px-8 rounded-xl text-lg shadow-2xl transition-all hover:scale-105 flex items-center justify-center gap-2 hover:shadow-purple-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? '⏳ Creating...' : '→ Create Game'}
+            </button>
+          </form>
         </div>
       </div>
     </div>
