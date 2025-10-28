@@ -158,55 +158,47 @@ function Lobby() {
   if (!game) return <div className="min-h-screen flex items-center justify-center bg-purple-950"><div className="text-xl text-white">Loading...</div></div>
 
     return (
-    <div className="min-h-screen bg-[#280040] relative">
-      {/* Blurred game board background */}
-      <div className="absolute inset-0 bg-[#280040] backdrop-blur-3xl">
-        <div className="w-full h-full opacity-30" style={{
-          backgroundImage: `url('data:image/svg+xml,${encodeURIComponent('<svg width="400" height="400" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="50" height="50" fill="%23FFD700"/><rect x="50" y="0" width="50" height="50" fill="%23DC143C"/><rect x="100" y="0" width="50" height="50" fill="%234169E1"/><rect x="150" y="0" width="50" height="50" fill="%23228B22"/><rect x="200" y="0" width="50" height="50" fill="%23FF8C00"/><rect x="250" y="0" width="50" height="50" fill="%23DC143C"/><rect x="300" y="0" width="50" height="50" fill="%23FFD700"/><rect x="350" y="0" width="50" height="50" fill="%23FF69B4"/></svg>')}')`,
-          backgroundSize: 'contain',
-          backgroundRepeat: 'repeat'
-        }} />
-        </div>
+    <div className="min-h-screen bg-[#1a0033] relative">
 
       {/* Header */}
       <div className="relative z-20 px-6 py-4 flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-white">poordown.io</h1>
+        <h1 className="text-3xl font-bold text-white tracking-tight">lazydown.oi</h1>
         <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-full bg-transparent flex items-center justify-center hover:bg-white/10 transition-colors cursor-pointer">
             <MessageCircle className="w-5 h-5 text-white" />
-              </div>
-          <div className="w-10 h-10 rounded-full bg-gray-600 flex items-center justify-center">
+          </div>
+          <div className="w-10 h-10 rounded-full bg-transparent flex items-center justify-center hover:bg-white/10 transition-colors cursor-pointer">
             <HelpCircle className="w-5 h-5 text-white" />
-              </div>
-          <div className="w-10 h-10 rounded-full bg-gray-600 flex items-center justify-center">
+          </div>
+          <div className="w-10 h-10 rounded-full bg-transparent flex items-center justify-center hover:bg-white/10 transition-colors cursor-pointer">
             <Volume2 className="w-5 h-5 text-white" />
-            </div>
-          <div className="w-10 h-10 rounded-full bg-gray-600 flex items-center justify-center">
+          </div>
+          <div className="w-10 h-10 rounded-full bg-transparent flex items-center justify-center hover:bg-white/10 transition-colors cursor-pointer">
             <Search className="w-5 h-5 text-white" />
-            </div>
+          </div>
         </div>
       </div>
 
       {/* Main content */}
       <div className="relative z-10 flex h-[calc(100vh-80px)]">
         {/* Left Panel - Share and Chat */}
-        <div className="w-1/3 bg-[#3a1552] backdrop-blur-lg p-6 border-r border-purple-800">
+        <div className="w-1/3 bg-[#3a1552] p-6 border-r border-purple-800">
           {/* Share this game */}
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-3">
               <h2 className="text-white font-semibold">Share this game</h2>
               <Info className="w-4 h-4 text-purple-400" />
             </div>
-            <div className="flex gap-2 bg-gray-800 rounded-lg p-2">
+            <div className="flex gap-2 bg-[#2a0f3f] rounded-lg p-2">
               <input 
                 type="text" 
                 readOnly
-                value={`https://poordown.io/room/${gameId}`}
-                className="flex-1 bg-transparent text-gray-300 text-sm px-2"
+                value={`https://lazydown.oi/room/${gameId}`}
+                className="flex-1 bg-transparent text-white text-sm px-2"
               />
               <button
                 onClick={copyGameLink}
-                className="px-3 py-1 bg-purple-600 hover:bg-purple-700 rounded text-white text-sm flex items-center gap-2"
+                className="px-3 py-1.5 bg-[#2a0f3f] hover:bg-[#3a1552] rounded text-white text-sm flex items-center gap-2"
               >
                 {linkCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                 {linkCopied ? 'Copied' : 'Copy'}
@@ -215,53 +207,66 @@ function Lobby() {
             </div>
 
           {/* Ad blocker placeholder */}
-          <div className="mb-6 border-2 border-dashed border-purple-600 rounded-lg p-4 text-center">
-            <p className="text-purple-300 text-sm">Disable your ad blocker to support poordown.io</p>
-              </div>
+          <div className="mb-6 bg-[#3a1552] rounded-lg p-4 text-center border border-purple-700">
+            <p className="text-white text-sm">Disable your ad blocker to support lazydown.oi</p>
+          </div>
 
           {/* Chat */}
           <div className="mb-6">
             <div className="flex items-center justify-center gap-2 mb-3">
-              <Volume2 className="w-4 h-4 text-purple-400" />
+              <Volume2 className="w-4 h-4 text-gray-400" />
               <h2 className="text-white font-semibold">Chat</h2>
-              <ChevronRight className="w-4 h-4 text-purple-400" />
+              <Search className="w-4 h-4 text-gray-400" />
             </div>
-            <div className="flex flex-col items-center justify-center p-8 border border-purple-700 rounded-lg bg-purple-950/50">
+            <div className="flex flex-col items-center justify-center p-8 rounded-lg bg-[#2a0f3f]">
               <MessageCircle className="w-8 h-8 text-gray-500 mb-2" />
               <p className="text-gray-500 text-sm">No messages yet</p>
-              </div>
             </div>
+          </div>
 
           {/* Ad blocker notice */}
           {showAdBlocker && (
-            <div className="fixed bottom-6 left-6 bg-purple-700 border-2 border-purple-500 rounded-lg p-3 max-w-xs shadow-lg">
+            <div className="fixed bottom-6 left-6 bg-[#3a1552] border border-purple-700 rounded-lg p-3 max-w-xs shadow-lg">
               <div className="flex items-start gap-2">
                 <div className="flex-1">
+                  <p className="text-white text-xs leading-tight font-semibold mb-1">
+                    Please disable your Adblocker
+                  </p>
                   <p className="text-white text-xs leading-tight">
-                    Please disable your Adblocker poordown is free and wants to stay free. We use ad revenue to keep maintaining the game. Thanks! ❤️❤️
+                    lazydown.oi is free and wants to stay free. We use ad revenue to keep maintaining the game. Thanks! ❤️
                   </p>
                 </div>
-                <button onClick={() => setShowAdBlocker(false)} className="text-white hover:text-gray-300">
+                <button onClick={() => setShowAdBlocker(false)} className="text-red-500 hover:text-red-600 transition-colors">
                   <X className="w-4 h-4" />
                 </button>
-                </div>
               </div>
-            )}
+            </div>
+          )}
         </div>
 
         {/* Center - Blurred background */}
-        <div className="w-1/3 relative"></div>
+        <div className="w-1/3 relative overflow-hidden">
+          <div 
+            className="absolute inset-0 opacity-20 blur-2xl"
+            style={{
+              backgroundImage: `url('data:image/svg+xml,${encodeURIComponent('<svg width="800" height="800" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="100" height="100" fill="%23228B22" opacity="0.5"/><rect x="100" y="0" width="100" height="100" fill="%23228B22" opacity="0.5"/><rect x="200" y="0" width="100" height="100" fill="%23228B22" opacity="0.5"/><rect x="300" y="0" width="100" height="100" fill="%234169E1" opacity="0.5"/><rect x="400" y="0" width="100" height="100" fill="%23DC143C" opacity="0.5"/><rect x="500" y="0" width="100" height="100" fill="%23FFD700" opacity="0.5"/><rect x="600" y="0" width="100" height="100" fill="%23FF8C00" opacity="0.5"/><rect x="700" y="0" width="100" height="100" fill="%23DC143C" opacity="0.5"/></svg>')}')`,
+              backgroundSize: 'contain',
+              backgroundRepeat: 'repeat',
+              filter: 'blur(20px)',
+            }}
+          />
+        </div>
 
         {/* Right Panel - Settings */}
-        <div className="w-1/3 bg-[#3a1552] backdrop-blur-lg p-6 border-l border-purple-800 overflow-y-auto">
+        <div className="w-1/3 bg-[#3a1552] p-6 border-l border-purple-800 overflow-y-auto">
           {/* Waiting for players or Players list */}
           <div className="mb-6">
             {players.length > 0 ? (
-              <div className="bg-purple-950/50 rounded-lg p-4 border border-purple-700 mb-4">
+              <div className="bg-[#2a0f3f] rounded-lg p-4 mb-4">
                 <h3 className="text-white font-semibold mb-3">Players ({players.length}/{maxPlayersValue})</h3>
                 <div className="space-y-2">
                   {players.map(player => (
-                    <div key={player.id} className="flex items-center gap-2 bg-purple-950/50 rounded p-2">
+                    <div key={player.id} className="flex items-center gap-2 bg-[#1a0033] rounded p-2">
                       <div 
                         className="w-8 h-8 rounded-full"
                         style={{ backgroundColor: player.color || '#999' }}
@@ -279,22 +284,24 @@ function Lobby() {
 
           {/* Game settings */}
           <div className="mb-6">
-            <h3 className="text-purple-300 text-sm font-semibold mb-4">Game settings</h3>
+            <h3 className="text-white text-sm font-semibold mb-4">Game settings</h3>
             <div className="space-y-4">
               {/* Maximum players */}
-              <div className="bg-purple-950/50 rounded-lg p-4 border border-purple-700">
+              <div className="bg-[#2a0f3f] rounded-lg p-4">
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-3 flex-1">
-                    <Users className="w-5 h-5 text-purple-400 mt-0.5" />
+                    <div className="mt-0.5 flex items-center gap-1">
+                      <Users className="w-5 h-5 text-gray-300" />
+                    </div>
                     <div className="flex-1">
                       <p className="text-white font-semibold text-sm">Maximum players</p>
-                      <p className="text-gray-400 text-xs">How many players can join the game</p>
-              </div>
+                      <p className="text-gray-400 text-xs mt-0.5">How many players can join the game</p>
+                    </div>
                   </div>
                   <select 
                     value={maxPlayers}
                     onChange={(e) => setMaxPlayers(parseInt(e.target.value))}
-                    className="bg-gray-800 text-white text-sm px-3 py-1 rounded border border-gray-700"
+                    className="bg-[#2a0f3f] text-white text-sm px-3 py-1.5 rounded-lg border border-purple-700"
                   >
                     <option value="2">2</option>
                     <option value="3">3</option>
@@ -302,61 +309,63 @@ function Lobby() {
                     <option value="5">5</option>
                     <option value="6">6</option>
                   </select>
-            </div>
+                </div>
               </div>
 
               {/* Private room */}
-              <div className="bg-purple-950/50 rounded-lg p-4 border border-purple-700">
+              <div className="bg-[#2a0f3f] rounded-lg p-4">
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-3 flex-1">
-                    <div className="w-5 h-5 text-purple-400 mt-0.5">🔑</div>
+                    <div className="w-5 h-5 text-gray-300 mt-0.5">🔑</div>
                     <div className="flex-1">
                       <p className="text-white font-semibold text-sm">Private room</p>
-                      <p className="text-gray-400 text-xs">Private rooms can be accessed using the room URL only</p>
-              </div>
-            </div>
+                      <p className="text-gray-400 text-xs mt-0.5">Private rooms can be accessed using the room URL only</p>
+                    </div>
+                  </div>
                   <div className="w-14 h-7 bg-purple-600 rounded-full relative cursor-pointer">
-                    <div className="absolute right-1 top-1 w-5 h-5 bg-white rounded-full"></div>
-                </div>
+                    <div className="absolute right-1 top-1 w-5 h-5 bg-white rounded-full transition-transform"></div>
+                  </div>
                 </div>
               </div>
 
               {/* Allow bots */}
-              <div className="bg-purple-950/50 rounded-lg p-4 border border-purple-700">
+              <div className="bg-[#2a0f3f] rounded-lg p-4">
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-3 flex-1">
-                    <Bot className="w-5 h-5 text-purple-400 mt-0.5" />
+                    <Bot className="w-5 h-5 text-gray-300 mt-0.5" />
                     <div className="flex-1">
-                      <p className="text-white font-semibold text-sm">Allow bots to join <span className="text-purple-400 text-xs">Beta</span></p>
-                      <p className="text-gray-400 text-xs">Bots will join the game based on availability</p>
+                      <p className="text-white font-semibold text-sm">Allow bots to join <span className="text-blue-400 text-xs">Beta</span></p>
+                      <p className="text-gray-400 text-xs mt-0.5">Bots will join the game based on availability</p>
                     </div>
                   </div>
-                  <div className="w-14 h-7 bg-gray-600 rounded-full relative cursor-pointer">
-                    <div className="absolute left-1 top-1 w-5 h-5 bg-white rounded-full"></div>
+                  <div className="w-14 h-7 bg-gray-700 rounded-full relative cursor-pointer">
+                    <div className="absolute left-1 top-1 w-5 h-5 bg-white rounded-full transition-transform"></div>
                   </div>
                 </div>
               </div>
 
               {/* Board map */}
-              <div className="bg-purple-950/50 rounded-lg p-4 border border-purple-700">
-                <div className="flex items-start justify-between">
+              <div className="bg-[#2a0f3f] rounded-lg p-4">
+                <div className="flex items-start justify-between mb-1">
                   <div className="flex items-start gap-3 flex-1">
-                    <div className="w-5 h-5 text-purple-400 mt-0.5">📍</div>
+                    <div className="w-5 h-5 text-gray-300 mt-0.5">📍</div>
                     <div className="flex-1">
                       <p className="text-white font-semibold text-sm">Board map</p>
-                      <p className="text-gray-400 text-xs">Change map tiles, properties and stacks</p>
+                      <p className="text-gray-400 text-xs mt-0.5">Change map tiles, properties and stacks</p>
                     </div>
                   </div>
-                  <div className="text-white text-sm">Classic</div>
                 </div>
-                <button className="mt-2 text-purple-400 text-xs hover:text-purple-300">Browse maps &gt;</button>
-              </div>
+                <div className="flex items-center gap-2 ml-8">
+                  <span className="text-white text-sm">Classic</span>
+                  <span className="text-gray-400 text-xs">Browse maps &gt;</span>
                 </div>
               </div>
+            </div>
+          </div>
 
           {/* Gameplay rules */}
           <div>
-            <h3 className="text-purple-300 text-sm font-semibold mb-4">Gameplay rules</h3>
+            <h3 className="text-white text-sm font-semibold mb-4">Gameplay rules</h3>
             <div className="space-y-4">
               {isHost && game.status === 'waiting' && (
                 <>
@@ -437,12 +446,12 @@ function Lobby() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-[#3a1552] rounded-2xl p-8 max-w-lg w-full mx-4 border border-purple-700"
+              className="bg-[#3a1552] rounded-2xl p-8 max-w-lg w-full mx-4"
             >
               <h2 className="text-white text-xl font-semibold mb-6">Select your player appearance:</h2>
               
-              {/* Color grid - large circles matching screenshot */}
-              <div className="grid grid-cols-3 gap-6 mb-8">
+              {/* Color grid - matching richup.io 3x3 layout */}
+              <div className="grid grid-cols-3 gap-4 mb-6">
                 {PLAYER_COLORS.map((colorObj, idx) => {
                   const takenPlayer = playerByColor.get(colorObj.name)
                   const isSelected = selectedColor === colorObj.name
@@ -454,35 +463,41 @@ function Lobby() {
                       onClick={() => !isTaken && setSelectedColor(colorObj.name)}
                       disabled={isTaken}
                       className={`
-                        w-20 h-20 rounded-full relative mx-auto
-                        ${isSelected ? 'ring-4 ring-purple-400 shadow-2xl scale-110' : ''}
-                        ${isTaken ? 'opacity-30 cursor-not-allowed' : 'hover:scale-110 cursor-pointer'}
+                        w-16 h-16 rounded-full relative mx-auto
+                        ${isSelected ? 'ring-4 ring-purple-400 shadow-2xl' : ''}
+                        ${isTaken ? 'opacity-30 cursor-not-allowed' : 'hover:ring-2 hover:ring-purple-500 cursor-pointer'}
                         transition-all duration-200 border-4
                         ${isSelected ? 'border-purple-400' : 'border-transparent'}
                       `}
                       style={{ backgroundColor: colorObj.hex }}
                     >
-                      {isSelected && (
-                        <motion.div
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          className="absolute -top-1 -right-1 bg-yellow-400 text-gray-900 rounded-full w-6 h-6 flex items-center justify-center font-bold text-xs shadow-lg"
-                        >
-                          ✓
-                        </motion.div>
-                      )}
                     </button>
                   )
                 })}
+              </div>
+
+              {/* Character blob - purple glowing character */}
+              <div className="mb-6 flex items-center justify-end">
+                <div className="w-20 h-20 relative rounded-full bg-gradient-to-br from-purple-600 via-purple-500 to-purple-400 shadow-lg shadow-purple-500/50 flex items-center justify-center border-4 border-purple-400">
+                  <div className="absolute inset-2 bg-white/20 rounded-full"></div>
+                  <div className="absolute top-3 left-3 w-4 h-4 bg-white rounded-full opacity-80"></div>
+                  <div className="absolute top-3 right-3 w-4 h-4 bg-white rounded-full opacity-80"></div>
+                </div>
               </div>
 
               {/* Join game button */}
               <button
                 onClick={joinGame}
                 disabled={loading || !selectedColor}
-                className="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-4 rounded-xl transition-colors shadow-lg"
+                className="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors mb-3"
               >
                 {loading ? 'Joining...' : 'Join game'}
+              </button>
+
+              {/* Get more appearances button */}
+              <button className="w-full text-purple-400 hover:text-purple-300 text-sm flex items-center justify-center gap-2 py-2 transition-colors">
+                <span className="w-4 h-4">🛒</span>
+                Get more appearances
               </button>
             </motion.div>
           </motion.div>

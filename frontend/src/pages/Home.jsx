@@ -56,7 +56,7 @@ function Home() {
         <div className="text-center mb-8 animate-fade-in">
           <div className="text-7xl mb-6 animate-bounce">🎲</div>
           <h1 className="text-5xl md:text-6xl font-black text-white mb-3 tracking-tight">
-            poordown<span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">.oi</span>
+            lazydown<span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">.oi</span>
           </h1>
           <p className="text-purple-200 text-lg font-medium">Rule the economy</p>
         </div>

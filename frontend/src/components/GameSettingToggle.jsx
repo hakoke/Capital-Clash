@@ -29,13 +29,13 @@ function GameSettingToggle({ icon, title, description, setting, gameId, game }) 
   }
 
   return (
-    <div className="bg-purple-950/50 rounded-lg p-4 border border-purple-700">
+    <div className="bg-[#2a0f3f] rounded-lg p-4">
       <div className="flex items-start justify-between">
         <div className="flex items-start gap-3 flex-1">
-          <span className="text-xl">{icon}</span>
+          <span className="text-xl mt-0.5">{icon}</span>
           <div className="flex-1">
             <p className="text-white font-semibold text-sm">{title}</p>
-            <p className="text-gray-400 text-xs">{description}</p>
+            <p className="text-gray-400 text-xs mt-0.5">{description}</p>
           </div>
         </div>
         
@@ -44,13 +44,13 @@ function GameSettingToggle({ icon, title, description, setting, gameId, game }) 
           onClick={toggleSetting}
           disabled={updating}
           className={`
-            relative w-14 h-7 rounded-full transition-all duration-200 flex-shrink-0
-            ${value ? 'bg-purple-600' : 'bg-gray-600'}
+            relative w-14 h-7 rounded-full transition-all duration-200 flex-shrink-0 top-1
+            ${value ? 'bg-purple-600' : 'bg-gray-700'}
             ${updating ? 'opacity-50' : 'cursor-pointer'}
           `}
         >
           <div className={`
-            absolute w-5 h-5 bg-white rounded-full shadow-lg transition-transform duration-200
+            absolute w-5 h-5 bg-white rounded-full transition-transform duration-200 top-1
             ${value ? 'translate-x-7' : 'translate-x-1'}
           `}></div>
         </button>

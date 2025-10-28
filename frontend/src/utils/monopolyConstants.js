@@ -13,13 +13,16 @@ export const COLOR_GROUPS = {
   'special': '#FFFFFF'
 };
 
-// Available player colors
+// Available player colors - matching richup.io style
 export const PLAYER_COLORS = [
-  { name: 'red', hex: '#DC143C' },
-  { name: 'blue', hex: '#4169E1' },
-  { name: 'green', hex: '#228B22' },
-  { name: 'yellow', hex: '#FFD700' },
-  { name: 'purple', hex: '#9B30FF' },
-  { name: 'orange', hex: '#FF8C00' }
+  { name: 'bright_green', hex: '#00FF00' },
+  { name: 'bright_yellow', hex: '#FFFF00' },
+  { name: 'bright_orange', hex: '#FF4500' },
+  { name: 'light_blue', hex: '#87CEEB' },
+  { name: 'teal', hex: '#008080' },
+  { name: 'dark_green', hex: '#006400' },
+  { name: 'brown', hex: '#8B4513' },
+  { name: 'magenta', hex: '#FF00FF' },
+  { name: 'bright_pink', hex: '#FF1493' }
 ];
 
