@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import axios from 'axios'
-import { Users, Play } from 'lucide-react'
+import { Users, Play, Copy, Check, Crown, Settings, Share2 } from 'lucide-react'
 import { PLAYER_COLORS } from '../utils/monopolyConstants.js'
 import GameSettingToggle from '../components/GameSettingToggle.jsx'
 
@@ -20,6 +20,7 @@ function Lobby() {
   const [showNameInput, setShowNameInput] = useState(true)
   const [customStartingCash, setCustomStartingCash] = useState('1500')
   const [showCustomInput, setShowCustomInput] = useState(false)
+  const [animationKey, setAnimationKey] = useState(0)
 
   useEffect(() => {
     fetchGameData()
@@ -60,6 +61,7 @@ function Lobby() {
     }
     setShowNameInput(false)
     setShowColorSelection(true)
+    setAnimationKey(prev => prev + 1)
   }
 
   const joinGame = async () => {
@@ -133,32 +135,48 @@ function Lobby() {
 
   if (!game) return <div className="min-h-screen flex items-center justify-center"><div className="text-xl">Loading...</div></div>
 
+  const isHost = isPlayerInGame && players.length > 0 && players.find(p => p.order_in_game === 1)?.id === currentPlayerId
+
   // Show name input first, then color selection
   if (showNameInput && !isPlayerInGame) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 via-purple-800 to-blue-900 p-4">
-        <div className="max-w-md w-full">
-          <div className="text-center mb-8">
-            <div className="text-5xl mb-4">🎲</div>
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">
-              RICH<span className="text-purple-300">UP.IO</span>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 animated-bg">
+        {/* Animated background icons */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-20 left-20 text-6xl opacity-10 animate-pulse">💰</div>
+          <div className="absolute top-40 right-32 text-5xl opacity-10 animate-pulse delay-300">🏠</div>
+          <div className="absolute bottom-32 left-40 text-7xl opacity-10 animate-pulse delay-700">🎲</div>
+          <div className="absolute bottom-40 right-20 text-6xl opacity-10 animate-pulse delay-1000">💸</div>
+        </div>
+
+        <div className="max-w-md w-full relative z-10">
+          <div className="text-center mb-8 animate-fade-in">
+            <div className="text-7xl mb-6 animate-bounce">🎲</div>
+            <h1 className="text-5xl md:text-6xl font-black text-white mb-3 tracking-tight">
+              RICH<span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">UP</span>.IO
             </h1>
-            <p className="text-purple-200">Rule the economy</p>
+            <p className="text-purple-200 text-lg font-medium">Rule the economy</p>
           </div>
           
-          <div className="bg-purple-900 rounded-2xl p-8 border-2 border-purple-700 shadow-2xl">
-            <input
-              type="text"
-              value={playerName}
-              onChange={(e) => setPlayerName(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleEnterGame()}
-              placeholder="n"
-              className="w-full bg-purple-800 border-2 border-purple-600 rounded-xl px-6 py-4 text-white text-lg placeholder-purple-400 focus:border-purple-400 focus:outline-none mb-4"
-            />
+          <div className="glass rounded-3xl p-8 border border-white/10 shadow-2xl animate-fade-in">
+            <div className="mb-6">
+              <label className="block text-white text-sm font-semibold mb-3 uppercase tracking-wide">Your Name</label>
+              <input
+                type="text"
+                value={playerName}
+                onChange={(e) => setPlayerName(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleEnterGame()}
+                placeholder="Enter your name"
+                className="w-full bg-white/10 backdrop-blur-sm border-2 border-white/20 rounded-xl px-6 py-4 text-white text-lg placeholder-white/40 focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
+                autoFocus
+              />
+            </div>
+
             <button
               onClick={handleEnterGame}
-              className="w-full bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-400 hover:to-purple-600 text-white font-bold py-4 px-8 rounded-xl text-lg shadow-lg transition-all hover:scale-105 flex items-center justify-center gap-2"
+              className="w-full bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 hover:from-purple-500 hover:via-pink-500 hover:to-purple-500 text-white font-bold py-4 px-8 rounded-xl text-lg shadow-2xl transition-all hover:scale-105 flex items-center justify-center gap-2 hover:shadow-purple-500/50"
             >
+              <span>→</span>
               Enter Game
             </button>
           </div>
@@ -167,298 +185,57 @@ function Lobby() {
     )
   }
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-blue-900 p-4">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-4">
-          <h1 className="text-3xl md:text-4xl font-bold text-white mb-1">
-            🎲 MONOPOLY GAME
-          </h1>
-          <p className="text-purple-200">{game.name}</p>
+  // Color selection screen
+  if (showColorSelection && !isPlayerInGame) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 animated-bg">
+        {/* Animated background icons */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-20 left-20 text-6xl opacity-10 animate-pulse">💰</div>
+          <div className="absolute top-40 right-32 text-5xl opacity-10 animate-pulse delay-300">🏠</div>
+          <div className="absolute bottom-32 left-40 text-7xl opacity-10 animate-pulse delay-700">🎲</div>
+          <div className="absolute bottom-40 right-20 text-6xl opacity-10 animate-pulse delay-1000">💸</div>
         </div>
 
-        {/* Game Info Card */}
-        <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                <Users className="w-6 h-6 text-blue-600" />
-              </div>
-              <div>
-                <div className="text-xs text-gray-600 uppercase">Players</div>
-                <div className="text-2xl font-bold text-gray-800">{players.length}/6</div>
-              </div>
+        <div className="max-w-2xl w-full mx-auto p-6 relative z-10">
+          <div className="glass rounded-3xl p-8 border border-white/10 shadow-2xl animate-scale-in">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold text-white mb-2">Select your player appearance</h2>
+              <p className="text-white/60">Choose your color to join the game</p>
             </div>
             
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                <span className="text-2xl">🎮</span>
-              </div>
-              <div>
-                <div className="text-xs text-gray-600 uppercase">Status</div>
-                <div className="text-lg font-bold text-green-600 capitalize">{game.status}</div>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                <span className="text-2xl">💰</span>
-              </div>
-              <div>
-                <div className="text-xs text-gray-600 uppercase">Starting Money</div>
-                <div className="text-lg font-bold text-purple-600">$1,500</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Copy Link Button */}
-          <div className="border-t pt-4">
-            <div className="flex items-center gap-2">
-              <div className="flex-1 bg-gray-100 rounded-lg px-4 py-2 text-sm font-mono text-gray-700">
-                {window.location.origin}/lobby/{gameId}
-              </div>
-            <button
-              onClick={copyGameLink}
-              className={`px-6 py-2 rounded-lg font-semibold transition-all ${
-                linkCopied 
-                  ? 'bg-green-500 text-white' 
-                  : 'bg-purple-500 hover:bg-purple-600 text-white'
-              }`}
-            >
-              {linkCopied ? '✓ Copied!' : 'Copy'}
-            </button>
-            </div>
-          </div>
-        </div>
-        
-        {/* Game Settings - Only for host */}
-        {players.length > 0 && game.status === 'waiting' && isPlayerInGame && players.find(p => p.order_in_game === 1)?.id === currentPlayerId && (
-          <div className="bg-purple-900 rounded-2xl shadow-xl p-6 mb-6 border-2 border-purple-700">
-            <h3 className="text-xl font-bold text-white mb-4">Gameplay rules</h3>
-            <div className="space-y-3">
-              <GameSettingToggle
-                icon="💰"
-                title="x2 rent on full-set properties"
-                description="If a player owns a full property set, the base rent payment will be doubled"
-                setting="double_rent_on_full_set"
-                gameId={gameId}
-                game={game}
-              />
-              
-              <GameSettingToggle
-                icon="🏖️"
-                title="Vacation cash"
-                description="If a player lands on Vacation, all collected money from taxes and bank payments will be earned"
-                setting="vacation_cash"
-                gameId={gameId}
-                game={game}
-              />
-              
-              <GameSettingToggle
-                icon="🔨"
-                title="Auction"
-                description="If someone skips purchasing the property landed on, it will be sold to the highest bidder"
-                setting="auction_enabled"
-                gameId={gameId}
-                game={game}
-              />
-              
-              <GameSettingToggle
-                icon="⚖️"
-                title="Don't collect rent while in prison"
-                description="Rent will not be collected when landing on properties whose owners are in prison"
-                setting="no_rent_in_prison"
-                gameId={gameId}
-                game={game}
-              />
-              
-              <GameSettingToggle
-                icon="🏠"
-                title="Mortgage"
-                description="Mortgage properties to earn 50% of their cost, but you won't get paid rent when players land on them"
-                setting="mortgage_enabled"
-                gameId={gameId}
-                game={game}
-              />
-              
-              <GameSettingToggle
-                icon="⚖️"
-                title="Even build"
-                description="Houses and hotels must be built up and sold off evenly within a property set"
-                setting="even_build"
-                gameId={gameId}
-                game={game}
-              />
-              
-              <div className="flex items-center justify-between bg-purple-800 rounded-lg p-3">
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">💰</span>
-                  <div>
-                    <div className="text-sm font-semibold text-white">Starting cash</div>
-                    <div className="text-xs text-purple-300">Adjust how much money players start the game with</div>
-                  </div>
-                </div>
-                <div className="flex flex-col gap-2">
-                  <select
-                    value={parseInt(game.starting_cash || 1500)}
-                    onChange={(e) => {
-                      const val = e.target.value
-                      if (val === 'custom') {
-                        setShowCustomInput(true)
-                      } else {
-                        setShowCustomInput(false)
-                        updateStartingCash(parseInt(val))
-                      }
-                    }}
-                    className="bg-purple-700 text-white border border-purple-600 rounded-lg px-3 py-1.5 text-sm font-bold"
-                  >
-                    <option value="500">$500</option>
-                    <option value="1000">$1,000</option>
-                    <option value="1500">$1,500 (Classic)</option>
-                    <option value="2000">$2,000</option>
-                    <option value="2500">$2,500</option>
-                    <option value="3000">$3,000</option>
-                    <option value="custom">Custom...</option>
-                  </select>
-                  
-                  {showCustomInput && (
-                    <div className="flex gap-2">
-                      <input
-                        type="number"
-                        value={customStartingCash}
-                        onChange={(e) => setCustomStartingCash(e.target.value)}
-                        placeholder="Enter amount"
-                        min="100"
-                        step="100"
-                        className="bg-purple-800 text-white border border-purple-600 rounded-lg px-3 py-1.5 text-sm w-32"
-                      />
-                      <button
-                        onClick={() => {
-                          const amount = parseInt(customStartingCash)
-                          if (amount >= 100) {
-                            updateStartingCash(amount)
-                          }
-                        }}
-                        className="bg-purple-600 hover:bg-purple-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold transition-all"
-                      >
-                        Set
-                      </button>
-                      <button
-                        onClick={() => setShowCustomInput(false)}
-                        className="bg-gray-600 hover:bg-gray-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold transition-all"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Players List - Only show when in game */}
-        {isPlayerInGame && (
-          <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
-            <h2 className="text-2xl font-bold mb-4 text-gray-800">Players ({players.length}/6)</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {players.map((player, index) => {
-                const isHost = player.order_in_game === 1
-                return (
-                  <div 
-                    key={player.id} 
-                    className="bg-gradient-to-br from-white to-gray-50 rounded-xl p-4 border-2 transition-all hover:shadow-lg"
-                    style={{ borderColor: player.color }}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div 
-                        className="w-14 h-14 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg flex-shrink-0"
-                        style={{ backgroundColor: player.color }}
-                      >
-                        {player.name.charAt(0).toUpperCase()}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-bold text-lg flex items-center gap-2 truncate">
-                          {player.name}
-                          {isHost && <span className="text-xl" title="Host">👑</span>}
-                        </p>
-                        <p className="text-green-600 font-semibold">${parseInt(player.money || 0).toLocaleString()}</p>
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Start Button - Only for host */}
-        {players.length >= 2 && game.status === 'waiting' && isPlayerInGame && players.find(p => p.order_in_game === 1)?.id === currentPlayerId && (
-          <div className="flex justify-center mb-6">
-            <button
-              onClick={startGame}
-              disabled={loading}
-              className="bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-500 hover:to-purple-700 text-white px-12 py-4 rounded-xl font-bold text-xl shadow-2xl transition-all hover:scale-105 disabled:opacity-50"
-            >
-              {loading ? (
-                'Starting...'
-              ) : (
-                'Start Game'
-              )}
-            </button>
-          </div>
-        )}
-        
-        {/* Game Board Preview as Background */}
-        {isPlayerInGame && (
-          <div className="relative bg-gradient-to-br from-purple-900 to-blue-900 rounded-2xl p-6 mb-6 opacity-20 blur-sm pointer-events-none">
-            <div className="grid grid-cols-4 gap-2">
-              {Array.from({length: 16}).map((_, i) => (
-                <div key={i} className="bg-white bg-opacity-10 rounded p-4 text-center text-xs">
-                  Property {i+1}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Color Selection Screen - Similar to screenshot */}
-        {!isPlayerInGame && showColorSelection && (
-          <div className="bg-purple-900 rounded-2xl shadow-2xl p-8 border-2 border-purple-700">
-            <h2 className="text-2xl font-bold text-white mb-6 text-center">Select your player appearance:</h2>
-            
-            <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="grid grid-cols-3 gap-4 mb-8">
               {PLAYER_COLORS.map((colorObj) => {
                 const isTaken = players.some(p => p.color === colorObj.name)
                 const isSelected = selectedColor === colorObj.name
                 
-                if (isTaken) {
-                  return (
-                    <button
-                      key={colorObj.name}
-                      disabled
-                      className="w-full h-24 rounded-full bg-gray-600 opacity-30 cursor-not-allowed flex items-center justify-center border-4 border-gray-500"
-                    >
-                      <span className="text-2xl">✕</span>
-                    </button>
-                  )
-                }
-                
                 return (
                   <button
                     key={colorObj.name}
-                    type="button"
-                    onClick={() => setSelectedColor(colorObj.name)}
+                    disabled={isTaken}
+                    onClick={() => !isTaken && setSelectedColor(colorObj.name)}
                     className={`
-                      w-full h-24 rounded-full font-bold text-white
-                      transition-all duration-200 flex items-center justify-center
-                      cursor-pointer hover:scale-105 hover:shadow-2xl border-4
-                      ${isSelected ? 'ring-4 ring-yellow-400 shadow-2xl scale-110 border-yellow-400' : 'border-transparent'}
+                      relative group h-28 rounded-2xl font-bold text-white
+                      transition-all duration-300 flex flex-col items-center justify-center
+                      ${isTaken 
+                        ? 'opacity-30 cursor-not-allowed bg-gray-800 border-4 border-gray-700' 
+                        : 'cursor-pointer hover:scale-110 hover:shadow-2xl border-4'
+                      }
+                      ${isSelected 
+                        ? 'ring-4 ring-yellow-400 shadow-2xl scale-110 border-yellow-400 shadow-yellow-400/50' 
+                        : isTaken ? '' : 'border-transparent hover:border-white/30'
+                      }
                     `}
-                    style={{ backgroundColor: colorObj.hex }}
+                    style={{ backgroundColor: isTaken ? undefined : colorObj.hex }}
                   >
-                    {isSelected && <div className="text-3xl">✓</div>}
+                    {isSelected && !isTaken && (
+                      <div className="absolute -top-2 -right-2 bg-yellow-400 text-gray-900 rounded-full w-8 h-8 flex items-center justify-center font-bold shadow-lg animate-bounce">
+                        ✓
+                      </div>
+                    )}
+                    {isTaken && (
+                      <span className="text-3xl opacity-50">✕</span>
+                    )}
                   </button>
                 )
               })}
@@ -467,21 +244,290 @@ function Lobby() {
             <button
               onClick={joinGame}
               disabled={loading || !selectedColor}
-              className="w-full bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-400 hover:to-purple-600 text-white font-bold py-4 px-8 rounded-xl text-lg shadow-lg transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 hover:from-purple-500 hover:via-pink-500 hover:to-purple-500 text-white font-bold py-4 px-8 rounded-xl text-lg shadow-2xl transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 hover:shadow-purple-500/50"
             >
               {loading ? '⏳ Joining...' : 'Join Game'}
             </button>
           </div>
-        )}
+        </div>
+      </div>
+    )
+  }
 
-        {/* If already in game but can't start */}
-        {isPlayerInGame && players.length >= 2 && game.status === 'waiting' && players.find(p => p.order_in_game === 1)?.id !== currentPlayerId && (
-          <div className="bg-yellow-50 border-2 border-yellow-300 rounded-2xl p-6 text-center shadow-xl">
-            <div className="text-4xl mb-2">⏳</div>
-            <p className="text-gray-700 font-semibold">Waiting for host to start the game...</p>
-            <p className="text-sm text-gray-600 mt-2">The host will begin the game shortly!</p>
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 animated-bg">
+      {/* Animated background */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
+        <div className="absolute top-20 left-20 text-6xl animate-pulse">💰</div>
+        <div className="absolute top-40 right-32 text-5xl animate-pulse delay-300">🏠</div>
+        <div className="absolute bottom-32 left-40 text-7xl animate-pulse delay-700">🎲</div>
+        <div className="absolute bottom-40 right-20 text-6xl animate-pulse delay-1000">💸</div>
+      </div>
+
+      <div className="max-w-7xl mx-auto p-4 relative z-10 animate-fade-in">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl md:text-5xl font-black text-white mb-2 animate-slide-up">
+            🎲 RICH<span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">UP</span>.IO
+          </h1>
+          <p className="text-white/60 text-lg">{game.status === 'waiting' ? '⏳ Waiting for players...' : '🎮 Game in progress'}</p>
+        </div>
+
+        {/* Main Layout: 3-column grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column: Share & Chat */}
+          <div className="space-y-4 animate-slide-up" style={{ animationDelay: '0.1s' }}>
+            {/* Share Game Card */}
+            <div className="glass rounded-2xl p-5 border border-white/10 shadow-xl transition-all-smooth hover:scale-[1.02]">
+              <div className="flex items-center gap-2 mb-3">
+                <Share2 className="w-5 h-5 text-purple-400" />
+                <h3 className="text-white font-semibold text-sm uppercase tracking-wide">Share this game</h3>
+              </div>
+              <div className="flex gap-2 mb-2">
+                <div className="flex-1 bg-white/10 rounded-lg px-4 py-2 text-sm font-mono text-white/80 truncate">
+                  {window.location.origin}/lobby/{gameId}
+                </div>
+                <button
+                  onClick={copyGameLink}
+                  className={`px-4 py-2 rounded-lg font-semibold transition-all flex items-center gap-2 ${
+                    linkCopied 
+                      ? 'bg-green-500 text-white' 
+                      : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white'
+                  }`}
+                >
+                  {linkCopied ? (
+                    <>
+                      <Check className="w-4 h-4" />
+                      <span>Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4" />
+                      <span>Copy</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Players List */}
+            {isPlayerInGame && (
+              <div className="glass rounded-2xl p-5 border border-white/10 shadow-xl transition-all-smooth hover:scale-[1.02]">
+                <div className="flex items-center gap-2 mb-4">
+                  <Users className="w-5 h-5 text-purple-400" />
+                  <h3 className="text-white font-semibold text-sm uppercase tracking-wide">Players ({players.length}/6)</h3>
+                </div>
+                <div className="space-y-2 max-h-96 overflow-y-auto custom-scrollbar">
+                  {players.map((player) => {
+                    const isHost = player.order_in_game === 1
+                    return (
+                      <div 
+                        key={player.id} 
+                        className="bg-white/10 rounded-xl p-3 border border-white/20 backdrop-blur-sm hover:bg-white/15 transition-all"
+                        style={{ borderLeftColor: player.color, borderLeftWidth: '4px' }}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div 
+                            className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold shadow-lg flex-shrink-0"
+                            style={{ backgroundColor: player.color }}
+                          >
+                            {player.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-bold text-white flex items-center gap-2 truncate">
+                              {player.name}
+                              {isHost && <Crown className="w-4 h-4 text-yellow-400" />}
+                            </p>
+                            <p className="text-green-400 font-semibold text-sm">${parseInt(player.money || 0).toLocaleString()}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
           </div>
-        )}
+
+          {/* Center Column: Game Info and Start Button */}
+          <div className="space-y-4 animate-slide-up" style={{ animationDelay: '0.2s' }}>
+            {/* Game Info */}
+            <div className="glass rounded-2xl p-6 border border-white/10 shadow-xl text-center transition-all-smooth hover:scale-[1.02]">
+              <div className="text-6xl mb-4">🎲</div>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <div className="text-3xl font-black text-white">{players.length}</div>
+                  <div className="text-sm text-white/60">Players</div>
+                </div>
+                <div>
+                  <div className="text-3xl font-black text-purple-400">${parseInt(game.starting_cash || 1500).toLocaleString()}</div>
+                  <div className="text-sm text-white/60">Starting Cash</div>
+                </div>
+              </div>
+              
+              {isHost && (
+                <>
+                  <button
+                    onClick={startGame}
+                    disabled={loading || players.length < 2}
+                    className={`w-full py-4 px-6 rounded-xl font-bold text-lg shadow-2xl transition-all flex items-center justify-center gap-2 ${
+                      players.length >= 2
+                        ? 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white hover:scale-105 hover:shadow-green-500/50'
+                        : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                    }`}
+                  >
+                    {loading ? '⏳ Starting...' : '🚀 Start Game'}
+                  </button>
+                  <p className="text-xs text-white/40 mt-2">
+                    {players.length < 2 ? `Need ${2 - players.length} more player${2 - players.length > 1 ? 's' : ''} to start` : 'Ready to start!'}
+                  </p>
+                </>
+              )}
+
+              {!isPlayerInGame && players.length >= 2 && game.status === 'waiting' && (
+                <div className="text-yellow-400 flex items-center justify-center gap-2 mt-4">
+                  <span className="animate-pulse">⏳</span>
+                  <span className="text-sm">Waiting for host to start the game...</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Right Column: Game Settings (Host Only) */}
+          {isHost && game.status === 'waiting' && (
+            <div className="space-y-4 animate-slide-up" style={{ animationDelay: '0.3s' }}>
+              <div className="glass rounded-2xl p-6 border border-white/10 shadow-xl transition-all-smooth hover:scale-[1.02]">
+                <div className="flex items-center gap-2 mb-5">
+                  <Settings className="w-5 h-5 text-purple-400" />
+                  <h3 className="text-white font-semibold text-sm uppercase tracking-wide">Gameplay rules</h3>
+                </div>
+                
+                <div className="space-y-3 max-h-[600px] overflow-y-auto custom-scrollbar pr-2">
+                  <GameSettingToggle
+                    icon="💰"
+                    title="x2 rent on full-set properties"
+                    description="If a player owns a full property set, the base rent payment will be doubled"
+                    setting="double_rent_on_full_set"
+                    gameId={gameId}
+                    game={game}
+                  />
+                  
+                  <GameSettingToggle
+                    icon="🏖️"
+                    title="Vacation cash"
+                    description="If a player lands on Vacation, all collected money from taxes and bank payments will be earned"
+                    setting="vacation_cash"
+                    gameId={gameId}
+                    game={game}
+                  />
+                  
+                  <GameSettingToggle
+                    icon="🔨"
+                    title="Auction"
+                    description="If someone skips purchasing the property landed on, it will be sold to the highest bidder"
+                    setting="auction_enabled"
+                    gameId={gameId}
+                    game={game}
+                  />
+                  
+                  <GameSettingToggle
+                    icon="⚖️"
+                    title="Don't collect rent while in prison"
+                    description="Rent will not be collected when landing on properties whose owners are in prison"
+                    setting="no_rent_in_prison"
+                    gameId={gameId}
+                    game={game}
+                  />
+                  
+                  <GameSettingToggle
+                    icon="🏠"
+                    title="Mortgage"
+                    description="Mortgage properties to earn 50% of their cost, but you won't get paid rent when players land on them"
+                    setting="mortgage_enabled"
+                    gameId={gameId}
+                    game={game}
+                  />
+                  
+                  <GameSettingToggle
+                    icon="⚖️"
+                    title="Even build"
+                    description="Houses and hotels must be built up and sold off evenly within a property set"
+                    setting="even_build"
+                    gameId={gameId}
+                    game={game}
+                  />
+                  
+                  {/* Starting Cash Selection */}
+                  <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-4">
+                    <div className="flex items-center gap-3 mb-3">
+                      <span className="text-2xl">💰</span>
+                      <div className="flex-1">
+                        <div className="text-sm font-semibold text-white">Starting cash</div>
+                        <div className="text-xs text-white/60">Adjust how much money players start the game with</div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-col gap-2">
+                      <select
+                        value={parseInt(game.starting_cash || 1500)}
+                        onChange={(e) => {
+                          const val = e.target.value
+                          if (val === 'custom') {
+                            setShowCustomInput(true)
+                          } else {
+                            setShowCustomInput(false)
+                            updateStartingCash(parseInt(val))
+                          }
+                        }}
+                        className="bg-white/10 text-white border border-white/20 rounded-lg px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      >
+                        <option value="500" className="bg-purple-900">$500</option>
+                        <option value="1000" className="bg-purple-900">$1,000</option>
+                        <option value="1500" className="bg-purple-900">$1,500 (Classic)</option>
+                        <option value="2000" className="bg-purple-900">$2,000</option>
+                        <option value="2500" className="bg-purple-900">$2,500</option>
+                        <option value="3000" className="bg-purple-900">$3,000</option>
+                        <option value="custom" className="bg-purple-900">Custom...</option>
+                      </select>
+                      
+                      {showCustomInput && (
+                        <div className="flex gap-2">
+                          <input
+                            type="number"
+                            value={customStartingCash}
+                            onChange={(e) => setCustomStartingCash(e.target.value)}
+                            placeholder="Enter amount"
+                            min="100"
+                            step="100"
+                            className="bg-white/10 text-white border border-white/20 rounded-lg px-3 py-2 text-sm flex-1 placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          />
+                          <button
+                            onClick={() => {
+                              const amount = parseInt(customStartingCash)
+                              if (amount >= 100) {
+                                updateStartingCash(amount)
+                                setShowCustomInput(false)
+                              }
+                            }}
+                            className="bg-purple-600 hover:bg-purple-500 text-white px-3 py-2 rounded-lg text-sm font-semibold transition-all"
+                          >
+                            Set
+                          </button>
+                          <button
+                            onClick={() => setShowCustomInput(false)}
+                            className="bg-white/10 hover:bg-white/20 text-white px-3 py-2 rounded-lg text-sm font-semibold transition-all"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
