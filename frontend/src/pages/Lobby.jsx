@@ -254,7 +254,7 @@ function Lobby() {
       {/* Header - Top Bar */}
       <div className="relative z-20 px-6 py-3 bg-[#1a0a2e] border-b border-purple-800 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-bold text-white">lazydown.oi</h1>
+          <h1 className="text-2xl font-bold text-white">poordown.oi</h1>
           <div className="flex items-center gap-2 ml-4">
             <a href="https://discord.gg" className="text-white hover:opacity-80 transition-opacity">
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M13.545 2.907a13.227 13.227 0 0 0-3.257 1.053A11.89 11.89 0 0 0 5.647 2.216 14.031 14.031 0 0 0 2.9 9.084c.88-.53 1.87-.915 2.93-1.153a9.908 9.908 0 0 1-2.93-1.85A8.84 8.84 0 0 0 1.77 9.073a12.105 12.105 0 0 0 3.592 5.503 10.614 10.614 0 0 1-2.94 1.18 12.343 12.343 0 0 0 7.272 2.631 12.024 12.024 0 0 0 8.718-3.897 13.213 13.213 0 0 1-2.93 1.85 10.073 10.073 0 0 0 5.3-7.514 8.84 8.84 0 0 0 .849-7.588 9.908 9.908 0 0 1-2.93 1.85 10.853 10.853 0 0 0 .877-3.01c.157-1.459-.909-2.602-2.758-3.636z"/></svg>
@@ -279,7 +279,7 @@ function Lobby() {
               <input 
                 type="text" 
                 readOnly
-                value={`https://lazydown.oi/room/${gameId}`}
+                value={`https://poordown.oi/room/${gameId}`}
               className="flex-1 bg-[#2a0f3f] text-white text-sm px-3 py-2 rounded-lg mb-2"
               />
             <div className="flex gap-2">
@@ -298,7 +298,7 @@ function Lobby() {
 
           {/* Ad blocker placeholder */}
           <div className="mb-6 bg-[#3a1552] rounded-lg p-4 text-center border border-purple-700">
-            <p className="text-white text-sm">Disable your ad blocker to support lazydown.oi</p>
+            <p className="text-white text-sm">Disable your ad blocker to support poordown.oi</p>
           </div>
 
           {/* Chat */}
@@ -361,7 +361,7 @@ function Lobby() {
                     Please disable your Adblocker
                   </p>
                   <p className="text-white text-xs leading-tight">
-                    lazydown.oi is free and wants to stay free. We use ad revenue to keep maintaining the game. Thanks! ❤️
+                    poordown.oi is free and wants to stay free. We use ad revenue to keep maintaining the game. Thanks! ❤️
                   </p>
                 </div>
                 <button onClick={() => setShowAdBlocker(false)} className="text-red-500 hover:text-red-600 transition-colors">
@@ -372,44 +372,108 @@ function Lobby() {
           )}
         </div>
 
-        {/* Center - Board Preview */}
-        <div className="flex-1 bg-[#2d1b4e] relative overflow-auto">
-          <div className="p-8">
-            {/* Dice Display */}
-            <div className="flex items-center justify-center mb-4 gap-4">
-              <div className="w-12 h-12 bg-white rounded-lg shadow-lg flex items-center justify-center">
-                <span className="text-2xl font-bold">⚀</span>
-              </div>
-              <div className="w-12 h-12 bg-white rounded-lg shadow-lg flex items-center justify-center">
-                <span className="text-2xl font-bold">⚁</span>
-              </div>
-              <button className="px-6 py-3 bg-[#5a2d8c] hover:bg-[#6a3d9c] text-white font-semibold rounded-lg shadow-lg transition-colors">
-                🎲 Roll the dice
-              </button>
-            </div>
+        {/* Center - Conditional Display */}
+        <div className="flex-1 bg-[#2d1b4e] relative overflow-auto flex items-center justify-center">
+          {/* Show color selection in center if not joined yet */}
+          {showColorSelection && !isPlayerInGame && (
+            <div className="max-w-lg w-full px-8">
+              <div className="bg-[#3a1552] rounded-2xl p-8 border border-purple-700">
+                <h2 className="text-white text-xl font-semibold mb-6 text-center">Select your player appearance:</h2>
+                
+                {/* Color grid - 3 columns matching richup.io style */}
+                <div className="grid grid-cols-3 gap-4 mb-6">
+                  {PLAYER_COLORS.map((colorObj, idx) => {
+                    const takenPlayer = playerByColor.get(colorObj.name)
+                    const isSelected = selectedColor === colorObj.name
+                    const isTaken = Boolean(takenPlayer)
+                    
+                    return (
+                      <button
+                        key={colorObj.name}
+                        onClick={() => !isTaken && setSelectedColor(colorObj.name)}
+                        disabled={isTaken}
+                        className={`
+                          w-16 h-16 rounded-full relative mx-auto transition-all duration-200
+                          ${isSelected ? 'ring-4 ring-purple-400 scale-110 shadow-lg' : ''}
+                          ${isTaken ? 'opacity-30 cursor-not-allowed' : 'hover:scale-105 cursor-pointer'}
+                        `}
+                        style={{ backgroundColor: colorObj.hex }}
+                      >
+                        {isSelected && (
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="w-4 h-4 bg-white rounded-full opacity-80"></div>
+                            <div className="absolute w-2 h-2 bg-gray-800 rounded-full"></div>
+                          </div>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
 
-            {/* Game Log */}
-            <div className="bg-[#1a0a2e] rounded-lg p-4 text-xs text-gray-300 space-y-1">
-              {players.length > 0 && (
-                <>
-                  <div className="text-green-400">Game started with a randomized players order. Good luck!</div>
-                  <div className="text-purple-400">{players[0]?.name || 'Player'} joined the game</div>
-                  <div className="text-purple-400">Joined room {gameId}</div>
-                </>
-              )}
+                {/* Join game button */}
+                <button
+                  onClick={joinGame}
+                  disabled={loading || !selectedColor}
+                  className="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors flex items-center justify-center gap-2 mb-3"
+                >
+                  {loading ? 'Joining...' : 'Join game'}
+                </button>
+                
+                {/* Get more appearances button */}
+                <button className="w-full bg-[#2a0f3f] hover:bg-[#3a1552] text-gray-300 text-sm py-2 rounded-lg transition-colors flex items-center justify-center gap-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                  Get more appearances
+                </button>
+              </div>
             </div>
+          )}
 
-            {/* Mini Board Preview */}
-            <div className="mt-6 bg-[#1a0a2e] rounded-lg p-4">
-              <MonopolyBoard
-                properties={properties}
-                players={players}
-                currentPlayer={currentPlayer}
-                currentTurnPlayer={null}
-                isPreview={true}
-              />
+          {/* Show Start Game button when joined and waiting for host */}
+          {isPlayerInGame && !isHost && game && game.status === 'waiting' && (
+            <div className="max-w-md w-full px-8">
+              <div className="text-center">
+                <div className="mb-6 flex items-center justify-center gap-4">
+                  <div className="w-16 h-16 bg-white rounded-lg shadow-lg flex items-center justify-center">
+                    <span className="text-4xl font-bold">⚀</span>
+                  </div>
+                  <div className="w-16 h-16 bg-white rounded-lg shadow-lg flex items-center justify-center">
+                    <span className="text-4xl font-bold">⚁</span>
+                  </div>
+                </div>
+                <p className="text-gray-400 mb-2">Waiting for host to start the game...</p>
+                <p className="text-sm text-purple-400">Joined room {gameId.slice(0, 8)}</p>
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* Show Start Game option for host */}
+          {isHost && game && game.status === 'waiting' && (
+            <div className="max-w-md w-full px-8">
+              <div className="text-center">
+                <div className="mb-6 flex items-center justify-center gap-4">
+                  <div className="w-16 h-16 bg-white rounded-lg shadow-lg flex items-center justify-center">
+                    <span className="text-4xl font-bold">⚀</span>
+                  </div>
+                  <div className="w-16 h-16 bg-white rounded-lg shadow-lg flex items-center justify-center">
+                    <span className="text-4xl font-bold">⚁</span>
+                  </div>
+                </div>
+                <button
+                  onClick={startGame}
+                  disabled={loading || players.length < 2}
+                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-4 rounded-xl transition-all shadow-lg hover:shadow-purple-500/50 flex items-center justify-center gap-2 mb-2"
+                >
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+                  </svg>
+                  {loading ? 'Starting...' : 'Start Game'}
+                </button>
+                <p className="text-gray-400 text-sm">{players.length} / {maxPlayers} players joined</p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Right Panel - Players and Actions */}
@@ -653,18 +717,6 @@ function Lobby() {
             </>
           )}
 
-          {/* Start game button */}
-          {isHost && (
-            <div className="mt-6">
-              <button
-                onClick={startGame}
-                disabled={loading || players.length < 2}
-                className="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition-colors"
-              >
-                {loading ? 'Starting...' : 'Start Game'}
-              </button>
-            </div>
-          )}
         </div>
       </div>
 
@@ -711,62 +763,6 @@ function Lobby() {
                   <span>&gt;&gt;</span> Join Game
                 </button>
               </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Color selection overlay modal */}
-      <AnimatePresence>
-        {showColorSelection && !isPlayerInGame && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-[#3a1552] rounded-2xl p-8 max-w-lg w-full mx-4"
-            >
-              <h2 className="text-white text-xl font-semibold mb-6">Select your player appearance:</h2>
-              
-              {/* Color grid - matching richup.io 3x3 layout */}
-              <div className="grid grid-cols-3 gap-4 mb-6">
-                {PLAYER_COLORS.map((colorObj, idx) => {
-                  const takenPlayer = playerByColor.get(colorObj.name)
-                  const isSelected = selectedColor === colorObj.name
-                  const isTaken = Boolean(takenPlayer)
-                  
-                  return (
-                    <button
-                      key={colorObj.name}
-                      onClick={() => !isTaken && setSelectedColor(colorObj.name)}
-                      disabled={isTaken}
-                      className={`
-                        w-16 h-16 rounded-full relative mx-auto
-                        ${isSelected ? 'ring-4 ring-purple-400 shadow-2xl scale-110' : ''}
-                        ${isTaken ? 'opacity-30 cursor-not-allowed' : 'hover:ring-2 hover:ring-purple-500 cursor-pointer'}
-                        transition-all duration-200 border-4
-                        ${isSelected ? 'border-purple-400' : 'border-transparent'}
-                      `}
-                      style={{ backgroundColor: colorObj.hex }}
-                    >
-                    </button>
-                  )
-                })}
-              </div>
-
-              {/* Join game button */}
-              <button
-                onClick={joinGame}
-                disabled={loading || !selectedColor}
-                className="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors"
-              >
-                {loading ? 'Joining...' : 'Join game'}
-              </button>
             </motion.div>
           </motion.div>
         )}
