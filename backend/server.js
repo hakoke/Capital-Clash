@@ -22,7 +22,7 @@ dotenv.config();
 // Run database migrations on startup
 async function runMigrations() {
   try {
-    const migrationPath = path.join(__dirname, 'database', 'add_money_column.sql');
+    const migrationPath = path.join(__dirname, 'database', 'migrations.sql');
     if (fs.existsSync(migrationPath)) {
       const migration = fs.readFileSync(migrationPath, 'utf8');
       await pool.query(migration);
