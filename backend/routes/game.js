@@ -74,6 +74,23 @@ router.post('/:gameId/initialize-board', async (req, res) => {
   try {
     const { gameId } = req.params;
 
+    // Check if properties table exists, if not create it
+    try {
+      await pool.query('SELECT 1 FROM properties LIMIT 1');
+    } catch (err) {
+      // Table doesn't exist, initialize it
+      console.log('Initializing Monopoly schema...');
+      const schemaPath = path.join(__dirname, '../database/schema_monopoly.sql');
+      const schema = fs.readFileSync(schemaPath, 'utf8');
+      const statements = schema.split(';').filter(s => s.trim());
+      for (const statement of statements) {
+        if (statement.trim()) {
+          await pool.query(statement);
+        }
+      }
+      console.log('✅ Schema initialized successfully');
+    }
+
     // Create all Monopoly properties
     for (const prop of MONOPOLY_PROPERTIES) {
       await pool.query(
@@ -136,7 +153,7 @@ router.post('/:gameId/start', async (req, res) => {
     } catch (err) {
       // Table doesn't exist, initialize it
       console.log('Initializing Monopoly schema...');
-      const schemaPath = path.join(__dirname, 'schema_monopoly.sql');
+      const schemaPath = path.join(__dirname, '../database/schema_monopoly.sql');
       const schema = fs.readFileSync(schemaPath, 'utf8');
       const statements = schema.split(';').filter(s => s.trim());
       for (const statement of statements) {
