@@ -4,7 +4,9 @@ import { Server } from 'socket.io';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
+import pool from './database/index.js';
 import gameRoutes from './routes/game.js';
 import playerRoutes from './routes/player.js';
 import aiRoutes from './routes/ai.js';
@@ -16,6 +18,22 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 dotenv.config();
+
+// Run database migrations on startup
+async function runMigrations() {
+  try {
+    const migrationPath = path.join(__dirname, 'database', 'add_money_column.sql');
+    if (fs.existsSync(migrationPath)) {
+      const migration = fs.readFileSync(migrationPath, 'utf8');
+      await pool.query(migration);
+      console.log('✅ Database migrations completed');
+    }
+  } catch (error) {
+    console.error('⚠️ Migration error (non-critical):', error.message);
+  }
+}
+
+runMigrations();
 
 const app = express();
 const httpServer = createServer(app);
