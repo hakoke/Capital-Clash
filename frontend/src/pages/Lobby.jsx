@@ -389,19 +389,19 @@ function Lobby() {
             <div className="relative z-10" style={{ 
               maxWidth: '380px',
               backdropFilter: 'blur(12px)',
-              background: 'rgba(15, 12, 30, 0.75)',
+              background: 'rgba(13, 10, 24, 0.8)',
               borderRadius: '12px',
               padding: '32px',
-              boxShadow: '0 0 60px rgba(0, 255, 255, 0.08), inset 0 0 60px rgba(255,255,255,0.05)',
+              boxShadow: '0 0 60px rgba(0, 255, 255, 0.08), inset 0 0 40px rgba(0,0,0,0.6), inset 0 0 80px rgba(0,255,255,0.03)',
               border: 'none'
             }}>
                 <div style={{
                   position: 'absolute',
                   inset: 0,
                   borderRadius: '12px',
-                  background: 'radial-gradient(circle, rgba(30,25,55,0.9) 0%, rgba(10,8,25,0.75) 80%)',
+                  background: 'radial-gradient(circle at center, rgba(35,30,60,0.9) 0%, rgba(10,8,20,0.8) 80%)',
                   pointerEvents: 'none',
-                  opacity: 0.9
+                  opacity: 0.85
                 }}></div>
                 
                 {/* Light spill effect from avatars */}
@@ -409,9 +409,9 @@ function Lobby() {
                   position: 'absolute',
                   inset: 0,
                   borderRadius: '12px',
-                  background: 'radial-gradient(circle, rgba(0,255,255,0.1) 0%, transparent 70%)',
+                  background: 'radial-gradient(circle, rgba(0,255,255,0.08) 0%, transparent 70%)',
                   pointerEvents: 'none',
-                  opacity: 0.6
+                  opacity: 0.5
                 }}></div>
                 
                 <div style={{ position: 'relative', zIndex: 1 }}>
@@ -438,9 +438,9 @@ function Lobby() {
                             height: '72px',
                             background: isTaken 
                               ? 'transparent' 
-                              : `radial-gradient(circle at 30% 25%, rgba(255,255,255,0.15) 2%, ${colorObj.hex} 90%)`,
+                              : `radial-gradient(circle at 30% 25%, rgba(255,255,255,0.12) 2%, ${colorObj.hex} 90%)`,
                             boxShadow: isSelected 
-                              ? '0 0 25px rgba(0, 230, 255, 0.6)' 
+                              ? '0 0 25px rgba(0, 230, 255, 0.5), inset 0 0 15px rgba(255,255,255,0.05)' 
                               : 'none',
                             transition: 'all 0.2s ease',
                             border: isSelected ? 'none' : 'none'
