@@ -177,6 +177,20 @@ router.post('/:gameId/start', async (req, res) => {
     } catch (err) {
       // Column might already exist, ignore
     }
+    
+    // Ensure game settings columns exist
+    try {
+      await pool.query(`ALTER TABLE games 
+        ADD COLUMN IF NOT EXISTS double_rent_on_full_set BOOLEAN DEFAULT true,
+        ADD COLUMN IF NOT EXISTS vacation_cash BOOLEAN DEFAULT true,
+        ADD COLUMN IF NOT EXISTS auction_enabled BOOLEAN DEFAULT true,
+        ADD COLUMN IF NOT EXISTS no_rent_in_prison BOOLEAN DEFAULT true,
+        ADD COLUMN IF NOT EXISTS mortgage_enabled BOOLEAN DEFAULT true,
+        ADD COLUMN IF NOT EXISTS even_build BOOLEAN DEFAULT true,
+        ADD COLUMN IF NOT EXISTS starting_cash DECIMAL(15, 2) DEFAULT 1500.00`);
+    } catch (err) {
+      // Columns might already exist, ignore
+    }
 
     // Initialize board if not already done
     const propertiesResult = await pool.query(
@@ -424,6 +438,40 @@ router.post('/:gameId/advance-turn', async (req, res) => {
     });
   } catch (error) {
     console.error('Error advancing turn:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Update game settings
+router.post('/:gameId/settings', async (req, res) => {
+  try {
+    const { gameId } = req.params;
+    const { setting, value } = req.body;
+    
+    // Validate setting name
+    const validSettings = [
+      'double_rent_on_full_set',
+      'vacation_cash',
+      'auction_enabled',
+      'no_rent_in_prison',
+      'mortgage_enabled',
+      'even_build',
+      'starting_cash'
+    ];
+    
+    if (!validSettings.includes(setting)) {
+      return res.status(400).json({ success: false, error: 'Invalid setting' });
+    }
+    
+    // Update the setting
+    await pool.query(
+      `UPDATE games SET ${setting} = $1 WHERE id = $2`,
+      [value, gameId]
+    );
+    
+    res.json({ success: true, message: 'Setting updated' });
+  } catch (error) {
+    console.error('Error updating settings:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });

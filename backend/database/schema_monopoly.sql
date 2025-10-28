@@ -9,6 +9,14 @@ CREATE TABLE IF NOT EXISTS games (
     name VARCHAR(255) NOT NULL,
     status VARCHAR(50) NOT NULL DEFAULT 'waiting', -- waiting, active, finished
     current_player_turn INTEGER DEFAULT 1,
+    -- Game settings
+    double_rent_on_full_set BOOLEAN DEFAULT true,
+    vacation_cash BOOLEAN DEFAULT true,
+    auction_enabled BOOLEAN DEFAULT true,
+    no_rent_in_prison BOOLEAN DEFAULT true,
+    mortgage_enabled BOOLEAN DEFAULT true,
+    even_build BOOLEAN DEFAULT true,
+    starting_cash DECIMAL(15, 2) DEFAULT 1500.00,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

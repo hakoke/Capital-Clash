@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { Users, Play } from 'lucide-react'
 import { PLAYER_COLORS } from '../utils/monopolyConstants.js'
+import GameSettingToggle from '../components/GameSettingToggle.jsx'
 
 function Lobby() {
   const { gameId } = useParams()
@@ -17,6 +18,8 @@ function Lobby() {
   const [linkCopied, setLinkCopied] = useState(false)
   const [showColorSelection, setShowColorSelection] = useState(false)
   const [showNameInput, setShowNameInput] = useState(true)
+  const [customStartingCash, setCustomStartingCash] = useState('1500')
+  const [showCustomInput, setShowCustomInput] = useState(false)
 
   useEffect(() => {
     fetchGameData()
@@ -81,6 +84,18 @@ function Lobby() {
       alert('Failed to join game: ' + (error.response?.data?.error || error.message))
     } finally {
       setLoading(false)
+    }
+  }
+
+  const updateStartingCash = async (amount) => {
+    try {
+      await axios.post(`/api/game/${gameId}/settings`, {
+        setting: 'starting_cash',
+        value: amount
+      })
+      fetchGameData()
+    } catch (error) {
+      console.error('Error updating starting cash:', error)
     }
   }
 
@@ -217,88 +232,64 @@ function Lobby() {
           </div>
         </div>
         
-        {/* Game Settings */}
-        {players.length > 0 && (
+        {/* Game Settings - Only for host */}
+        {players.length > 0 && game.status === 'waiting' && isPlayerInGame && players.find(p => p.order_in_game === 1)?.id === currentPlayerId && (
           <div className="bg-purple-900 rounded-2xl shadow-xl p-6 mb-6 border-2 border-purple-700">
             <h3 className="text-xl font-bold text-white mb-4">Gameplay rules</h3>
             <div className="space-y-3">
-              <div className="flex items-center justify-between bg-purple-800 rounded-lg p-3">
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">💰</span>
-                  <div>
-                    <div className="text-sm font-semibold text-white">x2 rent on full-set properties</div>
-                    <div className="text-xs text-purple-300">If a player owns a full property set, the base rent payment will be doubled</div>
-                  </div>
-                </div>
-                <div className="bg-purple-600 rounded-full w-12 h-6 flex items-center justify-end px-1 cursor-pointer">
-                  <div className="w-4 h-4 bg-white rounded-full"></div>
-                </div>
-              </div>
+              <GameSettingToggle
+                icon="💰"
+                title="x2 rent on full-set properties"
+                description="If a player owns a full property set, the base rent payment will be doubled"
+                setting="double_rent_on_full_set"
+                gameId={gameId}
+                game={game}
+              />
               
-              <div className="flex items-center justify-between bg-purple-800 rounded-lg p-3">
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">🏖️</span>
-                  <div>
-                    <div className="text-sm font-semibold text-white">Vacation cash</div>
-                    <div className="text-xs text-purple-300">If a player lands on Vacation, all collected money from taxes and bank payments will be earned</div>
-                  </div>
-                </div>
-                <div className="bg-purple-600 rounded-full w-12 h-6 flex items-center justify-end px-1 cursor-pointer">
-                  <div className="w-4 h-4 bg-white rounded-full"></div>
-                </div>
-              </div>
+              <GameSettingToggle
+                icon="🏖️"
+                title="Vacation cash"
+                description="If a player lands on Vacation, all collected money from taxes and bank payments will be earned"
+                setting="vacation_cash"
+                gameId={gameId}
+                game={game}
+              />
               
-              <div className="flex items-center justify-between bg-purple-800 rounded-lg p-3">
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">🔨</span>
-                  <div>
-                    <div className="text-sm font-semibold text-white">Auction</div>
-                    <div className="text-xs text-purple-300">If someone skips purchasing the property landed on, it will be sold to the highest bidder</div>
-                  </div>
-                </div>
-                <div className="bg-purple-600 rounded-full w-12 h-6 flex items-center justify-end px-1 cursor-pointer">
-                  <div className="w-4 h-4 bg-white rounded-full"></div>
-                </div>
-              </div>
+              <GameSettingToggle
+                icon="🔨"
+                title="Auction"
+                description="If someone skips purchasing the property landed on, it will be sold to the highest bidder"
+                setting="auction_enabled"
+                gameId={gameId}
+                game={game}
+              />
               
-              <div className="flex items-center justify-between bg-purple-800 rounded-lg p-3">
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">⚖️</span>
-                  <div>
-                    <div className="text-sm font-semibold text-white">Don't collect rent while in prison</div>
-                    <div className="text-xs text-purple-300">Rent will not be collected when landing on properties whose owners are in prison</div>
-                  </div>
-                </div>
-                <div className="bg-purple-600 rounded-full w-12 h-6 flex items-center justify-end px-1 cursor-pointer">
-                  <div className="w-4 h-4 bg-white rounded-full"></div>
-                </div>
-              </div>
+              <GameSettingToggle
+                icon="⚖️"
+                title="Don't collect rent while in prison"
+                description="Rent will not be collected when landing on properties whose owners are in prison"
+                setting="no_rent_in_prison"
+                gameId={gameId}
+                game={game}
+              />
               
-              <div className="flex items-center justify-between bg-purple-800 rounded-lg p-3">
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">🏠</span>
-                  <div>
-                    <div className="text-sm font-semibold text-white">Mortgage</div>
-                    <div className="text-xs text-purple-300">Mortgage properties to earn 50% of their cost, but you won't get paid rent when players land on them</div>
-                  </div>
-                </div>
-                <div className="bg-purple-600 rounded-full w-12 h-6 flex items-center justify-end px-1 cursor-pointer">
-                  <div className="w-4 h-4 bg-white rounded-full"></div>
-                </div>
-              </div>
+              <GameSettingToggle
+                icon="🏠"
+                title="Mortgage"
+                description="Mortgage properties to earn 50% of their cost, but you won't get paid rent when players land on them"
+                setting="mortgage_enabled"
+                gameId={gameId}
+                game={game}
+              />
               
-              <div className="flex items-center justify-between bg-purple-800 rounded-lg p-3">
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">⚖️</span>
-                  <div>
-                    <div className="text-sm font-semibold text-white">Even build</div>
-                    <div className="text-xs text-purple-300">Houses and hotels must be built up and sold off evenly within a property set</div>
-                  </div>
-                </div>
-                <div className="bg-purple-600 rounded-full w-12 h-6 flex items-center justify-end px-1 cursor-pointer">
-                  <div className="w-4 h-4 bg-white rounded-full"></div>
-                </div>
-              </div>
+              <GameSettingToggle
+                icon="⚖️"
+                title="Even build"
+                description="Houses and hotels must be built up and sold off evenly within a property set"
+                setting="even_build"
+                gameId={gameId}
+                game={game}
+              />
               
               <div className="flex items-center justify-between bg-purple-800 rounded-lg p-3">
                 <div className="flex items-center gap-3">
@@ -308,7 +299,60 @@ function Lobby() {
                     <div className="text-xs text-purple-300">Adjust how much money players start the game with</div>
                   </div>
                 </div>
-                <div className="text-green-400 font-bold">$1,500</div>
+                <div className="flex flex-col gap-2">
+                  <select
+                    value={parseInt(game.starting_cash || 1500)}
+                    onChange={(e) => {
+                      const val = e.target.value
+                      if (val === 'custom') {
+                        setShowCustomInput(true)
+                      } else {
+                        setShowCustomInput(false)
+                        updateStartingCash(parseInt(val))
+                      }
+                    }}
+                    className="bg-purple-700 text-white border border-purple-600 rounded-lg px-3 py-1.5 text-sm font-bold"
+                  >
+                    <option value="500">$500</option>
+                    <option value="1000">$1,000</option>
+                    <option value="1500">$1,500 (Classic)</option>
+                    <option value="2000">$2,000</option>
+                    <option value="2500">$2,500</option>
+                    <option value="3000">$3,000</option>
+                    <option value="custom">Custom...</option>
+                  </select>
+                  
+                  {showCustomInput && (
+                    <div className="flex gap-2">
+                      <input
+                        type="number"
+                        value={customStartingCash}
+                        onChange={(e) => setCustomStartingCash(e.target.value)}
+                        placeholder="Enter amount"
+                        min="100"
+                        step="100"
+                        className="bg-purple-800 text-white border border-purple-600 rounded-lg px-3 py-1.5 text-sm w-32"
+                      />
+                      <button
+                        onClick={() => {
+                          const amount = parseInt(customStartingCash)
+                          if (amount >= 100) {
+                            updateStartingCash(amount)
+                          }
+                        }}
+                        className="bg-purple-600 hover:bg-purple-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold transition-all"
+                      >
+                        Set
+                      </button>
+                      <button
+                        onClick={() => setShowCustomInput(false)}
+                        className="bg-gray-600 hover:bg-gray-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold transition-all"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
