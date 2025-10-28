@@ -30,6 +30,8 @@ function Lobby() {
   const [maxPlayers, setMaxPlayers] = useState(4)
   const [chatMessages, setChatMessages] = useState([])
   const [chatInput, setChatInput] = useState('')
+  const [startingCash, setStartingCash] = useState(1500)
+  const [customStartingCash, setCustomStartingCash] = useState('')
 
   const socketRef = useRef(null)
 
@@ -367,16 +369,21 @@ function Lobby() {
               <div className="bg-[#2a0f3f] rounded-lg p-4 mb-4">
                 <h3 className="text-white font-semibold mb-3">Players ({players.length}/{maxPlayersValue})</h3>
                 <div className="space-y-2">
-                  {players.map(player => (
-                    <div key={player.id} className="flex items-center gap-2 bg-[#1a0033] rounded p-2">
-                      <div 
-                        className="w-8 h-8 rounded-full"
-                        style={{ backgroundColor: player.color || '#999' }}
-                      />
-                      <span className="text-white text-sm">{player.name}</span>
-                      {player.order_in_game === 1 && <Crown className="w-4 h-4 text-yellow-300" />}
-                    </div>
-                  ))}
+                  {players.map(player => {
+                    const colorData = PLAYER_COLORS.find(c => c.name === player.color)
+                    const colorHex = colorData?.hex || '#999'
+                    
+                    return (
+                      <div key={player.id} className="flex items-center gap-2 bg-[#1a0033] rounded p-2">
+                        <div 
+                          className="w-8 h-8 rounded-full border-2 border-purple-600"
+                          style={{ backgroundColor: colorHex }}
+                        />
+                        <span className="text-white text-sm">{player.name}</span>
+                        {player.order_in_game === 1 && <Crown className="w-4 h-4 text-yellow-300" />}
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
             ) : (
@@ -384,93 +391,86 @@ function Lobby() {
             )}
           </div>
 
-          {/* Game settings */}
-          <div className="mb-6">
-            <h3 className="text-white text-sm font-semibold mb-4">Game settings</h3>
-            <div className="space-y-4">
-              {/* Maximum players */}
-              <div className="bg-[#2a0f3f] rounded-lg p-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-3 flex-1">
-                    <div className="mt-0.5 flex items-center gap-1">
-                      <Users className="w-5 h-5 text-gray-300" />
+          {/* ALL settings are host-only */}
+          {isHost && (
+            <>
+            <div className="mb-6">
+              <h3 className="text-white text-sm font-semibold mb-4">Game settings</h3>
+              <div className="space-y-4">
+                {/* Maximum players */}
+                <div className="bg-[#2a0f3f] rounded-lg p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-3 flex-1">
+                      <div className="mt-0.5 flex items-center gap-1">
+                        <Users className="w-5 h-5 text-gray-300" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-white font-semibold text-sm">Maximum players</p>
+                        <p className="text-gray-400 text-xs mt-0.5">How many players can join the game</p>
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <p className="text-white font-semibold text-sm">Maximum players</p>
-                      <p className="text-gray-400 text-xs mt-0.5">How many players can join the game</p>
-                    </div>
+                    <select 
+                      value={maxPlayers}
+                      onChange={(e) => setMaxPlayers(parseInt(e.target.value))}
+                      className="bg-[#2a0f3f] text-white text-sm px-3 py-1.5 rounded-lg border border-purple-700"
+                    >
+                      <option value="2">2</option>
+                      <option value="3">3</option>
+                      <option value="4">4</option>
+                      <option value="5">5</option>
+                      <option value="6">6</option>
+                    </select>
                   </div>
-                  <select 
-                    value={maxPlayers}
-                    onChange={(e) => setMaxPlayers(parseInt(e.target.value))}
-                    className="bg-[#2a0f3f] text-white text-sm px-3 py-1.5 rounded-lg border border-purple-700"
-                  >
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="4">4</option>
-                    <option value="5">5</option>
-                    <option value="6">6</option>
-                  </select>
                 </div>
-              </div>
 
-              {/* Private room */}
-              <div className="bg-[#2a0f3f] rounded-lg p-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-3 flex-1">
-                    <div className="w-5 h-5 text-gray-300 mt-0.5">🔑</div>
-                    <div className="flex-1">
-                      <p className="text-white font-semibold text-sm">Private room</p>
-                      <p className="text-gray-400 text-xs mt-0.5">Private rooms can be accessed using the room URL only</p>
+                {/* Starting cash */}
+                <div className="bg-[#2a0f3f] rounded-lg p-4">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-start gap-3 flex-1">
+                      <div className="w-5 h-5 text-gray-300 mt-0.5">💰</div>
+                      <div className="flex-1">
+                        <p className="text-white font-semibold text-sm">Starting cash</p>
+                        <p className="text-gray-400 text-xs mt-0.5">Amount of cash each player starts with</p>
+                      </div>
                     </div>
+                    <select 
+                      value={startingCash === 'custom' ? 'custom' : startingCash}
+                      onChange={(e) => {
+                        const val = e.target.value
+                        if (val === 'custom') {
+                          setStartingCash('custom')
+                        } else {
+                          setStartingCash(parseInt(val))
+                        }
+                      }}
+                      className="bg-[#2a0f3f] text-white text-sm px-3 py-1.5 rounded-lg border border-purple-700"
+                    >
+                      <option value="1000">$1,000</option>
+                      <option value="1500">$1,500</option>
+                      <option value="2000">$2,000</option>
+                      <option value="2500">$2,500</option>
+                      <option value="custom">Custom</option>
+                    </select>
                   </div>
-                  <div className="w-14 h-7 bg-purple-600 rounded-full relative cursor-pointer">
-                    <div className="absolute right-1 top-1 w-5 h-5 bg-white rounded-full transition-transform"></div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Allow bots */}
-              <div className="bg-[#2a0f3f] rounded-lg p-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-3 flex-1">
-                    <Bot className="w-5 h-5 text-gray-300 mt-0.5" />
-                    <div className="flex-1">
-                      <p className="text-white font-semibold text-sm">Allow bots to join <span className="text-blue-400 text-xs">Beta</span></p>
-                      <p className="text-gray-400 text-xs mt-0.5">Bots will join the game based on availability</p>
+                  {startingCash === 'custom' && (
+                    <div className="ml-8 mt-2">
+                      <input
+                        type="number"
+                        value={customStartingCash}
+                        onChange={(e) => setCustomStartingCash(e.target.value)}
+                        placeholder="Enter custom amount"
+                        className="w-full bg-[#1a0033] text-white text-sm px-3 py-2 rounded-lg border border-purple-700 focus:border-purple-500 focus:outline-none"
+                      />
                     </div>
-                  </div>
-                  <div className="w-14 h-7 bg-gray-700 rounded-full relative cursor-pointer">
-                    <div className="absolute left-1 top-1 w-5 h-5 bg-white rounded-full transition-transform"></div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Board map */}
-              <div className="bg-[#2a0f3f] rounded-lg p-4">
-                <div className="flex items-start justify-between mb-1">
-                  <div className="flex items-start gap-3 flex-1">
-                    <div className="w-5 h-5 text-gray-300 mt-0.5">📍</div>
-                    <div className="flex-1">
-                      <p className="text-white font-semibold text-sm">Board map</p>
-                      <p className="text-gray-400 text-xs mt-0.5">Change map tiles, properties and stacks</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 ml-8">
-                  <span className="text-white text-sm">Classic</span>
-                  <span className="text-gray-400 text-xs">Browse maps &gt;</span>
+                  )}
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Gameplay rules */}
-          <div>
-            <h3 className="text-white text-sm font-semibold mb-4">Gameplay rules</h3>
-            <div className="space-y-4">
-              {isHost && game.status === 'waiting' && (
-                <>
+            {/* Gameplay rules */}
+            <div>
+              <h3 className="text-white text-sm font-semibold mb-4">Gameplay rules</h3>
+              <div className="space-y-4">
                 <GameSettingToggle
                   icon="💰"
                     title="x2 rent on full-set properties"
@@ -515,10 +515,19 @@ function Lobby() {
                   gameId={gameId}
                   game={game}
                 />
-                </>
-              )}
+
+                <GameSettingToggle
+                  icon="🏘️"
+                    title="Even build"
+                    description="Houses and hotels must be built up and sold off evenly within a property set"
+                  setting="even_build"
+                  gameId={gameId}
+                  game={game}
+                />
+              </div>
             </div>
-          </div>
+            </>
+          )}
 
           {/* Start game button */}
           {isHost && (
@@ -578,32 +587,13 @@ function Lobby() {
                 })}
               </div>
 
-              {/* Selected player appearance preview */}
-              {selectedColor && (
-                <div className="mb-6 flex items-center justify-end">
-                  <div className="relative">
-                    <div 
-                      className="w-20 h-20 rounded-full border-4 border-purple-400 shadow-2xl shadow-purple-400/50"
-                      style={{ backgroundColor: PLAYER_COLORS.find(c => c.name === selectedColor)?.hex }}
-                    >
-                    </div>
-                  </div>
-                </div>
-              )}
-
               {/* Join game button */}
               <button
                 onClick={joinGame}
                 disabled={loading || !selectedColor}
-                className="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors mb-3"
+                className="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors"
               >
                 {loading ? 'Joining...' : 'Join game'}
-              </button>
-
-              {/* Get more appearances button */}
-              <button className="w-full text-purple-400 hover:text-purple-300 text-sm flex items-center justify-center gap-2 py-2 transition-colors">
-                <span className="w-4 h-4">🛒</span>
-                Get more appearances
               </button>
             </motion.div>
           </motion.div>
