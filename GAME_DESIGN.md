@@ -27,7 +27,7 @@ Each district has tiles that can be **bought, developed, or leased**, similar to
 ## 🎮 Gameplay Overview
 Each match lasts **8–10 rounds (quarters)**.
 Players start with:
-* A company name that they choose
+* A company name that they choosme
 * $1M capital
 * 1 random starting district
 
