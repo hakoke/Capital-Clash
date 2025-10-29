@@ -1365,7 +1365,7 @@ input:focus, textarea:focus, select:focus {
   gap: 32px;
   width: 100%;
   height: 100%;
-  padding: 12px;
+  padding: 8px;
   border-radius: 30px;
   background: linear-gradient(180deg, rgba(15, 17, 35, 0.88) 0%, rgba(8, 10, 22, 0.94) 100%);
   border: 1px solid rgba(124, 197, 255, 0.18);
@@ -1375,7 +1375,7 @@ input:focus, textarea:focus, select:focus {
 
 .poordown-board-stage--solo {
   gap: 0;
-  padding: 12px;
+  padding: 8px;
 }
 
 .poordown-board-stage--solo .poordown-board-stage__board {
