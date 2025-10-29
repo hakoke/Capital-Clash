@@ -68,11 +68,8 @@ const computeTileMeta = (rawPosition) => {
 }
 
 const getDisplayName = (name = '') => {
-  if (name.length <= 16) return name
-  const trimmed = name.slice(0, 14).trim()
-  const lastSpace = trimmed.lastIndexOf(' ')
-  if (lastSpace > 8) return trimmed.slice(0, lastSpace) + '…'
-  return trimmed + '…'
+  // Show full names - no truncation for readability
+  return name || ''
 }
 
 const getFallbackProperties = () => {
