@@ -1373,6 +1373,15 @@ input:focus, textarea:focus, select:focus {
   backdrop-filter: blur(22px) saturate(170%);
 }
 
+.poordown-board-stage--solo {
+  gap: 0;
+  padding: 32px;
+}
+
+.poordown-board-stage--solo .poordown-board-stage__board {
+  max-width: 640px;
+}
+
 .poordown-board-stage__board {
   flex: 1;
   max-width: 520px;

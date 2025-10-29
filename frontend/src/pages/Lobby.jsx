@@ -263,18 +263,19 @@ function Lobby() {
     ) : null
   )
 
-  const renderDie = (value) => (
-    <div className="poordown-die" key={`die-${value}`}>
-      <div className="poordown-die__face">
+  const renderHubDie = (value, key) => (
+    <div className={`poordown-center-die ${value ? '' : 'poordown-center-die--idle'}`} key={key}>
+      <div className="poordown-center-die__face">
         {Array.from({ length: 9 }).map((_, idx) => (
-          <div key={`pip-${value}-${idx}`} className="poordown-die__cell">
+          <div key={`${key}-${idx}`} className="poordown-center-die__cell">
             <span
-              className="poordown-die__pip"
-              style={{ opacity: DICE_PIPS[value]?.includes(idx) ? 1 : 0 }}
+              className="poordown-center-die__pip"
+              style={{ opacity: value && DICE_PIPS[value]?.includes(idx) ? 1 : 0 }}
             ></span>
           </div>
         ))}
       </div>
+      <div className="poordown-center-die__shadow" aria-hidden="true"></div>
     </div>
   )
 
@@ -282,77 +283,48 @@ function Lobby() {
     const isHostView = variant === 'host'
     const minimumPlayers = 2
     const canStart = players.length >= minimumPlayers
-    const visiblePlayers = players.slice(0, 4)
+
+    const centerContent = (
+      <div className={`poordown-board-hub ${isHostView ? '' : 'poordown-board-hub--guest'}`}>
+        <span className="poordown-board-hub__subtitle">Host controls</span>
+        <h3 className="poordown-board-hub__title">Launch the trip</h3>
+
+        <div className="poordown-board-hub__dice">
+          {renderHubDie(3, `lobby-${variant}-die-1`)}
+          {renderHubDie(4, `lobby-${variant}-die-2`)}
+        </div>
+
+        <div className="poordown-board-hub__meta">{players.length} / {maxPlayers} players</div>
+
+        {isHostView ? (
+          <button
+            onClick={startGame}
+            disabled={loading || !canStart}
+            className="poordown-start-button poordown-start-button--board"
+          >
+            <span>▶</span>
+            <span>{loading ? 'Starting…' : canStart ? 'Start game' : 'Need 2 players'}</span>
+          </button>
+        ) : (
+          <div className="poordown-board-hub__chip">Waiting for host</div>
+        )}
+
+        <p className="poordown-board-hub__hint">
+          Need at least two players to begin.
+        </p>
+      </div>
+    )
 
     return (
-      <div className="poordown-board-stage">
+      <div className="poordown-board-stage poordown-board-stage--solo">
         <div className="poordown-board-stage__board">
           <MonopolyBoard
             properties={properties}
             players={[]}
             currentPlayer={null}
-            currentTurnPlayer={null}
             isPreview={true}
+            centerContent={centerContent}
           />
-        </div>
-        <div className="poordown-board-stage__panel">
-          <div>
-            <div className="poordown-panel-subtitle">{isHostView ? 'Host controls' : 'Lobby ready'}</div>
-            <h3>{isHostView ? 'Launch the trip' : 'Waiting to launch'}</h3>
-          </div>
-
-          <div className="poordown-dice-stack">
-            {renderDie(3)}
-            {renderDie(4)}
-          </div>
-
-          <div className="poordown-start-meta">
-            <span className="poordown-players-dot">{players.length} / {maxPlayers} players</span>
-          </div>
-
-          <div className="space-y-2">
-            {isHostView ? (
-              <>
-                <button
-                  onClick={startGame}
-                  disabled={loading || !canStart}
-                  className="poordown-start-button"
-                >
-                  <span>▶</span>
-                  <span>{loading ? 'Starting...' : 'Start Game'}</span>
-                </button>
-                <p className="poordown-start-meta">
-                  {canStart ? 'Ready when everyone is set.' : 'Need at least two players to begin.'}
-                </p>
-              </>
-            ) : (
-              <div className="poordown-status-chip">Waiting for host</div>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            {visiblePlayers.map((player) => {
-              const isYou = currentPlayerId && player.id === currentPlayerId
-              return (
-                <div
-                  key={player.id}
-                  className={`poordown-player-row ${isYou ? 'you' : ''}`}
-                >
-                  <PlayerAvatar color={player.color} size="sm" showCrown={player.order_in_game === 1} />
-                  <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-sm text-white truncate">{player.name}</div>
-                    <div className="poordown-player-meta">{player.color.replace('_', ' ')}</div>
-                  </div>
-                  <div className="poordown-player-money">${player.money || 1500}</div>
-                </div>
-              )
-            })}
-            {players.length === 0 && (
-              <div className="text-xs text-center text-purple-300 opacity-70">
-                Waiting for friends to join...
-              </div>
-            )}
-          </div>
         </div>
       </div>
     )
