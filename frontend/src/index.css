@@ -850,11 +850,12 @@ input:focus, textarea:focus, select:focus {
   position: absolute;
   inset: -120px;
   border-radius: 32px;
-  background: radial-gradient(circle at 50% 35%, rgba(80, 220, 255, 0.55) 0%, rgba(80, 220, 255, 0) 58%),
-    radial-gradient(circle at 20% 80%, rgba(167, 139, 250, 0.45) 0%, rgba(167, 139, 250, 0) 60%),
-    radial-gradient(circle at 85% 80%, rgba(45, 212, 191, 0.35) 0%, rgba(45, 212, 191, 0) 62%);
+  background: 
+    radial-gradient(circle at 50% 35%, rgba(80, 220, 255, 0.25) 0%, rgba(80, 220, 255, 0) 58%),
+    radial-gradient(circle at 20% 80%, rgba(167, 139, 250, 0.2) 0%, rgba(167, 139, 250, 0) 60%),
+    radial-gradient(circle at 85% 80%, rgba(45, 212, 191, 0.15) 0%, rgba(45, 212, 191, 0) 62%);
   filter: blur(90px);
-  opacity: 0.85;
+  opacity: 0.6;
   pointer-events: none;
   z-index: 0;
 }
@@ -864,10 +865,10 @@ input:focus, textarea:focus, select:focus {
   width: 100%;
   padding: 36px 40px 32px;
   border-radius: 24px;
-  background: linear-gradient(180deg, rgba(18, 22, 39, 0.96) 0%, rgba(10, 13, 26, 0.95) 100%);
-  box-shadow: 0 60px 140px -70px rgba(7, 11, 24, 0.95), 0 38px 80px -60px rgba(64, 217, 255, 0.45);
+  background: linear-gradient(180deg, rgba(18, 22, 39, 0.75) 0%, rgba(10, 13, 26, 0.8) 100%);
+  box-shadow: 0 60px 140px -70px rgba(7, 11, 24, 0.9), 0 38px 80px -60px rgba(64, 217, 255, 0.3);
   border: 1px solid rgba(113, 182, 255, 0.12);
-  backdrop-filter: blur(18px) saturate(150%);
+  backdrop-filter: blur(40px) saturate(160%);
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -882,9 +883,9 @@ input:focus, textarea:focus, select:focus {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: radial-gradient(circle at 50% 20%, rgba(255, 255, 255, 0.08) 0%, transparent 55%),
-    radial-gradient(circle at 50% 115%, rgba(12, 15, 28, 0.8) 0%, rgba(12, 15, 28, 0) 65%);
-  mix-blend-mode: screen;
+  background: radial-gradient(circle at 50% 20%, rgba(255, 255, 255, 0.06) 0%, transparent 55%),
+    radial-gradient(circle at 50% 115%, rgba(12, 15, 28, 0.4) 0%, rgba(12, 15, 28, 0) 65%);
+  mix-blend-mode: overlay;
   pointer-events: none;
 }
 
@@ -942,14 +943,19 @@ input:focus, textarea:focus, select:focus {
 .poordown-avatar-circle {
   --avatar-color: #6f3cf5;
   position: relative;
-  width: 72px;
-  height: 72px;
+  width: 64px;
+  height: 64px;
   border-radius: 999px;
   border: none;
-  background: radial-gradient(circle at 30% 25%, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0) 55%),
-    radial-gradient(circle at 70% 78%, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0) 60%),
-    var(--avatar-color);
-  box-shadow: 0 18px 28px -22px rgba(10, 12, 24, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  background: 
+    radial-gradient(circle at 28% 22%, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0) 35%),
+    radial-gradient(circle at 75% 80%, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0) 50%),
+    radial-gradient(circle at 50% 50%, var(--avatar-color) 0%, color-mix(in srgb, var(--avatar-color) 80%, black) 100%);
+  box-shadow: 
+    0 8px 16px -8px rgba(0, 0, 0, 0.6),
+    0 2px 8px rgba(0, 0, 0, 0.4),
+    inset 0 2px 4px rgba(255, 255, 255, 0.3),
+    inset 0 -2px 8px rgba(0, 0, 0, 0.3);
   transition: transform 0.25s ease, box-shadow 0.25s ease, filter 0.25s ease;
   cursor: default;
   overflow: hidden;
@@ -961,13 +967,24 @@ input:focus, textarea:focus, select:focus {
 
 .poordown-avatar-circle--interactive:hover {
   transform: scale(1.08);
-  box-shadow: 0 24px 48px -26px rgba(32, 189, 255, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.24);
-  filter: brightness(1.05);
+  box-shadow: 
+    0 12px 24px -12px rgba(0, 0, 0, 0.7),
+    0 4px 12px rgba(0, 0, 0, 0.5),
+    0 0 20px rgba(32, 189, 255, 0.4),
+    inset 0 2px 4px rgba(255, 255, 255, 0.35),
+    inset 0 -2px 8px rgba(0, 0, 0, 0.35);
+  filter: brightness(1.08);
 }
 
 .poordown-avatar-circle--selected {
   transform: scale(1.05);
-  box-shadow: 0 0 38px rgba(56, 189, 248, 0.55), 0 26px 46px -24px rgba(56, 189, 248, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.26);
+  box-shadow: 
+    0 0 0 3px rgba(56, 189, 248, 0.6),
+    0 0 38px rgba(56, 189, 248, 0.55),
+    0 12px 28px -12px rgba(0, 0, 0, 0.7),
+    0 4px 12px rgba(56, 189, 248, 0.4),
+    inset 0 2px 4px rgba(255, 255, 255, 0.35),
+    inset 0 -2px 8px rgba(0, 0, 0, 0.35);
   animation: poordown-avatar-pulse 2.8s ease-in-out infinite;
 }
 
@@ -1003,40 +1020,43 @@ input:focus, textarea:focus, select:focus {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: radial-gradient(circle at 24% 24%, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 45%),
-    linear-gradient(200deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0) 45%);
-  mix-blend-mode: screen;
-  opacity: 0.65;
+  background: 
+    radial-gradient(circle at 22% 20%, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0) 28%),
+    radial-gradient(circle at 38% 32%, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0) 35%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.15) 0%, transparent 50%, rgba(0, 0, 0, 0.1) 100%);
+  mix-blend-mode: overlay;
+  opacity: 0.85;
   pointer-events: none;
 }
 
 .poordown-avatar-eyes {
   position: absolute;
-  top: 26px;
+  top: 50%;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%);
   display: flex;
-  gap: 10px;
+  gap: 8px;
+  z-index: 10;
 }
 
 .poordown-eye {
   position: relative;
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   background: white;
-  box-shadow: 0 2px 4px rgba(17, 24, 39, 0.2), inset 0 -1px 2px rgba(17, 24, 39, 0.3);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), inset 0 -1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .poordown-pupil {
   position: absolute;
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background: #0b1120;
+  background: #0f172a;
   top: 50%;
   left: 50%;
-  transform: translate(-45%, -35%);
+  transform: translate(-50%, -50%);
 }
 
 .poordown-eye-glint {
@@ -1044,9 +1064,9 @@ input:focus, textarea:focus, select:focus {
   width: 3px;
   height: 3px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.8);
-  top: 28%;
-  left: 38%;
+  background: rgba(255, 255, 255, 0.9);
+  top: 25%;
+  left: 30%;
 }
 
 .poordown-join-button {
@@ -1140,11 +1160,23 @@ input:focus, textarea:focus, select:focus {
 @keyframes poordown-avatar-pulse {
   0%, 100% {
     transform: scale(1.05);
-    box-shadow: 0 0 36px rgba(56, 189, 248, 0.4), 0 24px 42px -24px rgba(56, 189, 248, 0.32);
+    box-shadow: 
+      0 0 0 3px rgba(56, 189, 248, 0.6),
+      0 0 32px rgba(56, 189, 248, 0.5),
+      0 12px 28px -12px rgba(0, 0, 0, 0.7),
+      0 4px 12px rgba(56, 189, 248, 0.3),
+      inset 0 2px 4px rgba(255, 255, 255, 0.35),
+      inset 0 -2px 8px rgba(0, 0, 0, 0.35);
   }
   50% {
-    transform: scale(1.095);
-    box-shadow: 0 0 44px rgba(56, 189, 248, 0.55), 0 26px 46px -20px rgba(56, 189, 248, 0.45);
+    transform: scale(1.08);
+    box-shadow: 
+      0 0 0 4px rgba(56, 189, 248, 0.7),
+      0 0 48px rgba(56, 189, 248, 0.65),
+      0 14px 32px -12px rgba(0, 0, 0, 0.8),
+      0 6px 16px rgba(56, 189, 248, 0.5),
+      inset 0 2px 4px rgba(255, 255, 255, 0.4),
+      inset 0 -2px 8px rgba(0, 0, 0, 0.4);
   }
 }
 
