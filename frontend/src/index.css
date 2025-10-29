@@ -2399,6 +2399,7 @@ input:focus, textarea:focus, select:focus {
     inset 0 2px 0 rgba(255, 255, 255, 0.05),
     inset 0 -2px 0 rgba(0, 0, 0, 0.3);
   overflow: hidden;
+  min-height: 0;
 }
 
 .modern-board::before {
