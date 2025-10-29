@@ -500,16 +500,10 @@ function Lobby() {
         </div>
 
         {/* Center - Conditional Display */}
-        <div className="flex-1 relative overflow-auto flex items-center justify-center" style={{ 
-          background: 'linear-gradient(rgba(0,0,0,0.3), transparent)',
-          backgroundSize: '100% 100%'
-        }}>
+        <div className="flex-1 relative overflow-hidden flex items-center justify-center poordown-main-stage">
           {/* Blurred board background with depth fade like RichUp */}
-          <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute inset-0" style={{ 
-              filter: 'blur(9px)',
-              opacity: 0.45
-            }}>
+          <div className="poordown-main-stage__backdrop" aria-hidden="true">
+            <div className="poordown-main-stage__board">
               <MonopolyBoard
                 properties={properties}
                 players={players}
