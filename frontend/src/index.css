@@ -1129,24 +1129,24 @@ input:focus, textarea:focus, select:focus {
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -42%);
-  gap: 8px;
+  transform: translate(-50%, -50%);
+  gap: 7px;
 }
 
 .poordown-avatar-eyes--floating .poordown-eye {
-  width: 15px;
-  height: 15px;
+  width: 14px;
+  height: 14px;
   box-shadow: 0 2px 5px rgba(4, 8, 24, 0.28), inset 0 -1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .poordown-avatar-eyes--floating .poordown-pupil {
-  width: 7px;
-  height: 7px;
+  width: 6.5px;
+  height: 6.5px;
 }
 
 .poordown-avatar-eyes--floating .poordown-eye-glint {
-  width: 3.5px;
-  height: 3.5px;
+  width: 3px;
+  height: 3px;
 }
 
 .poordown-join-button {
@@ -1412,6 +1412,169 @@ input:focus, textarea:focus, select:focus {
 
 .poordown-preview-center p {
   max-width: 220px;
+}
+
+.poordown-board-center__content {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.poordown-board-hub {
+  width: 100%;
+  max-width: 280px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  text-align: center;
+  color: rgba(226, 232, 255, 0.9);
+}
+
+.poordown-board-hub--active {
+  max-width: 320px;
+}
+
+.poordown-board-hub__subtitle {
+  font-size: 0.68rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba(148, 163, 196, 0.62);
+}
+
+.poordown-board-hub__title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+
+.poordown-board-hub__meta {
+  font-size: 0.78rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(196, 203, 255, 0.72);
+}
+
+.poordown-board-hub__hint {
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(148, 163, 196, 0.48);
+}
+
+.poordown-board-hub__chip {
+  padding: 6px 18px;
+  border-radius: 999px;
+  background: rgba(56, 189, 248, 0.18);
+  color: rgba(236, 252, 255, 0.88);
+  font-size: 0.68rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.poordown-board-hub__dice {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+}
+
+.poordown-center-die {
+  position: relative;
+  width: 82px;
+  height: 82px;
+  border-radius: 22px;
+  background: linear-gradient(150deg, #ffffff 0%, #e5ecff 60%, #cbd5f5 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), inset 0 -6px 18px rgba(148, 163, 184, 0.35), 0 18px 30px -18px rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+}
+
+.poordown-center-die__face {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.poordown-center-die__cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.poordown-center-die__pip {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: linear-gradient(160deg, #111827, #1f2937);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.4);
+}
+
+.poordown-center-die__shadow {
+  position: absolute;
+  bottom: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 58px;
+  height: 14px;
+  background: radial-gradient(circle, rgba(15, 23, 42, 0.35) 0%, rgba(15, 23, 42, 0) 70%);
+  filter: blur(4px);
+}
+
+.poordown-center-die--idle .poordown-center-die__pip {
+  opacity: 0.15;
+}
+
+.poordown-board-hub__player {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  justify-content: center;
+}
+
+.poordown-board-hub__player-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.poordown-board-hub__player-name {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.poordown-board-hub__player-seat {
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(148, 163, 196, 0.55);
+}
+
+.poordown-board-hub__waiting {
+  font-size: 0.78rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(148, 163, 196, 0.5);
+}
+
+.poordown-board-hub__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.poordown-start-button--board {
+  width: 100%;
 }
 
 .poordown-board-stage__panel {

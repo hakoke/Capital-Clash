@@ -11,7 +11,7 @@ const resolvePlayerColor = (color) => {
   return color
 }
 
-function MonopolyBoard({ properties, players, currentPlayer, onBuyProperty, isPreview = false }) {
+function MonopolyBoard({ properties, players, currentPlayer, onBuyProperty, isPreview = false, centerContent = null }) {
   const [selectedProperty, setSelectedProperty] = useState(null)
 
   // Organize properties by position (0-39) with themed overrides
@@ -299,19 +299,17 @@ function MonopolyBoard({ properties, players, currentPlayer, onBuyProperty, isPr
 
           {/* Center Board Background */}
           <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-[#20113c] via-[#231446] to-[#120724] rounded-xl border border-[#5d2fbf] shadow-inner min-w-0 p-2 md:p-4 relative overflow-hidden">
-            {isPreview ? (
+            {centerContent ? (
+              <div className="poordown-board-center__content">
+                {centerContent}
+              </div>
+            ) : isPreview ? (
               <div className="poordown-preview-center">
                 <span className="text-[0.65rem] uppercase tracking-[0.45em] text-purple-200/80">Board preview</span>
                 <h4 className="text-lg font-semibold tracking-[0.3em] text-white">Middle East Route</h4>
                 <p className="text-xs text-purple-200/70 tracking-[0.3em] uppercase">Palestine • Israel • UAE • Egypt • USA</p>
               </div>
-            ) : (
-              <div className="poordown-board-center">
-                <span className="poordown-board-center__subtitle">poordown route</span>
-                <h4 className="poordown-board-center__title">Middle East Board</h4>
-                <span className="poordown-board-center__tagline">Palestine • Israel • UAE • Egypt • USA</span>
-              </div>
-            )}
+            ) : null}
           </div>
 
           {/* Right Column: Position 11-19 (bottom to top) */}

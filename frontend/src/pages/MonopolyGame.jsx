@@ -300,18 +300,19 @@ function MonopolyGame() {
     ) : null
   )
 
-  const renderDie = (value, key) => (
-    <div className={`poordown-die ${value ? '' : 'poordown-die--idle'}`} key={key}>
-      <div className="poordown-die__face">
+  const renderHubDie = (value, key) => (
+    <div className={`poordown-center-die ${value ? '' : 'poordown-center-die--idle'}`} key={key}>
+      <div className="poordown-center-die__face">
         {Array.from({ length: 9 }).map((_, idx) => (
-          <div key={`${key}-${idx}`} className="poordown-die__cell">
+          <div key={`${key}-${idx}`} className="poordown-center-die__cell">
             <span
-              className="poordown-die__pip"
+              className="poordown-center-die__pip"
               style={{ opacity: value && DICE_PIPS[value]?.includes(idx) ? 1 : 0 }}
             ></span>
           </div>
         ))}
       </div>
+      <div className="poordown-center-die__shadow" aria-hidden="true"></div>
     </div>
   )
 
@@ -331,6 +332,77 @@ function MonopolyGame() {
     () => [...players].sort((a, b) => a.order_in_game - b.order_in_game),
     [players]
   )
+
+  const waitingCenterContent = (
+    <div className="poordown-board-hub">
+      <span className="poordown-board-hub__subtitle">Host controls</span>
+      <h3 className="poordown-board-hub__title">Launch the trip</h3>
+
+      <div className="poordown-board-hub__dice">
+        {renderHubDie(3, 'wait-1')}
+        {renderHubDie(4, 'wait-2')}
+      </div>
+
+      <div className="poordown-board-hub__meta">{players.length} / {maxPlayers} players</div>
+
+      {isHost ? (
+        <button
+          onClick={handleStartGame}
+          disabled={!canStartGame}
+          className="poordown-start-button poordown-start-button--board"
+        >
+          <span>▶</span>
+          <span>{canStartGame ? 'Start game' : 'Need 2 players'}</span>
+        </button>
+      ) : (
+        <div className="poordown-board-hub__chip">Waiting for host</div>
+      )}
+
+      <p className="poordown-board-hub__hint">Need at least two players to begin.</p>
+    </div>
+  )
+
+  const activeCenterContent = (
+    <div className="poordown-board-hub poordown-board-hub--active">
+      <span className="poordown-board-hub__subtitle">Current turn</span>
+      {currentTurnPlayer ? (
+        <div className="poordown-board-hub__player">
+          <PlayerAvatar color={currentTurnPlayer.color} size="md" showCrown={currentTurnPlayer.order_in_game === 1} />
+          <div className="poordown-board-hub__player-meta">
+            <span className="poordown-board-hub__player-name">{currentTurnPlayer.name}</span>
+            <span className="poordown-board-hub__player-seat">Seat #{currentTurnPlayer.order_in_game}</span>
+          </div>
+        </div>
+      ) : (
+        <div className="poordown-board-hub__waiting">Waiting for turn...</div>
+      )}
+
+      <div className="poordown-board-hub__dice">
+        {renderHubDie(lastDiceResult?.die1 || 0, 'play-1')}
+        {renderHubDie(lastDiceResult?.die2 || 0, 'play-2')}
+      </div>
+
+      {isMyTurn ? (
+        <div className="poordown-board-hub__actions">
+          {currentPlayer.can_roll ? (
+            <button onClick={handleRollDice} className="poordown-game-overlay-action-primary">
+              Roll dice
+            </button>
+          ) : (
+            <button onClick={handleEndTurn} className="poordown-game-overlay-action-secondary">
+              End turn
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="poordown-board-hub__chip">
+          {currentTurnPlayer ? `Waiting for ${currentTurnPlayer.name}` : 'Waiting for players'}
+        </div>
+      )}
+    </div>
+  )
+
+  const boardCenterContent = game.status === 'waiting' ? waitingCenterContent : activeCenterContent
 
   return (
     <div className="poordown-game-scene">
@@ -460,80 +532,8 @@ function MonopolyGame() {
                   players={players}
                   currentPlayer={currentPlayer}
                   onBuyProperty={handleBuyProperty}
+                  centerContent={boardCenterContent}
                 />
-              </div>
-
-              <div className="poordown-game-stage__overlay">
-                {game.status === 'waiting' ? (
-                  <div className="poordown-game-overlay-card">
-                    <span className="poordown-game-overlay-card__subtitle">Host controls</span>
-                    <h3 className="poordown-game-overlay-card__title">Launch the trip</h3>
-
-                    <div className="poordown-dice-stack">
-                      {renderDie(3, 'wait-1')}
-                      {renderDie(4, 'wait-2')}
-                    </div>
-
-                    <div className="poordown-game-overlay-card__meta">
-                      {players.length} / {maxPlayers} players
-                    </div>
-
-                    {isHost ? (
-                      <button
-                        onClick={handleStartGame}
-                        disabled={!canStartGame}
-                        className="poordown-start-button"
-                      >
-                        <span>▶</span>
-                        <span>{canStartGame ? 'Start game' : 'Need 2 players'}</span>
-                      </button>
-                    ) : (
-                      <div className="poordown-game-overlay-card__chip">Waiting for host</div>
-                    )}
-
-                    <p className="poordown-game-overlay-card__hint">
-                      Need at least two players to begin.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="poordown-game-overlay-card poordown-game-overlay-card--active">
-                    <span className="poordown-game-overlay-card__subtitle">Current turn</span>
-                    {currentTurnPlayer ? (
-                      <div className="poordown-game-overlay-player">
-                        <PlayerAvatar color={currentTurnPlayer.color} size="md" showCrown={currentTurnPlayer.order_in_game === 1} />
-                        <div className="poordown-game-overlay-player__meta">
-                          <span className="poordown-game-overlay-player__name">{currentTurnPlayer.name}</span>
-                          <span className="poordown-game-overlay-player__seat">Seat #{currentTurnPlayer.order_in_game}</span>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="poordown-game-overlay-player__waiting">Waiting for turn assignment...</div>
-                    )}
-
-                    <div className="poordown-dice-stack">
-                      {renderDie(lastDiceResult?.die1 || 0, 'play-1')}
-                      {renderDie(lastDiceResult?.die2 || 0, 'play-2')}
-                    </div>
-
-                    {isMyTurn ? (
-                      <div className="poordown-game-overlay-actions">
-                        {currentPlayer.can_roll ? (
-                          <button onClick={handleRollDice} className="poordown-game-overlay-action-primary">
-                            Roll dice
-                          </button>
-                        ) : (
-                          <button onClick={handleEndTurn} className="poordown-game-overlay-action-secondary">
-                            End turn
-                          </button>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="poordown-game-overlay-card__chip">
-                        {currentTurnPlayer ? `Waiting for ${currentTurnPlayer.name}` : 'Waiting for players'}
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
             </div>
           </main>
