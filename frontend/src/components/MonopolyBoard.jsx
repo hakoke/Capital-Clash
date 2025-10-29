@@ -391,17 +391,17 @@ function MonopolyBoard({
 
                 <div className="modern-board__tile-inner">
                 <div className="modern-board__tile-content">
+                  {Number(property.price) > 0 && (
+                    <span className="modern-board__tile-price">{formatMoney(property.price)}</span>
+                  )}
+                  <span className="modern-board__tile-name">{getDisplayName(property.name)}</span>
                   {property.flag && (
-                    <span className="modern-board__tile-flag" style={{ fontSize: '1.5em', marginBottom: '4px' }}>
+                    <span className="modern-board__tile-flag">
                       {property.flag}
                     </span>
                   )}
                   {property.displayIcon && !property.flag && (
                     <span className="modern-board__tile-icon">{property.displayIcon}</span>
-                  )}
-                  <span className="modern-board__tile-name">{getDisplayName(property.name)}</span>
-                  {Number(property.price) > 0 && (
-                    <span className="modern-board__tile-price">{formatMoney(property.price)}</span>
                   )}
             </div>
 

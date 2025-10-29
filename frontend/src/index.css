@@ -2471,7 +2471,7 @@ input:focus, textarea:focus, select:focus {
     0 8px 24px -16px rgba(12, 16, 32, 0.9),
     0 2px 8px rgba(124, 197, 255, 0.1);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow: hidden;
+  overflow: visible;
   min-height: 0;
 }
 
@@ -2506,14 +2506,15 @@ input:focus, textarea:focus, select:focus {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 6px;
+  justify-content: space-between;
+  gap: 4px;
   text-align: center;
   color: rgba(236, 239, 255, 0.92);
   width: 100%;
   height: 100%;
   text-transform: uppercase;
-  padding: 4px;
+  padding: 8px 4px 2px 4px;
+  position: relative;
 }
 
 .modern-board__tile--horizontal .modern-board__tile-content {
@@ -2532,22 +2533,26 @@ input:focus, textarea:focus, select:focus {
 }
 
 .modern-board__tile-icon {
-  font-size: clamp(0.9rem, 1.2vw, 1.1rem);
+  font-size: clamp(1.1rem, 1.5vw, 1.4rem);
   display: block;
   filter: drop-shadow(0 2px 6px rgba(56, 189, 248, 0.5));
   line-height: 1;
   transition: transform 0.3s ease;
   flex-shrink: 0;
+  margin-top: auto;
   margin-bottom: 4px;
 }
 
 .modern-board__tile-flag {
   display: block;
-  font-size: clamp(1.1em, 1.5vw, 1.4em) !important;
+  font-size: clamp(1.3em, 2vw, 1.8em) !important;
   line-height: 1;
-  margin-bottom: 4px;
+  margin-top: auto;
+  margin-bottom: -8px;
   filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.5));
   flex-shrink: 0;
+  position: relative;
+  z-index: 2;
 }
 
 .modern-board__tile--corner .modern-board__tile-icon {
@@ -2583,7 +2588,7 @@ input:focus, textarea:focus, select:focus {
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-bottom: 6px;
+  margin: auto 0;
   white-space: normal;
   word-break: break-word;
   text-align: center;
@@ -2600,14 +2605,16 @@ input:focus, textarea:focus, select:focus {
 .modern-board__tile-price {
   font-size: clamp(0.9rem, 1.5vw, 1.1rem);
   font-weight: 900;
-  color: rgba(187, 247, 208, 1);
+  color: rgba(255, 255, 255, 1);
   letter-spacing: 0.02em;
   text-shadow: 
     0 2px 5px rgba(0, 0, 0, 0.95),
-    0 0 10px rgba(34, 197, 94, 0.6),
+    0 0 10px rgba(0, 0, 0, 0.8),
     0 1px 3px rgba(0, 0, 0, 0.9);
   white-space: nowrap;
-  margin-top: 4px;
+  margin-top: 0;
+  margin-bottom: auto;
+  order: -1;
 }
 
 .modern-board__tile--vertical .modern-board__tile-price {
