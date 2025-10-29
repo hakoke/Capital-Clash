@@ -40,20 +40,25 @@ const computeTileMeta = (rawPosition) => {
     region: 'go'
   }
 
+  // Corner positions (matching Mr. Worldwide screenshot):
+  // Position 0 = bottom-right = Vacation
+  // Position 10 = bottom-left = Go to Prison
+  // Position 20 = top-left = START
+  // Position 30 = top-right = In Prison
   if (position === 0) {
-    meta = { row: BOARD_SIZE, col: BOARD_SIZE, orientation: 'corner', region: 'go' }
+    meta = { row: BOARD_SIZE, col: BOARD_SIZE, orientation: 'corner', region: 'parking' }
   } else if (position > 0 && position < 10) {
     meta = { row: BOARD_SIZE, col: BOARD_SIZE - position, orientation: 'horizontal', region: 'bottom' }
   } else if (position === 10) {
-    meta = { row: BOARD_SIZE, col: 1, orientation: 'corner', region: 'jail' }
+    meta = { row: BOARD_SIZE, col: 1, orientation: 'corner', region: 'go-to-jail' }
   } else if (position > 10 && position < 20) {
     meta = { row: BOARD_SIZE - (position - 10), col: 1, orientation: 'vertical', region: 'left' }
   } else if (position === 20) {
-    meta = { row: 1, col: 1, orientation: 'corner', region: 'free-parking' }
+    meta = { row: 1, col: 1, orientation: 'corner', region: 'go' }
   } else if (position > 20 && position < 30) {
     meta = { row: 1, col: 1 + (position - 20), orientation: 'horizontal', region: 'top' }
   } else if (position === 30) {
-    meta = { row: 1, col: BOARD_SIZE, orientation: 'corner', region: 'go-to-jail' }
+    meta = { row: 1, col: BOARD_SIZE, orientation: 'corner', region: 'jail' }
   } else if (position > 30 && position < 40) {
     meta = { row: 1 + (position - 30), col: BOARD_SIZE, orientation: 'vertical', region: 'right' }
   }
