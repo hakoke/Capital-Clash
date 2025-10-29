@@ -527,8 +527,7 @@ function Lobby() {
                 <div className="poordown-selection-ambient" aria-hidden="true"></div>
                 <div className="poordown-selection-card">
                   <div className="poordown-selection-header">
-                    <span className="poordown-selection-subtle">Select your player appearance</span>
-                    <h2 className="poordown-selection-title">SELECT YOUR PLAYER APPEARANCE</h2>
+                    <h2 className="poordown-selection-title-main">Select your player appearance:</h2>
                   </div>
                   <div className="poordown-avatar-grid">
                     {PLAYER_COLORS.map((colorObj) => {
@@ -547,7 +546,7 @@ function Lobby() {
                         >
                           <span className="poordown-avatar-halo" aria-hidden="true"></span>
                           <span className="poordown-avatar-gloss" aria-hidden="true"></span>
-                          {isSelected && (
+                          {!isTaken && (
                             <div className="poordown-avatar-eyes" aria-hidden="true">
                               <div className="poordown-eye">
                                 <span className="poordown-pupil"></span>
@@ -568,12 +567,15 @@ function Lobby() {
                     disabled={loading || !selectedColor}
                     className="poordown-join-button"
                   >
-                    {loading ? 'joining...' : 'join game'}
+                    {loading ? 'joining...' : 'Join game'}
                   </button>
                   <button
                     type="button"
-                    className="poordown-secondary-action"
+                    className="poordown-get-more-button"
                   >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                    </svg>
                     Get more appearances
                   </button>
                 </div>
@@ -755,72 +757,111 @@ function Lobby() {
                   {renderGuardTooltip('maxPlayers')}
                 </div>
 
-                {/* Starting cash */}
+                {/* Private room */}
                 <div
                   className="relative"
-                  onMouseEnter={() => handleGuardHover('startingCash')}
+                  onMouseEnter={() => handleGuardHover('privateRoom')}
                   onMouseLeave={handleGuardLeave}
                 >
                   <div className={`bg-[#2a0f3f] rounded-lg p-4 transition-opacity ${disableSettings ? 'settings-card-disabled' : ''}`}>
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-start gap-3 flex-1">
-                      <div className="w-5 h-5 text-white mt-0.5" style={{ filter: 'drop-shadow(0 0 6px rgba(0,255,255,0.4))' }}>💰</div>
-                      <div className="flex-1">
-                        <p className="text-white font-semibold text-sm" style={{ fontSize: '13px', fontWeight: 500 }}>Starting cash</p>
-                        <p className="text-gray-400 text-xs mt-0.5" style={{ fontSize: '11px' }}>Amount of cash each player starts with</p>
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start gap-3 flex-1">
+                        <div className="mt-0.5 flex items-center gap-1">
+                          <svg className="w-5 h-5 text-white" style={{ filter: 'drop-shadow(0 0 6px rgba(0,255,255,0.4))' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                          </svg>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-white font-semibold text-sm" style={{ fontSize: '13px', fontWeight: 500 }}>Private room</p>
+                          <p className="text-gray-400 text-xs mt-0.5" style={{ fontSize: '11px' }}>Private rooms can be accessed using the room URL only</p>
+                        </div>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="sr-only peer"
+                          disabled={disableSettings}
+                          defaultChecked={true}
+                        />
+                        <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                      </label>
+                    </div>
+                  </div>
+                  {renderGuardTooltip('privateRoom')}
+                </div>
+
+                {/* Allow bots to join */}
+                <div
+                  className="relative"
+                  onMouseEnter={() => handleGuardHover('allowBots')}
+                  onMouseLeave={handleGuardLeave}
+                >
+                  <div className={`bg-[#2a0f3f] rounded-lg p-4 transition-opacity ${disableSettings ? 'settings-card-disabled' : ''}`}>
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start gap-3 flex-1">
+                        <div className="mt-0.5 flex items-center gap-1">
+                          <svg className="w-5 h-5 text-white" style={{ filter: 'drop-shadow(0 0 6px rgba(0,255,255,0.4))' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                          </svg>
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <p className="text-white font-semibold text-sm" style={{ fontSize: '13px', fontWeight: 500 }}>Allow bots to join</p>
+                            <span className="px-2 py-0.5 text-xs font-semibold bg-purple-600 text-white rounded" style={{ fontSize: '10px' }}>Beta</span>
+                          </div>
+                          <p className="text-gray-400 text-xs mt-0.5" style={{ fontSize: '11px' }}>Bots will join the game based on availability</p>
+                        </div>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="sr-only peer"
+                          disabled={disableSettings}
+                          defaultChecked={false}
+                        />
+                        <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                      </label>
+                    </div>
+                  </div>
+                  {renderGuardTooltip('allowBots')}
+                </div>
+
+                {/* Board map */}
+                <div
+                  className="relative"
+                  onMouseEnter={() => handleGuardHover('boardMap')}
+                  onMouseLeave={handleGuardLeave}
+                >
+                  <div className={`bg-[#2a0f3f] rounded-lg p-4 transition-opacity ${disableSettings ? 'settings-card-disabled' : ''}`}>
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start gap-3 flex-1">
+                        <div className="mt-0.5 flex items-center gap-1">
+                          <svg className="w-5 h-5 text-white" style={{ filter: 'drop-shadow(0 0 6px rgba(0,255,255,0.4))' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                          </svg>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-white font-semibold text-sm" style={{ fontSize: '13px', fontWeight: 500 }}>Board map</p>
+                          <p className="text-gray-400 text-xs mt-0.5" style={{ fontSize: '11px' }}>Change map tiles, properties and stacks</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-white text-sm font-semibold">Classic</span>
+                        <button
+                          disabled={disableSettings}
+                          className="text-purple-400 hover:text-purple-300 text-xs flex items-center gap-1 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <span>Browse maps</span>
+                          <ChevronRight className="w-3 h-3" />
+                        </button>
                       </div>
                     </div>
-                    <select 
-                      value={startingCash === 'custom' ? 'custom' : startingCash}
-                      onChange={async (e) => {
-                        if (disableSettings) return
-                        const val = e.target.value
-                        if (val === 'custom') {
-                          setStartingCash('custom')
-                        } else {
-                          const numVal = parseInt(val)
-                          setStartingCash(numVal)
-                          // Save to database immediately
-                          await axios.post(`/api/game/${gameId}/settings`, {
-                            setting: 'starting_cash',
-                            value: numVal
-                          }).catch(err => console.error('Error saving starting cash:', err))
-                        }
-                      }}
-                      disabled={disableSettings}
-                      className="bg-[#2a0f3f] text-white text-sm px-3 py-1.5 rounded-lg border border-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <option value="1000">$1,000</option>
-                      <option value="1500">$1,500</option>
-                      <option value="2000">$2,000</option>
-                      <option value="2500">$2,500</option>
-                      <option value="custom">Custom</option>
-                    </select>
                   </div>
-                  {startingCash === 'custom' && (
-                    <div className="ml-8 mt-2">
-                      <input
-                        type="number"
-                        value={customStartingCash}
-                        onChange={(e) => setCustomStartingCash(e.target.value)}
-                        onBlur={async () => {
-                          if (!disableSettings && customStartingCash) {
-                            const val = parseInt(customStartingCash)
-                            await axios.post(`/api/game/${gameId}/settings`, {
-                              setting: 'starting_cash',
-                              value: val
-                            }).catch(err => console.error('Error saving starting cash:', err))
-                          }
-                        }}
-                        placeholder="Enter custom amount"
-                        disabled={disableSettings}
-                        className="w-full bg-[#1a0033] text-white text-sm px-3 py-2 rounded-lg border border-purple-700 focus:border-purple-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
-                      />
-                    </div>
-                  )}
-                  </div>
-                  {renderGuardTooltip('startingCash')}
+                  {renderGuardTooltip('boardMap')}
                 </div>
+
+                {/* Starting cash - Hidden to match richup.io */}
+                <div className="hidden"></div>
               </div>
             </div>
 
@@ -852,18 +893,6 @@ function Lobby() {
                     title: "Don't collect rent while in prison",
                     description: 'Rent will not be collected when landing on properties whose owners are in prison',
                     setting: 'no_rent_in_prison'
-                  },
-                  {
-                    icon: '🏠',
-                    title: 'Mortgage',
-                    description: "Mortgage properties to earn 50% of their cost, but you won't get paid rent when players land on them",
-                    setting: 'mortgage_enabled'
-                  },
-                  {
-                    icon: '🏘️',
-                    title: 'Even build',
-                    description: 'Houses and hotels must be built up and sold off evenly within a property set',
-                    setting: 'even_build'
                   }
                 ].map((config) => (
                   <div

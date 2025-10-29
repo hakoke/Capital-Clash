@@ -13,17 +13,22 @@ export const COLOR_GROUPS = {
   'special': '#FFFFFF'
 };
 
-// Available player colors - RichUp.io uses 9 colors for 3x3 grid
+// Available player colors - RichUp.io uses 12 colors for 4x3 grid
 export const PLAYER_COLORS = [
-  { name: 'bright_green', hex: '#4ade80' },      // Lime green
-  { name: 'bright_yellow', hex: '#fbbf24' },    // Yellow
+  { name: 'lime_green', hex: '#bef264' },       // Row 1: Lime/Yellow-green
+  { name: 'golden_yellow', hex: '#fbbf24' },    // Yellow
   { name: 'bright_orange', hex: '#fb923c' },    // Orange
-  { name: 'cyan', hex: '#22d3ee' },              // Light blue/cyan
-  { name: 'light_blue', hex: '#38bdf8' },       // Blue
-  { name: 'teal', hex: '#2dd4bf' },              // Teal
-  { name: 'brown', hex: '#92400e' },             // Brown
-  { name: 'magenta', hex: '#ec4899' },           // Magenta
-  { name: 'bright_pink', hex: '#f472b6' }       // Pink (only 9 for 3x3)
+  { name: 'coral_red', hex: '#f87171' },        // Coral/Red
+  
+  { name: 'sky_blue', hex: '#60a5fa' },         // Row 2: Blue
+  { name: 'cyan', hex: '#22d3ee' },              // Cyan
+  { name: 'teal', hex: '#14b8a6' },              // Teal
+  { name: 'mint_green', hex: '#4ade80' },        // Mint/Green
+  
+  { name: 'tan_brown', hex: '#a0826d' },         // Row 3: Brown/Tan
+  { name: 'hot_pink', hex: '#ec4899' },          // Hot pink
+  { name: 'light_pink', hex: '#f472b6' },        // Light pink
+  { name: 'purple', hex: '#a855f7' }             // Purple
 ];
 
 export const MIDDLE_EAST_BOARD = {

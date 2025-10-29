@@ -840,7 +840,7 @@ input:focus, textarea:focus, select:focus {
 
 .poordown-selection-wrapper {
   position: relative;
-  width: min(420px, calc(100vw - 80px));
+  width: min(460px, calc(100vw - 80px));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -862,7 +862,7 @@ input:focus, textarea:focus, select:focus {
 .poordown-selection-card {
   position: relative;
   width: 100%;
-  padding: 40px 44px 34px;
+  padding: 36px 40px 32px;
   border-radius: 24px;
   background: linear-gradient(180deg, rgba(18, 22, 39, 0.96) 0%, rgba(10, 13, 26, 0.95) 100%);
   box-shadow: 0 60px 140px -70px rgba(7, 11, 24, 0.95), 0 38px 80px -60px rgba(64, 217, 255, 0.45);
@@ -870,7 +870,7 @@ input:focus, textarea:focus, select:focus {
   backdrop-filter: blur(18px) saturate(150%);
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 24px;
   align-items: center;
   justify-content: center;
   overflow: hidden;
@@ -914,6 +914,14 @@ input:focus, textarea:focus, select:focus {
   color: rgba(229, 237, 255, 0.68);
 }
 
+.poordown-selection-title-main {
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: rgba(229, 237, 255, 0.85);
+  text-transform: none;
+}
+
 .poordown-selection-subtle {
   font-size: 11px;
   letter-spacing: 0.16em;
@@ -927,15 +935,15 @@ input:focus, textarea:focus, select:focus {
   width: 100%;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 28px 26px;
+  gap: 22px 24px;
   justify-items: center;
 }
 
 .poordown-avatar-circle {
   --avatar-color: #6f3cf5;
   position: relative;
-  width: 76px;
-  height: 76px;
+  width: 72px;
+  height: 72px;
   border-radius: 999px;
   border: none;
   background: radial-gradient(circle at 30% 25%, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0) 55%),
@@ -1085,6 +1093,31 @@ input:focus, textarea:focus, select:focus {
 
 .poordown-secondary-action:hover {
   color: rgba(226, 231, 255, 0.75);
+}
+
+.poordown-get-more-button {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: rgba(184, 193, 224, 0.7);
+  background: rgba(31, 27, 56, 0.6);
+  border: 1px solid rgba(108, 117, 163, 0.2);
+  transition: all 0.22s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.poordown-get-more-button:hover {
+  color: rgba(226, 231, 255, 0.9);
+  background: rgba(41, 37, 70, 0.7);
+  border-color: rgba(108, 117, 163, 0.35);
 }
 
 .settings-guard-tooltip {
