@@ -287,6 +287,7 @@ function MonopolyBoard({
           name: theme.name || prop.name,
           displaySubtitle: theme.subtitle,
           displayIcon: theme.icon,
+          flag: theme.flag || null,
           color_group: theme.colorGroup || prop.color_group,
           property_type: theme.type || prop.property_type,
           price: prop.price ?? theme.price ?? 0
@@ -387,14 +388,19 @@ function MonopolyBoard({
                 )}
 
                 <div className="modern-board__tile-inner">
-                  <div className="modern-board__tile-content">
-                    {property.displayIcon && (
-                      <span className="modern-board__tile-icon">{property.displayIcon}</span>
-                    )}
-                    <span className="modern-board__tile-name">{getDisplayName(property.name)}</span>
-                    {Number(property.price) > 0 && (
-                      <span className="modern-board__tile-price">{formatMoney(property.price)}</span>
-                    )}
+                <div className="modern-board__tile-content">
+                  {property.flag && (
+                    <span className="modern-board__tile-flag" style={{ fontSize: '1.5em', marginBottom: '4px' }}>
+                      {property.flag}
+                    </span>
+                  )}
+                  {property.displayIcon && !property.flag && (
+                    <span className="modern-board__tile-icon">{property.displayIcon}</span>
+                  )}
+                  <span className="modern-board__tile-name">{getDisplayName(property.name)}</span>
+                  {Number(property.price) > 0 && (
+                    <span className="modern-board__tile-price">{formatMoney(property.price)}</span>
+                  )}
             </div>
 
                   {property.houses > 0 && (
@@ -450,42 +456,42 @@ function MonopolyBoard({
             ) : isPreview ? (
               <div className="modern-board__preview">
                 <div className="modern-board__preview-icon">🌍</div>
-                <h4 className="modern-board__preview-title">Middle East Route</h4>
+                <h4 className="modern-board__preview-title">Middle East & US Route</h4>
                 <div className="modern-board__preview-flags">
                   <span className="modern-board__preview-flag">🇵🇸</span>
                   <span className="modern-board__preview-flag">🇮🇱</span>
+                  <span className="modern-board__preview-flag">🇱🇧</span>
                   <span className="modern-board__preview-flag">🇦🇪</span>
-                  <span className="modern-board__preview-flag">🇸🇦</span>
                   <span className="modern-board__preview-flag">🇪🇬</span>
                   <span className="modern-board__preview-flag">🇹🇷</span>
                   <span className="modern-board__preview-flag">🇺🇸</span>
                 </div>
-                <p className="modern-board__preview-meta">From Gaza to Washington</p>
+                <p className="modern-board__preview-meta">From Gaza to New York</p>
                 <div className="modern-board__preview-stats">
                   <div className="modern-board__preview-stat">
                     <div className="modern-board__preview-stat-value">40</div>
                     <div className="modern-board__preview-stat-label">Spaces</div>
                   </div>
                   <div className="modern-board__preview-stat">
-                    <div className="modern-board__preview-stat-value">8</div>
-                    <div className="modern-board__preview-stat-label">Regions</div>
+                    <div className="modern-board__preview-stat-value">7</div>
+                    <div className="modern-board__preview-stat-label">Countries</div>
                   </div>
                 </div>
               </div>
             ) : (
               <div className="modern-board__preview">
                 <div className="modern-board__preview-icon">🌍</div>
-                <h4 className="modern-board__preview-title">Middle East Route</h4>
+                <h4 className="modern-board__preview-title">Middle East & US Route</h4>
                 <div className="modern-board__preview-flags">
                   <span className="modern-board__preview-flag">🇵🇸</span>
                   <span className="modern-board__preview-flag">🇮🇱</span>
+                  <span className="modern-board__preview-flag">🇱🇧</span>
                   <span className="modern-board__preview-flag">🇦🇪</span>
-                  <span className="modern-board__preview-flag">🇸🇦</span>
                   <span className="modern-board__preview-flag">🇪🇬</span>
                   <span className="modern-board__preview-flag">🇹🇷</span>
                   <span className="modern-board__preview-flag">🇺🇸</span>
                 </div>
-                <p className="modern-board__preview-meta">From Gaza to Washington</p>
+                <p className="modern-board__preview-meta">From Gaza to New York</p>
               </div>
             )}
           </div>

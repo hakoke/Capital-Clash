@@ -32,45 +32,60 @@ export const PLAYER_COLORS = [
 ];
 
 export const MIDDLE_EAST_BOARD = {
-  0: { name: 'Take Off', subtitle: 'Collect $400', type: 'start', icon: '✈️' },
-  1: { name: 'Gaza City', type: 'property', colorGroup: 'brown', price: 60, icon: '🇵🇸', flag: '🇵🇸' },
-  2: { name: 'Community Aid', type: 'community', icon: '🎁' },
-  3: { name: 'Bethlehem', type: 'property', colorGroup: 'brown', price: 60, icon: '🇵🇸', flag: '🇵🇸' },
-  4: { name: 'Border Fees', type: 'tax', icon: '💰' },
-  5: { name: 'Levant Rail', type: 'railroad', icon: '🚆' },
-  6: { name: 'Muscat', type: 'property', colorGroup: 'light_blue', price: 100, icon: '🇴🇲', flag: '🇴🇲' },
-  7: { name: 'Opportunity', type: 'chance', icon: '❓' },
-  8: { name: 'Doha', type: 'property', colorGroup: 'light_blue', price: 100, icon: '🇶🇦', flag: '🇶🇦' },
-  9: { name: 'Amman', type: 'property', colorGroup: 'light_blue', price: 120, icon: '🇯🇴', flag: '🇯🇴' },
-  10: { name: 'Customs Check', subtitle: 'Just Visiting', type: 'jail', icon: '🚧' },
-  11: { name: 'Kuwait City', type: 'property', colorGroup: 'pink', price: 140, icon: '🇰🇼', flag: '🇰🇼' },
-  12: { name: 'Desert Solar Grid', type: 'utility', icon: '☀️' },
-  13: { name: 'Riyadh', type: 'property', colorGroup: 'pink', price: 140, icon: '🇸🇦', flag: '🇸🇦' },
-  14: { name: 'Jeddah', type: 'property', colorGroup: 'pink', price: 160, icon: '🇸🇦', flag: '🇸🇦' },
-  15: { name: 'Gulf Air Link', type: 'railroad', icon: '🛩️' },
-  16: { name: 'Abu Dhabi', type: 'property', colorGroup: 'orange', price: 180, icon: '🇦🇪', flag: '🇦🇪' },
-  17: { name: 'Humanitarian Fund', type: 'community', icon: '🤝' },
-  18: { name: 'Dubai', type: 'property', colorGroup: 'orange', price: 180, icon: '🇦🇪', flag: '🇦🇪' },
-  19: { name: 'Sharjah', type: 'property', colorGroup: 'orange', price: 200, icon: '🇦🇪', flag: '🇦🇪' },
-  20: { name: 'Oasis Retreat', subtitle: 'Free Rest', type: 'parking', icon: '🏝️' },
+  // Corner 0: START
+  0: { name: 'START', subtitle: 'Collect $400', type: 'start', icon: '▶️' },
+  
+  // Bottom row (left to right) - Palestine & Israel properties
+  1: { name: 'Gaza', type: 'property', colorGroup: 'brown', price: 60, icon: '🇵🇸', flag: '🇵🇸' },
+  2: { name: 'Treasure', type: 'community', icon: '💰' },
+  3: { name: 'Ramallah', type: 'property', colorGroup: 'brown', price: 60, icon: '🇵🇸', flag: '🇵🇸' },
+  4: { name: 'Income Tax', type: 'tax', price: 200, icon: '💵' },
+  5: { name: 'Tel Aviv', type: 'property', colorGroup: 'brown', price: 100, icon: '🇮🇱', flag: '🇮🇱' },
+  6: { name: 'TLV Airport', type: 'railroad', price: 200, icon: '✈️' },
+  7: { name: 'Haifa', type: 'property', colorGroup: 'brown', price: 100, icon: '🇮🇱', flag: '🇮🇱' },
+  8: { name: 'Jerusalem', type: 'property', colorGroup: 'brown', price: 110, icon: '🇮🇱', flag: '🇮🇱' },
+  9: { name: 'Surprise', type: 'chance', icon: '❓' },
+  
+  // Corner 10: In Prison
+  10: { name: 'In Prison', subtitle: 'Just Visiting', type: 'jail', icon: '🚧' },
+  
+  // Right column (top to bottom) - Lebanon & UAE
+  11: { name: 'Beirut', type: 'property', colorGroup: 'light_blue', price: 140, icon: '🇱🇧', flag: '🇱🇧' },
+  12: { name: 'Electric Company', type: 'utility', price: 150, icon: '⚡' },
+  13: { name: 'Tripoli', type: 'property', colorGroup: 'light_blue', price: 140, icon: '🇱🇧', flag: '🇱🇧' },
+  14: { name: 'Sidon', type: 'property', colorGroup: 'light_blue', price: 160, icon: '🇱🇧', flag: '🇱🇧' },
+  15: { name: 'DXB Airport', type: 'railroad', price: 200, icon: '✈️' },
+  16: { name: 'Dubai', type: 'property', colorGroup: 'pink', price: 180, icon: '🇦🇪', flag: '🇦🇪' },
+  17: { name: 'Treasure', type: 'community', icon: '💰' },
+  18: { name: 'Abu Dhabi', type: 'property', colorGroup: 'pink', price: 180, icon: '🇦🇪', flag: '🇦🇪' },
+  19: { name: 'Sharjah', type: 'property', colorGroup: 'pink', price: 200, icon: '🇦🇪', flag: '🇦🇪' },
+  
+  // Corner 20: Vacation
+  20: { name: 'Vacation', subtitle: 'Free Rest', type: 'parking', icon: '🏖️' },
+  
+  // Top row (right to left) - Egypt & Turkey
   21: { name: 'Cairo', type: 'property', colorGroup: 'red', price: 220, icon: '🇪🇬', flag: '🇪🇬' },
-  22: { name: 'Opportunity', type: 'chance', icon: '❓' },
+  22: { name: 'Surprise', type: 'chance', icon: '❓' },
   23: { name: 'Alexandria', type: 'property', colorGroup: 'red', price: 220, icon: '🇪🇬', flag: '🇪🇬' },
   24: { name: 'Luxor', type: 'property', colorGroup: 'red', price: 240, icon: '🇪🇬', flag: '🇪🇬' },
-  25: { name: 'Nile River Ferry', type: 'railroad', icon: '⛴️' },
-  26: { name: 'Jerusalem', type: 'property', colorGroup: 'yellow', price: 260, icon: '🇮🇱', flag: '🇮🇱' },
-  27: { name: 'Haifa', type: 'property', colorGroup: 'yellow', price: 260, icon: '🇮🇱', flag: '🇮🇱' },
-  28: { name: 'Suez Canal Authority', type: 'utility', icon: '🚢' },
-  29: { name: 'Ramallah', type: 'property', colorGroup: 'yellow', price: 280, icon: '🇵🇸', flag: '🇵🇸' },
-  30: { name: 'Detained', subtitle: 'Go to Customs', type: 'go_to_jail', icon: '⛔' },
-  31: { name: 'Istanbul', type: 'property', colorGroup: 'green', price: 300, icon: '🇹🇷', flag: '🇹🇷' },
-  32: { name: 'Ankara', type: 'property', colorGroup: 'green', price: 300, icon: '🇹🇷', flag: '🇹🇷' },
-  33: { name: 'Relief Mission', type: 'community', icon: '💝' },
-  34: { name: 'Izmir', type: 'property', colorGroup: 'green', price: 320, icon: '🇹🇷', flag: '🇹🇷' },
-  35: { name: 'Atlantic Air Hub', type: 'railroad', icon: '🛫' },
-  36: { name: 'Opportunity', type: 'chance', icon: '❓' },
-  37: { name: 'New York', type: 'property', colorGroup: 'blue', price: 350, icon: '🇺🇸', flag: '🇺🇸' },
-  38: { name: 'Global Solidarity Tax', type: 'tax', icon: '💵' },
-  39: { name: 'Washington D.C.', type: 'property', colorGroup: 'blue', price: 400, icon: '🇺🇸', flag: '🇺🇸' }
+  25: { name: 'CAI Airport', type: 'railroad', price: 200, icon: '✈️' },
+  26: { name: 'Istanbul', type: 'property', colorGroup: 'yellow', price: 260, icon: '🇹🇷', flag: '🇹🇷' },
+  27: { name: 'Ankara', type: 'property', colorGroup: 'yellow', price: 260, icon: '🇹🇷', flag: '🇹🇷' },
+  28: { name: 'Water Company', type: 'utility', price: 150, icon: '💧' },
+  29: { name: 'Izmir', type: 'property', colorGroup: 'yellow', price: 280, icon: '🇹🇷', flag: '🇹🇷' },
+  
+  // Corner 30: Go to Prison
+  30: { name: 'Go to Prison', subtitle: 'Direct to Jail', type: 'go_to_jail', icon: '⛓️' },
+  
+  // Left column (bottom to top) - US properties
+  31: { name: 'New York', type: 'property', colorGroup: 'green', price: 300, icon: '🇺🇸', flag: '🇺🇸' },
+  32: { name: 'Los Angeles', type: 'property', colorGroup: 'green', price: 300, icon: '🇺🇸', flag: '🇺🇸' },
+  33: { name: 'Treasure', type: 'community', icon: '💰' },
+  34: { name: 'Chicago', type: 'property', colorGroup: 'green', price: 320, icon: '🇺🇸', flag: '🇺🇸' },
+  35: { name: 'Washington D.C.', type: 'property', colorGroup: 'green', price: 320, icon: '🇺🇸', flag: '🇺🇸' },
+  36: { name: 'JFK Airport', type: 'railroad', price: 200, icon: '✈️' },
+  37: { name: 'Surprise', type: 'chance', icon: '❓' },
+  38: { name: 'San Francisco', type: 'property', colorGroup: 'blue', price: 350, icon: '🇺🇸', flag: '🇺🇸' },
+  39: { name: 'Luxury Tax', type: 'tax', price: 75, icon: '💎' }
 };
 
