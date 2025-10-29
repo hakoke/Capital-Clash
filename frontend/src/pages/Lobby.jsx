@@ -541,7 +541,7 @@ function Lobby() {
                           <span className="poordown-avatar-halo" aria-hidden="true"></span>
                           <span className="poordown-avatar-gloss" aria-hidden="true"></span>
                           {isSelected && (
-                            <div className="poordown-avatar-eyes" aria-hidden="true">
+                            <div className="poordown-avatar-eyes poordown-avatar-eyes--floating" aria-hidden="true">
                               <div className="poordown-eye">
                                 <span className="poordown-pupil"></span>
                                 <span className="poordown-eye-glint"></span>
