@@ -311,78 +311,163 @@ router.post('/:gameId/roll', async (req, res) => {
 
     const property = propertyResult.rows[0];
 
-    // Check if property is owned by another player and rent needs to be paid
-    let rentDue = null;
-    let ownerInfo = null;
-    
-    if (property && property.owner_id && property.owner_id !== playerId) {
-      // Get the owner
-      const ownerResult = await pool.query('SELECT * FROM players WHERE id = $1', [property.owner_id]);
-      ownerInfo = ownerResult.rows[0];
-      
-      // Calculate rent (for now just basic rent, can add house logic later)
-      if (property.hotels > 0) {
-        rentDue = property.hotel_rent;
-      } else if (property.houses > 0) {
-        // Rent based on number of houses
-        rentDue = property.houses === 4 ? property.house_rent_4 : 
-                  property.houses === 3 ? property.house_rent_3 :
-                  property.houses === 2 ? property.house_rent_2 : property.house_rent_1;
-      } else if (property.color_group && property.color_group !== 'railroad' && property.color_group !== 'utility') {
-        // Check if owner has the whole color group
-        const sameColorProperties = await pool.query(
-          'SELECT * FROM properties WHERE game_id = $1 AND color_group = $2',
-          [gameId, property.color_group]
-        );
-        const ownedInGroup = sameColorProperties.rows.filter(p => p.owner_id === property.owner_id).length;
-        const totalInGroup = sameColorProperties.rows.length;
-        
-        if (ownedInGroup === totalInGroup) {
-          rentDue = property.rent_with_set;
-        } else {
-          rentDue = property.rent;
+    let rentPaid = 0;
+    let taxPaid = 0;
+    let bonusCollected = 0;
+    let forcedAction = null;
+    let updatedBankPool = parseFloat(game.bank_pool || 0);
+
+    if (property) {
+      switch (property.property_type) {
+        case 'tax': {
+          const isIncomeTax = property.name?.toLowerCase().includes('income');
+          const taxAmount = isIncomeTax ? 200 : property.name?.toLowerCase().includes('luxury') ? 100 : 150;
+          const playerMoney = parseFloat(player.money || 0);
+
+          if (playerMoney >= taxAmount) {
+            await pool.query('UPDATE players SET money = money - $1 WHERE id = $2', [taxAmount, playerId]);
+            taxPaid = taxAmount;
+          } else {
+            if (playerMoney > 0) {
+              await pool.query('UPDATE players SET money = 0 WHERE id = $1', [playerId]);
+            }
+            taxPaid = playerMoney;
+            await pool.query('UPDATE players SET status = $1 WHERE id = $2', ['bankrupt', playerId]);
+          }
+
+          if (game.vacation_cash && taxPaid > 0) {
+            await pool.query('UPDATE games SET bank_pool = bank_pool + $1 WHERE id = $2', [taxPaid, gameId]);
+            updatedBankPool += taxPaid;
+          }
+
+          await pool.query(
+            `INSERT INTO player_actions (id, game_id, player_id, action_type, details)
+             VALUES (uuid_generate_v4(), $1, $2, $3, $4)`,
+            [gameId, playerId, 'pay_tax', JSON.stringify({ amount: taxPaid, position: property.position })]
+          );
+          break;
         }
-      } else if (property.property_type === 'railroad') {
-        // Count owned railroads
-        const ownedRailroads = await pool.query(
-          'SELECT COUNT(*) as count FROM properties WHERE owner_id = $1 AND property_type = $2',
-          [property.owner_id, 'railroad']
-        );
-        const count = parseInt(ownedRailroads.rows[0].count);
-        rentDue = 25 * count; // $25 per railroad, doubles for each owned
-      } else if (property.property_type === 'utility') {
-        // Base utility rent (would multiply by dice total if both owned)
-        rentDue = 4 * total; // 4x dice roll if one owned, 10x if both
-      } else {
-        rentDue = property.rent || 0;
+
+        case 'free_parking': {
+          if (game.vacation_cash && updatedBankPool > 0) {
+            await pool.query('UPDATE players SET money = money + $1 WHERE id = $2', [updatedBankPool, playerId]);
+            await pool.query('UPDATE games SET bank_pool = 0 WHERE id = $1', [gameId]);
+
+            bonusCollected = updatedBankPool;
+            updatedBankPool = 0;
+
+            await pool.query(
+              `INSERT INTO player_actions (id, game_id, player_id, action_type, details)
+               VALUES (uuid_generate_v4(), $1, $2, $3, $4)`,
+              [gameId, playerId, 'collect_vacation_cash', JSON.stringify({ amount: bonusCollected })]
+            );
+          }
+          break;
+        }
+
+        case 'go_to_jail': {
+          newPosition = 10;
+          forcedAction = 'go_to_jail';
+          await pool.query(
+            'UPDATE players SET position = $1, is_in_jail = true, jail_turns = 0 WHERE id = $2',
+            [10, playerId]
+          );
+          await pool.query(
+            `INSERT INTO player_actions (id, game_id, player_id, action_type, details)
+             VALUES (uuid_generate_v4(), $1, $2, $3, $4)`,
+            [gameId, playerId, 'go_to_jail', JSON.stringify({ from: property.position })]
+          );
+          break;
+        }
+
+        default: {
+          if (property.owner_id && property.owner_id !== playerId) {
+            const ownerResult = await pool.query('SELECT * FROM players WHERE id = $1', [property.owner_id]);
+            const ownerInfo = ownerResult.rows[0];
+
+            const ownerInJail = ownerInfo?.is_in_jail;
+            const propertyMortgaged = property.is_mortgaged;
+
+            if (propertyMortgaged) {
+              break; // Mortgaged properties do not collect rent
+            }
+
+            if (game.no_rent_in_prison && ownerInJail) {
+              break;
+            }
+
+            let rentDue = 0;
+
+            if (property.hotels > 0) {
+              rentDue = parseFloat(property.hotel_rent || 0);
+            } else if (property.houses > 0) {
+              const houseRentMap = {
+                1: property.house_rent_1,
+                2: property.house_rent_2,
+                3: property.house_rent_3,
+                4: property.house_rent_4
+              };
+              rentDue = parseFloat(houseRentMap[property.houses] || property.rent);
+            } else if (property.property_type === 'railroad') {
+              const ownedRailroads = await pool.query(
+                'SELECT COUNT(*) as count FROM properties WHERE owner_id = $1 AND property_type = $2',
+                [property.owner_id, 'railroad']
+              );
+              const count = parseInt(ownedRailroads.rows[0].count, 10) || 1;
+              rentDue = 25 * count;
+            } else if (property.property_type === 'utility') {
+              const ownedUtilities = await pool.query(
+                'SELECT COUNT(*) as count FROM properties WHERE owner_id = $1 AND property_type = $2',
+                [property.owner_id, 'utility']
+              );
+              const count = parseInt(ownedUtilities.rows[0].count, 10) || 1;
+              rentDue = (count >= 2 ? 10 : 4) * total;
+            } else {
+              rentDue = parseFloat(property.rent || 0);
+
+              if (game.double_rent_on_full_set && property.color_group && property.color_group !== 'utility' && property.color_group !== 'railroad') {
+                const sameGroup = await pool.query(
+                  'SELECT owner_id FROM properties WHERE game_id = $1 AND color_group = $2',
+                  [gameId, property.color_group]
+                );
+                const ownedInGroup = sameGroup.rows.filter(p => p.owner_id === property.owner_id).length;
+                const totalInGroup = sameGroup.rows.length;
+                if (ownedInGroup === totalInGroup && totalInGroup > 0) {
+                  rentDue = parseFloat(property.rent_with_set || property.rent || 0);
+                }
+              }
+            }
+
+            rentDue = Math.max(0, rentDue);
+
+            if (rentDue > 0) {
+              const playerMoney = parseFloat(player.money || 0);
+
+              if (playerMoney >= rentDue) {
+                await pool.query('UPDATE players SET money = money - $1 WHERE id = $2', [rentDue, playerId]);
+                await pool.query('UPDATE players SET money = money + $1 WHERE id = $2', [rentDue, property.owner_id]);
+                rentPaid = rentDue;
+              } else {
+                if (playerMoney > 0) {
+                  await pool.query('UPDATE players SET money = 0 WHERE id = $1', [playerId]);
+                  await pool.query('UPDATE players SET money = money + $1 WHERE id = $2', [playerMoney, property.owner_id]);
+                  rentPaid = playerMoney;
+                }
+                await pool.query('UPDATE players SET status = $1 WHERE id = $2', ['bankrupt', playerId]);
+              }
+
+              if (rentPaid > 0) {
+                await pool.query(
+                  `INSERT INTO player_actions (id, game_id, player_id, action_type, details)
+                   VALUES (uuid_generate_v4(), $1, $2, $3, $4)`,
+                  [gameId, playerId, 'pay_rent', JSON.stringify({ amount: rentPaid, propertyId: property.id, ownerId: property.owner_id })]
+                );
+              }
+            }
+          }
+          break;
+        }
       }
-      
-      // Auto-pay rent if player has enough money
-      if (rentDue > 0 && parseFloat(player.money) >= rentDue) {
-        await pool.query(
-          'UPDATE players SET money = money - $1 WHERE id = $2',
-          [rentDue, playerId]
-        );
-        await pool.query(
-          'UPDATE players SET money = money + $1 WHERE id = $2',
-          [rentDue, property.owner_id]
-        );
-        
-        // Log the rent payment
-        await pool.query(
-          `INSERT INTO player_actions (id, game_id, player_id, action_type, details)
-           VALUES (uuid_generate_v4(), $1, $2, $3, $4)`,
-          [gameId, playerId, 'pay_rent', JSON.stringify({ amount: rentDue, propertyId: property.id, ownerId: property.owner_id })]
-        );
-      } else if (rentDue > 0) {
-        // Player doesn't have enough money - they're bankrupt!
-        await pool.query(
-          'UPDATE players SET status = $1 WHERE id = $2',
-          ['bankrupt', playerId]
-        );
-      }
-      
-      rentDue = null; // Reset so we don't send it in response
     }
 
     res.json({
@@ -390,7 +475,11 @@ router.post('/:gameId/roll', async (req, res) => {
       dice: { die1, die2, total, isDoubles },
       newPosition,
       property: property || null,
-      rentPaid: rentDue !== null ? rentDue : undefined
+      rentPaid: rentPaid || undefined,
+      taxPaid: taxPaid || undefined,
+      bonusCollected: bonusCollected || undefined,
+      forcedAction,
+      bankPool: updatedBankPool
     });
   } catch (error) {
     console.error('Error rolling dice:', error);

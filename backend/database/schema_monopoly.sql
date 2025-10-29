@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS games (
     mortgage_enabled BOOLEAN DEFAULT true,
     even_build BOOLEAN DEFAULT true,
     starting_cash DECIMAL(15, 2) DEFAULT 1500.00,
+    bank_pool DECIMAL(15, 2) DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

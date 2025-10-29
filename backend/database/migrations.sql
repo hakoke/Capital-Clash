@@ -202,6 +202,14 @@ BEGIN
 
     IF NOT EXISTS (
         SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'games' AND column_name = 'bank_pool'
+    ) THEN
+        ALTER TABLE games ADD COLUMN bank_pool DECIMAL(15, 2) DEFAULT 0;
+        RAISE NOTICE 'Added bank_pool to games';
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
         WHERE table_name = 'games' AND column_name = 'created_at'
     ) THEN
         ALTER TABLE games ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
