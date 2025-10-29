@@ -468,11 +468,45 @@ function MonopolyBoard({
               <div className="modern-board__center-content">{centerContent}</div>
             ) : isPreview ? (
               <div className="modern-board__preview">
-                <span className="modern-board__preview-subtitle">Board preview</span>
+                <div className="modern-board__preview-icon">🌍</div>
                 <h4 className="modern-board__preview-title">Middle East Route</h4>
-                <p className="modern-board__preview-meta">Palestine · Israel · UAE · Egypt · USA</p>
+                <div className="modern-board__preview-flags">
+                  <span className="modern-board__preview-flag">🇵🇸</span>
+                  <span className="modern-board__preview-flag">🇮🇱</span>
+                  <span className="modern-board__preview-flag">🇦🇪</span>
+                  <span className="modern-board__preview-flag">🇸🇦</span>
+                  <span className="modern-board__preview-flag">🇪🇬</span>
+                  <span className="modern-board__preview-flag">🇹🇷</span>
+                  <span className="modern-board__preview-flag">🇺🇸</span>
+                </div>
+                <p className="modern-board__preview-meta">From Gaza to Washington</p>
+                <div className="modern-board__preview-stats">
+                  <div className="modern-board__preview-stat">
+                    <div className="modern-board__preview-stat-value">40</div>
+                    <div className="modern-board__preview-stat-label">Spaces</div>
+                  </div>
+                  <div className="modern-board__preview-stat">
+                    <div className="modern-board__preview-stat-value">8</div>
+                    <div className="modern-board__preview-stat-label">Regions</div>
+                  </div>
+                </div>
               </div>
-            ) : null}
+            ) : (
+              <div className="modern-board__preview">
+                <div className="modern-board__preview-icon">🌍</div>
+                <h4 className="modern-board__preview-title">Middle East Route</h4>
+                <div className="modern-board__preview-flags">
+                  <span className="modern-board__preview-flag">🇵🇸</span>
+                  <span className="modern-board__preview-flag">🇮🇱</span>
+                  <span className="modern-board__preview-flag">🇦🇪</span>
+                  <span className="modern-board__preview-flag">🇸🇦</span>
+                  <span className="modern-board__preview-flag">🇪🇬</span>
+                  <span className="modern-board__preview-flag">🇹🇷</span>
+                  <span className="modern-board__preview-flag">🇺🇸</span>
+                </div>
+                <p className="modern-board__preview-meta">From Gaza to Washington</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
