@@ -2410,7 +2410,7 @@ input:focus, textarea:focus, select:focus {
     0 24px 64px -32px rgba(124, 197, 255, 0.18),
     inset 0 2px 0 rgba(255, 255, 255, 0.05),
     inset 0 -2px 0 rgba(0, 0, 0, 0.3);
-  overflow: hidden;
+  overflow: visible;
   min-height: 0;
   min-width: 0;
 }
@@ -2433,6 +2433,7 @@ input:focus, textarea:focus, select:focus {
   height: 100%;
   gap: 1px;
   min-height: 0;
+  overflow: visible;
 }
 
 .modern-board__tile {
@@ -2555,6 +2556,11 @@ input:focus, textarea:focus, select:focus {
   z-index: 2;
 }
 
+.modern-board__tile--corner .modern-board__tile-flag {
+  font-size: clamp(1.5em, 2.2vw, 2em) !important;
+  margin-bottom: -10px;
+}
+
 .modern-board__tile--corner .modern-board__tile-icon {
   font-size: clamp(1.4rem, 2vw, 1.8rem);
   filter: drop-shadow(0 3px 10px rgba(147, 51, 234, 0.6));
@@ -2639,6 +2645,13 @@ input:focus, textarea:focus, select:focus {
   writing-mode: vertical-rl;
   text-orientation: upright;
   letter-spacing: 0;
+}
+
+.modern-board__tile--vertical .modern-board__tile-flag {
+  writing-mode: horizontal-tb;
+  text-orientation: upright;
+  margin-bottom: -6px;
+  margin-top: auto;
 }
 
 .modern-board__structures {
