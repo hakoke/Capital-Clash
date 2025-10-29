@@ -587,13 +587,13 @@ function Lobby() {
 
           {/* Waiting stages */}
           {isPlayerInGame && !isHost && game && game.status === 'waiting' && (
-            <div className="relative z-10 w-full flex items-center justify-center px-4">
+            <div className="relative z-10 w-full h-full flex items-center justify-center px-4">
               {renderLobbyStage('guest')}
             </div>
           )}
 
           {isHost && game && game.status === 'waiting' && (
-            <div className="relative z-10 w-full flex items-center justify-center px-4">
+            <div className="relative z-10 w-full h-full flex items-center justify-center px-4">
               {renderLobbyStage('host')}
             </div>
           )}
