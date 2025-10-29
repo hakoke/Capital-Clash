@@ -2429,6 +2429,8 @@ input:focus, textarea:focus, select:focus {
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   border-radius: 14px;
+  min-height: 0;
+  min-width: 0;
 }
 
 .modern-board__tile:disabled {
@@ -2456,6 +2458,7 @@ input:focus, textarea:focus, select:focus {
     0 2px 8px rgba(124, 197, 255, 0.1);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
+  min-height: 0;
 }
 
 .modern-board__tile--corner .modern-board__tile-inner {
