@@ -94,7 +94,7 @@ function PropertyModal({
   isActionLoading,
   settings
 }) {
-  if (!property) return null
+    if (!property) return null
 
   const owner = property.owner_id ? players.find((p) => p.id === property.owner_id) : null
   const ownerBadgeColor = owner ? resolvePlayerColor(owner.color) : '#1f2937'
@@ -110,7 +110,7 @@ function PropertyModal({
     { label: 'Hotels', value: property.hotels || 0 }
   ]
 
-  return (
+    return (
     <div className="modern-board__backdrop">
       <div className="modern-board__modal">
         <header className="modern-board__modal-header">
@@ -159,7 +159,7 @@ function PropertyModal({
             <div className="modern-board__stat">
               <span>Hotel cost</span>
               <strong>{formatMoney(property.hotel_cost)}</strong>
-            </div>
+        </div>
             <div className="modern-board__stat">
               <span>Mortgage value</span>
               <strong>{formatMoney(mortgageValue)}</strong>
@@ -257,9 +257,9 @@ function PropertyModal({
           </button>
         </footer>
       </div>
-    </div>
-  )
-}
+      </div>
+    )
+  }
 
 function MonopolyBoard({
   properties,
@@ -388,31 +388,46 @@ function MonopolyBoard({
 
                 <div className="modern-board__tile-inner">
                   <div className="modern-board__tile-content">
-                    {property.displayIcon && (
-                      <span className="modern-board__tile-icon">{property.displayIcon}</span>
-                    )}
-                    <span className="modern-board__tile-name">{getDisplayName(property.name)}</span>
-                    {Number(property.price) > 0 ? (
-                      <span className="modern-board__tile-price">{formatMoney(property.price)}</span>
+                    {property.displayIcon ? (
+                      <>
+                        <span className="modern-board__tile-icon">{property.displayIcon}</span>
+                        <div className="flex flex-col items-center">
+                          <span className="modern-board__tile-name">{getDisplayName(property.name)}</span>
+                          {Number(property.price) > 0 ? (
+                            <span className="modern-board__tile-price">{formatMoney(property.price)}</span>
+                          ) : (
+                            <span className="modern-board__tile-subtitle">
+                              {(property.displaySubtitle || property.property_type || '').replace(/_/g, ' ')}
+                            </span>
+                          )}
+                        </div>
+                      </>
                     ) : (
-                      <span className="modern-board__tile-subtitle">
-                        {(property.displaySubtitle || property.property_type || '').replace(/_/g, ' ')}
-                      </span>
+                      <>
+                        <span className="modern-board__tile-name">{getDisplayName(property.name)}</span>
+                        {Number(property.price) > 0 ? (
+                          <span className="modern-board__tile-price">{formatMoney(property.price)}</span>
+                        ) : (
+                          <span className="modern-board__tile-subtitle">
+                            {(property.displaySubtitle || property.property_type || '').replace(/_/g, ' ')}
+                          </span>
+                        )}
+                      </>
                     )}
-                  </div>
+            </div>
 
                   {property.houses > 0 && (
                     <div className="modern-board__structures">
                       {Array.from({ length: Math.min(property.houses, 4) }).map((_, idx) => (
                         <span key={idx} className="modern-board__structure modern-board__structure--house"></span>
                       ))}
-                    </div>
+          </div>
                   )}
                   {property.hotels > 0 && (
                     <div className="modern-board__structures">
                       <span className="modern-board__structure modern-board__structure--hotel"></span>
-                    </div>
-                  )}
+        </div>
+      )}
 
                   {isOwned && owner && (
                     <span
@@ -443,7 +458,7 @@ function MonopolyBoard({
                       )}
                     </div>
                   )}
-                </div>
+          </div>
               </button>
             )
           })}

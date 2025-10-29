@@ -2482,8 +2482,11 @@ input:focus, textarea:focus, select:focus {
 }
 
 .modern-board__tile-icon {
-  font-size: 1rem;
-  filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.35));
+  font-size: clamp(1.2rem, 2.5vw, 1.8rem);
+  display: block;
+  margin-bottom: 4px;
+  filter: drop-shadow(0 2px 8px rgba(56, 189, 248, 0.5));
+  line-height: 1;
 }
 
 .modern-board__tile-name {

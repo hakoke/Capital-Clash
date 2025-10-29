@@ -9,6 +9,9 @@ import PlayerAvatar from '../components/PlayerAvatar.jsx'
 import { motion, AnimatePresence } from 'framer-motion'
 import MonopolyBoard from '../components/MonopolyBoard.jsx'
 
+const STARTING_CASH_PRESETS = [1000, 1500, 2000, 2500, 3000]
+const formatCurrency = (value) => `$${Number(value || 0).toLocaleString()}`
+
 const layoutVariants = {
   enter: { opacity: 0, y: 80 },
   center: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.16, 1, 0.3, 1] } },
@@ -44,6 +47,7 @@ function Lobby() {
   const [chatInput, setChatInput] = useState('')
   const [startingCash, setStartingCash] = useState(1500)
   const [customStartingCash, setCustomStartingCash] = useState('')
+  const [startingCashOption, setStartingCashOption] = useState('1500')
   const [maxPlayersDb, setMaxPlayersDb] = useState(4)
   const [isGameCreator, setIsGameCreator] = useState(false)
   const [hoveredSetting, setHoveredSetting] = useState(null)
@@ -262,6 +266,38 @@ function Lobby() {
       </div>
     ) : null
   )
+
+  const handleStartingCashChange = async (amount) => {
+    if (!isGameCreator) return
+    setStartingCash(amount)
+    setStartingCashOption(String(amount))
+    setCustomStartingCash(String(amount))
+    
+    try {
+      await axios.post(`/api/game/${gameId}/settings`, {
+        setting: 'starting_cash',
+        value: amount
+      })
+    } catch (error) {
+      console.error('Error updating starting money:', error)
+    }
+  }
+
+  const handleCustomStartingCashApply = async () => {
+    if (!isGameCreator) return
+    const amount = Math.max(500, Math.round(Number(customStartingCash) || 0))
+    setStartingCash(amount)
+    setCustomStartingCash(String(amount))
+    
+    try {
+      await axios.post(`/api/game/${gameId}/settings`, {
+        setting: 'starting_cash',
+        value: amount
+      })
+    } catch (error) {
+      console.error('Error updating starting money:', error)
+    }
+  }
 
   const renderHubDie = (value, key) => (
     <div className={`poordown-center-die ${value ? '' : 'poordown-center-die--idle'}`} key={key}>
@@ -723,6 +759,77 @@ function Lobby() {
                   {renderGuardTooltip('maxPlayers')}
                 </div>
 
+                {/* Starting money */}
+                <div
+                  className="relative"
+                  onMouseEnter={() => handleGuardHover('startingCash')}
+                  onMouseLeave={handleGuardLeave}
+                >
+                  <div className={`bg-[#2a0f3f] rounded-lg p-4 transition-opacity ${disableSettings ? 'settings-card-disabled' : ''}`}>
+                    <div className="flex flex-col gap-4">
+                      <div className="flex items-start gap-3 flex-1">
+                        <svg className="w-5 h-5 text-white" style={{ filter: 'drop-shadow(0 0 6px rgba(0,255,255,0.4))' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-2.21 0-4 .895-4 2s1.79 2 4 2 4 .895 4 2-1.79 2-4 2m0-8c2.21 0 4 .895 4 2m-4-4v1m0 10v1m-6-3.5c0 1.657 2.686 3 6 3s6-1.343 6-3V8.5" />
+                        </svg>
+                        <div className="flex-1">
+                          <p className="text-white font-semibold text-sm" style={{ fontSize: '13px', fontWeight: 500 }}>Starting money</p>
+                          <p className="text-gray-400 text-xs mt-0.5" style={{ fontSize: '11px' }}>Recommended {formatCurrency(1500)}</p>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {STARTING_CASH_PRESETS.map((amount) => (
+                          <button
+                            key={amount}
+                            type="button"
+                            onClick={() => handleStartingCashChange(amount)}
+                            disabled={disableSettings}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                              startingCash === amount
+                                ? 'bg-purple-600 text-white'
+                                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                            }`}
+                          >
+                            {formatCurrency(amount)}
+                          </button>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() => setStartingCashOption('custom')}
+                          disabled={disableSettings}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                            startingCashOption === 'custom'
+                              ? 'bg-purple-600 text-white'
+                              : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                          }`}
+                        >
+                          Custom
+                        </button>
+                      </div>
+                      {startingCashOption === 'custom' && (
+                        <div className="flex gap-2">
+                          <input
+                            type="number"
+                            min={500}
+                            step={50}
+                            value={customStartingCash}
+                            onChange={(e) => setCustomStartingCash(e.target.value)}
+                            disabled={disableSettings}
+                            className="flex-1 px-3 py-1.5 bg-gray-800 border border-gray-600 rounded-lg text-white text-sm"
+                          />
+                          <button
+                            type="button"
+                            onClick={handleCustomStartingCashApply}
+                            disabled={disableSettings}
+                            className="px-4 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-semibold transition-colors disabled:opacity-50"
+                          >
+                            Apply
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  {renderGuardTooltip('startingCash')}
+                </div>
               </div>
             </div>
 
