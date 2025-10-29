@@ -865,16 +865,16 @@ input:focus, textarea:focus, select:focus {
   width: 100%;
   padding: 36px 40px 32px;
   border-radius: 24px;
-  background: linear-gradient(180deg, rgba(18, 22, 39, 0.75) 0%, rgba(10, 13, 26, 0.8) 100%);
-  box-shadow: 0 60px 140px -70px rgba(7, 11, 24, 0.9), 0 38px 80px -60px rgba(64, 217, 255, 0.3);
-  border: 1px solid rgba(113, 182, 255, 0.12);
-  backdrop-filter: blur(40px) saturate(160%);
+  background: linear-gradient(180deg, rgba(18, 22, 39, 0.45) 0%, rgba(10, 13, 26, 0.55) 100%);
+  box-shadow: 0 60px 140px -70px rgba(7, 11, 24, 0.5), 0 38px 80px -60px rgba(64, 217, 255, 0.2);
+  border: 1px solid rgba(113, 182, 255, 0.15);
+  backdrop-filter: blur(60px) saturate(140%);
   display: flex;
   flex-direction: column;
   gap: 24px;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+  overflow: visible;
   z-index: 1;
 }
 
@@ -948,17 +948,15 @@ input:focus, textarea:focus, select:focus {
   border-radius: 999px;
   border: none;
   background: 
-    radial-gradient(circle at 28% 22%, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0) 35%),
-    radial-gradient(circle at 75% 80%, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0) 50%),
-    radial-gradient(circle at 50% 50%, var(--avatar-color) 0%, color-mix(in srgb, var(--avatar-color) 80%, black) 100%);
+    radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0) 50%),
+    radial-gradient(circle at 50% 50%, var(--avatar-color) 0%, color-mix(in srgb, var(--avatar-color) 85%, black) 100%);
   box-shadow: 
-    0 8px 16px -8px rgba(0, 0, 0, 0.6),
-    0 2px 8px rgba(0, 0, 0, 0.4),
-    inset 0 2px 4px rgba(255, 255, 255, 0.3),
-    inset 0 -2px 8px rgba(0, 0, 0, 0.3);
+    0 4px 12px rgba(0, 0, 0, 0.3),
+    inset 0 1px 2px rgba(255, 255, 255, 0.4),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.2);
   transition: transform 0.25s ease, box-shadow 0.25s ease, filter 0.25s ease;
   cursor: default;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .poordown-avatar-circle--interactive {
@@ -968,23 +966,21 @@ input:focus, textarea:focus, select:focus {
 .poordown-avatar-circle--interactive:hover {
   transform: scale(1.08);
   box-shadow: 
-    0 12px 24px -12px rgba(0, 0, 0, 0.7),
-    0 4px 12px rgba(0, 0, 0, 0.5),
-    0 0 20px rgba(32, 189, 255, 0.4),
-    inset 0 2px 4px rgba(255, 255, 255, 0.35),
-    inset 0 -2px 8px rgba(0, 0, 0, 0.35);
-  filter: brightness(1.08);
+    0 6px 16px rgba(0, 0, 0, 0.4),
+    0 0 20px rgba(32, 189, 255, 0.3),
+    inset 0 1px 2px rgba(255, 255, 255, 0.5),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.25);
+  filter: brightness(1.1);
 }
 
 .poordown-avatar-circle--selected {
   transform: scale(1.05);
   box-shadow: 
-    0 0 0 3px rgba(56, 189, 248, 0.6),
-    0 0 38px rgba(56, 189, 248, 0.55),
-    0 12px 28px -12px rgba(0, 0, 0, 0.7),
-    0 4px 12px rgba(56, 189, 248, 0.4),
-    inset 0 2px 4px rgba(255, 255, 255, 0.35),
-    inset 0 -2px 8px rgba(0, 0, 0, 0.35);
+    0 0 0 3px rgba(56, 189, 248, 0.7),
+    0 0 28px rgba(56, 189, 248, 0.5),
+    0 6px 16px rgba(0, 0, 0, 0.4),
+    inset 0 1px 2px rgba(255, 255, 255, 0.5),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.25);
   animation: poordown-avatar-pulse 2.8s ease-in-out infinite;
 }
 
@@ -1021,11 +1017,10 @@ input:focus, textarea:focus, select:focus {
   inset: 0;
   border-radius: inherit;
   background: 
-    radial-gradient(circle at 22% 20%, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0) 28%),
-    radial-gradient(circle at 38% 32%, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0) 35%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.15) 0%, transparent 50%, rgba(0, 0, 0, 0.1) 100%);
+    radial-gradient(circle at 30% 25%, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0) 40%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, transparent 60%);
   mix-blend-mode: overlay;
-  opacity: 0.85;
+  opacity: 0.7;
   pointer-events: none;
 }
 
@@ -1035,23 +1030,24 @@ input:focus, textarea:focus, select:focus {
   left: 50%;
   transform: translate(-50%, -50%);
   display: flex;
-  gap: 8px;
-  z-index: 10;
+  gap: 10px;
+  z-index: 20;
+  pointer-events: none;
 }
 
 .poordown-eye {
   position: relative;
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   background: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), inset 0 -1px 2px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25), inset 0 -1px 2px rgba(0, 0, 0, 0.15);
 }
 
 .poordown-pupil {
   position: absolute;
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: #0f172a;
   top: 50%;
@@ -1061,12 +1057,12 @@ input:focus, textarea:focus, select:focus {
 
 .poordown-eye-glint {
   position: absolute;
-  width: 3px;
-  height: 3px;
+  width: 4px;
+  height: 4px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.9);
-  top: 25%;
-  left: 30%;
+  background: rgba(255, 255, 255, 0.95);
+  top: 20%;
+  left: 25%;
 }
 
 .poordown-join-button {
@@ -1161,22 +1157,20 @@ input:focus, textarea:focus, select:focus {
   0%, 100% {
     transform: scale(1.05);
     box-shadow: 
-      0 0 0 3px rgba(56, 189, 248, 0.6),
-      0 0 32px rgba(56, 189, 248, 0.5),
-      0 12px 28px -12px rgba(0, 0, 0, 0.7),
-      0 4px 12px rgba(56, 189, 248, 0.3),
-      inset 0 2px 4px rgba(255, 255, 255, 0.35),
-      inset 0 -2px 8px rgba(0, 0, 0, 0.35);
+      0 0 0 3px rgba(56, 189, 248, 0.7),
+      0 0 24px rgba(56, 189, 248, 0.45),
+      0 6px 16px rgba(0, 0, 0, 0.4),
+      inset 0 1px 2px rgba(255, 255, 255, 0.5),
+      inset 0 -1px 2px rgba(0, 0, 0, 0.25);
   }
   50% {
     transform: scale(1.08);
     box-shadow: 
-      0 0 0 4px rgba(56, 189, 248, 0.7),
-      0 0 48px rgba(56, 189, 248, 0.65),
-      0 14px 32px -12px rgba(0, 0, 0, 0.8),
-      0 6px 16px rgba(56, 189, 248, 0.5),
-      inset 0 2px 4px rgba(255, 255, 255, 0.4),
-      inset 0 -2px 8px rgba(0, 0, 0, 0.4);
+      0 0 0 4px rgba(56, 189, 248, 0.8),
+      0 0 36px rgba(56, 189, 248, 0.6),
+      0 8px 20px rgba(0, 0, 0, 0.5),
+      inset 0 1px 2px rgba(255, 255, 255, 0.6),
+      inset 0 -1px 2px rgba(0, 0, 0, 0.3);
   }
 }
 
