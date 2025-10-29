@@ -388,31 +388,12 @@ function MonopolyBoard({
 
                 <div className="modern-board__tile-inner">
                   <div className="modern-board__tile-content">
-                    {property.displayIcon ? (
-                      <>
-                        <span className="modern-board__tile-icon">{property.displayIcon}</span>
-                        <div className="flex flex-col items-center">
-                          <span className="modern-board__tile-name">{getDisplayName(property.name)}</span>
-                          {Number(property.price) > 0 ? (
-                            <span className="modern-board__tile-price">{formatMoney(property.price)}</span>
-                          ) : (
-                            <span className="modern-board__tile-subtitle">
-                              {(property.displaySubtitle || property.property_type || '').replace(/_/g, ' ')}
-                            </span>
-                          )}
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <span className="modern-board__tile-name">{getDisplayName(property.name)}</span>
-                        {Number(property.price) > 0 ? (
-                          <span className="modern-board__tile-price">{formatMoney(property.price)}</span>
-                        ) : (
-                          <span className="modern-board__tile-subtitle">
-                            {(property.displaySubtitle || property.property_type || '').replace(/_/g, ' ')}
-                          </span>
-                        )}
-                      </>
+                    {property.displayIcon && (
+                      <span className="modern-board__tile-icon">{property.displayIcon}</span>
+                    )}
+                    <span className="modern-board__tile-name">{getDisplayName(property.name)}</span>
+                    {Number(property.price) > 0 && (
+                      <span className="modern-board__tile-price">{formatMoney(property.price)}</span>
                     )}
             </div>
 
