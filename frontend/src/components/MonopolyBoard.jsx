@@ -63,8 +63,11 @@ const computeTileMeta = (rawPosition) => {
 }
 
 const getDisplayName = (name = '') => {
-  if (name.length <= 14) return name
-  return `${name.slice(0, 11)}…`
+  if (name.length <= 16) return name
+  const trimmed = name.slice(0, 14).trim()
+  const lastSpace = trimmed.lastIndexOf(' ')
+  if (lastSpace > 8) return trimmed.slice(0, lastSpace) + '…'
+  return trimmed + '…'
 }
 
 const getFallbackProperties = () => {
@@ -367,7 +370,12 @@ function MonopolyBoard({
                 type="button"
                 key={property.id}
                 className={tileClassNames}
-                style={{ gridRow: meta.row, gridColumn: meta.col }}
+                style={{ 
+                  gridRow: meta.row, 
+                  gridColumn: meta.col,
+                  minHeight: 0,
+                  minWidth: 0
+                }}
                 onClick={() => handleTileClick(property)}
                 disabled={isPreview}
               >
