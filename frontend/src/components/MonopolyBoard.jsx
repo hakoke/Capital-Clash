@@ -1,7 +1,10 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { COLOR_GROUPS, MIDDLE_EAST_BOARD, PLAYER_COLORS } from '../utils/monopolyConstants.js'
 
 const PLAYER_COLOR_MAP = new Map(PLAYER_COLORS.map(entry => [entry.name, entry.hex]))
+const BOARD_SIZE = 11
+const TILE_META_CACHE = new Map()
+const MONEY_FORMATTER = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 })
 
 const resolvePlayerColor = (color) => {
   if (!color) return '#60a5fa'
@@ -11,316 +14,443 @@ const resolvePlayerColor = (color) => {
   return color
 }
 
-function MonopolyBoard({ properties, players, currentPlayer, onBuyProperty, isPreview = false, centerContent = null }) {
-  const [selectedProperty, setSelectedProperty] = useState(null)
+const getPropertyColor = (property) => {
+  if (!property?.color_group) return '#d1d5db'
+  return COLOR_GROUPS[property.color_group] || '#d1d5db'
+}
 
-  // Organize properties by position (0-39) with themed overrides
-  const sourceProperties = (properties && properties.length > 0)
-    ? [...properties]
-    : Object.entries(MIDDLE_EAST_BOARD).map(([position, meta]) => ({
-        id: `theme-${position}`,
-        position: Number(position),
-        name: meta.name,
-        price: meta.price || 0,
-        color_group: meta.colorGroup || null,
-        property_type: meta.type || 'special'
-      }))
+const formatMoney = (value) => {
+  const amount = Number(value)
+  if (!Number.isFinite(amount)) {
+    return '—'
+  }
+  return `$${MONEY_FORMATTER.format(Math.round(amount))}`
+}
 
-  const boardProperties = sourceProperties
-    .map((prop) => {
-      const theme = MIDDLE_EAST_BOARD[prop.position] || {}
-      return {
-        ...prop,
-        name: theme.name || prop.name,
-        displaySubtitle: theme.subtitle,
-        displayIcon: theme.icon,
-        color_group: theme.colorGroup || prop.color_group,
-        property_type: theme.type || prop.property_type,
-        price: prop.price || theme.price || 0
-      }
-    })
-    .sort((a, b) => a.position - b.position)
-
-  // Get player info by ID
-  const getPlayer = (playerId) => {
-    return players.find(p => p.id === playerId)
+const computeTileMeta = (rawPosition) => {
+  const position = Number(rawPosition)
+  if (TILE_META_CACHE.has(position)) {
+    return TILE_META_CACHE.get(position)
   }
 
-  // Get property color
-  const getPropertyColor = (property) => {
-    if (!property.color_group) return '#E5E7EB'
-    return COLOR_GROUPS[property.color_group] || '#E5E7EB'
+  let meta = {
+    row: BOARD_SIZE,
+    col: BOARD_SIZE,
+    orientation: 'corner',
+    region: 'go'
   }
 
-  // Render a property space
-  const renderProperty = (property, index) => {
-    const isOwned = !!property.owner_id
-    const owner = isOwned ? getPlayer(property.owner_id) : null
-    const ownerColorHex = owner ? resolvePlayerColor(owner.color) : null
-    const isMyProperty = owner && currentPlayer && owner.id === currentPlayer.id
-    
-    // Check if current player is at this position
-    const playersHere = players.filter(p => p.position === property.position)
-    
-    const isCorner = property.position === 0 || property.position === 10 || 
-                     property.position === 20 || property.position === 30
-    
-    // Get property color bar
-    const propertyColor = property.color_group ? getPropertyColor(property) : '#E5E7EB'
-    
-    // Shorten property name for display
-    const getDisplayName = (name) => {
-      if (name.length > 12) {
-        return name.substring(0, 10) + '...'
-      }
-      return name
-    }
-    
-    if (!property) return null
+  if (position === 0) {
+    meta = { row: BOARD_SIZE, col: BOARD_SIZE, orientation: 'corner', region: 'go' }
+  } else if (position > 0 && position < 10) {
+    meta = { row: BOARD_SIZE, col: BOARD_SIZE - position, orientation: 'horizontal', region: 'bottom' }
+  } else if (position === 10) {
+    meta = { row: BOARD_SIZE, col: 1, orientation: 'corner', region: 'jail' }
+  } else if (position > 10 && position < 20) {
+    meta = { row: BOARD_SIZE - (position - 10), col: 1, orientation: 'vertical', region: 'left' }
+  } else if (position === 20) {
+    meta = { row: 1, col: 1, orientation: 'corner', region: 'free-parking' }
+  } else if (position > 20 && position < 30) {
+    meta = { row: 1, col: 1 + (position - 20), orientation: 'horizontal', region: 'top' }
+  } else if (position === 30) {
+    meta = { row: 1, col: BOARD_SIZE, orientation: 'corner', region: 'go-to-jail' }
+  } else if (position > 30 && position < 40) {
+    meta = { row: 1 + (position - 30), col: BOARD_SIZE, orientation: 'vertical', region: 'right' }
+  }
 
-    const interactive = !isPreview
+  TILE_META_CACHE.set(position, meta)
+  return meta
+}
 
-    const tileType = property.property_type
-    const subtitle = property.displaySubtitle
-    const tileIcon = property.displayIcon
+const getDisplayName = (name = '') => {
+  if (name.length <= 14) return name
+  return `${name.slice(0, 11)}…`
+}
 
-    return (
-      <div
-        key={property.id || index}
-        onClick={() => {
-          if (isPreview) return
-          setSelectedProperty(property)
-        }}
-        className={`
-          ${isCorner ? 'w-14 h-14 md:w-16 md:h-16' : 'w-8 h-10 md:w-10 md:h-12'}
-          relative border-2
-          ${interactive ? 'cursor-pointer' : 'cursor-default'}
-          transition-all duration-300
-          bg-white
-          ${isOwned ? 'shadow-lg' : 'shadow'}
-          ${interactive ? 'hover:shadow-xl hover:scale-105' : ''}
-          rounded
-        `}
-        style={{
-          backgroundColor: isOwned ? (isMyProperty ? '#281046' : '#17092d') : '#26113f',
-          borderColor: isOwned && owner ? ownerColorHex : property.property_type === 'property' ? propertyColor : '#374151',
-          borderWidth: isOwned ? '3px' : '2px'
-        }}
-        title={property.name + (property.price > 0 ? ` - $${property.price}` : '')}
-      >
-        {/* Property Color Bar */}
-        {property.color_group && property.property_type === 'property' && (
-          <div 
-            className="h-2 w-full absolute top-0 left-0"
-            style={{ backgroundColor: propertyColor }}
-          />
-        )}
+const getFallbackProperties = () => {
+  return Object.entries(MIDDLE_EAST_BOARD).map(([position, meta]) => ({
+    id: `theme-${position}`,
+    position: Number(position),
+    name: meta.name,
+    price: meta.price || 0,
+    rent: meta.rent || 0,
+    rent_with_set: meta.rentWithSet || meta.rent || 0,
+    color_group: meta.colorGroup || null,
+    property_type: meta.type || 'special'
+  }))
+}
 
-        {/* Property Name */}
-        <div className="px-0.5 pt-2 md:pt-3 text-center leading-tight">
-          {tileIcon && (
-            <div className="text-[8px] md:text-[10px] mb-0.5">
-              {tileIcon}
-            </div>
+function PropertyModal({
+  property,
+  players,
+  onClose,
+  isOwner,
+  onBuyProperty,
+  onStructureAction,
+  onMortgageAction,
+  isActionLoading,
+  settings
+}) {
+  if (!property) return null
+
+  const owner = property.owner_id ? players.find((p) => p.id === property.owner_id) : null
+  const ownerBadgeColor = owner ? resolvePlayerColor(owner.color) : '#1f2937'
+  const mortgageValue = Number(property.price || 0) * 0.5
+  const mortgagePayoff = Number(property.price || 0) * 0.55
+  const mortgageEnabled = settings?.mortgage_enabled !== false
+
+  const managementDisabled = !isOwner || isActionLoading
+  const isDevelopable = property.property_type === 'property' && !!property.color_group
+
+  const structureSummary = [
+    { label: 'Houses', value: property.houses || 0 },
+    { label: 'Hotels', value: property.hotels || 0 }
+  ]
+
+  return (
+    <div className="modern-board__backdrop">
+      <div className="modern-board__modal">
+        <header className="modern-board__modal-header">
+          {property.color_group && (
+            <span
+              className="modern-board__modal-accent"
+              style={{ backgroundColor: getPropertyColor(property) }}
+            />
           )}
-          <div className={`font-bold text-white ${property.name.length > 12 ? 'text-[6px] md:text-[7px]' : 'text-[7px] md:text-[8px]'}`}>
-            {getDisplayName(property.name)}
-          </div>
-          
-          {/* Price */}
-          {property.price > 0 && (
-            <div className="text-[6px] md:text-[7px] font-semibold mt-0.5 text-purple-300">
-              ${property.price}
-            </div>
-          )}
-
-          {/* Special Space Labels */}
-          {!property.price && (
-            <div className="text-[6px] md:text-[7px] font-bold mt-0.5 text-purple-300">
-              {(subtitle || tileType?.replace('_', ' ')).substring(0, 20).toUpperCase()}
-            </div>
-          )}
-        </div>
-
-        {/* Owner Badge */}
-        {isOwned && owner && (
-          <div className="absolute bottom-0.5 md:bottom-1 left-1/2 transform -translate-x-1/2">
-            <div 
-              className="w-3 h-3 md:w-4 md:h-4 rounded-full flex items-center justify-center text-white text-[6px] md:text-[8px] font-bold shadow-md border border-white"
-              style={{ backgroundColor: ownerColorHex }}
-              title={`Owned by ${owner.name}`}
-            >
-              {owner.name.charAt(0).toUpperCase()}
+          <div className="modern-board__modal-title">
+            <h3>{property.name}</h3>
+            <div className="modern-board__modal-meta">
+              <span>{property.property_type === 'property' ? 'Title deed' : property.property_type.replace('_', ' ')}</span>
+              {property.is_mortgaged && <span className="modern-board__pill modern-board__pill--warning">Mortgaged</span>}
+              {owner && (
+                <span className="modern-board__pill modern-board__pill--owner">
+                  <span className="modern-board__pill-dot" style={{ backgroundColor: ownerBadgeColor }}></span>
+                  {owner.name}
+                </span>
+              )}
             </div>
           </div>
-        )}
+          <button className="modern-board__modal-close" onClick={onClose} aria-label="Close property details">
+            ×
+          </button>
+        </header>
 
-        {/* Houses/Hotels Indicator */}
-        {isOwned && property.houses > 0 && (
-          <div className="absolute top-0.5 md:top-1 right-0.5 md:right-1 flex gap-0.5">
-            {Array.from({ length: Math.min(property.houses, 4) }).map((_, i) => (
-              <div key={i} className="w-1 h-1 bg-green-600 rounded-full" />
+        <section className="modern-board__modal-body">
+          <div className="modern-board__stat-grid">
+            <div className="modern-board__stat">
+              <span>Price</span>
+              <strong>{formatMoney(property.price)}</strong>
+            </div>
+            <div className="modern-board__stat">
+              <span>Base rent</span>
+              <strong>{formatMoney(property.rent)}</strong>
+            </div>
+            <div className="modern-board__stat">
+              <span>Set rent</span>
+              <strong>{formatMoney(property.rent_with_set)}</strong>
+            </div>
+            <div className="modern-board__stat">
+              <span>House cost</span>
+              <strong>{formatMoney(property.house_cost)}</strong>
+            </div>
+            <div className="modern-board__stat">
+              <span>Hotel cost</span>
+              <strong>{formatMoney(property.hotel_cost)}</strong>
+            </div>
+            <div className="modern-board__stat">
+              <span>Mortgage value</span>
+              <strong>{formatMoney(mortgageValue)}</strong>
+            </div>
+          </div>
+
+          <div className="modern-board__structure-row">
+            {structureSummary.map((item) => (
+              <div key={item.label} className="modern-board__structure-card">
+                <span>{item.label}</span>
+                <strong>{item.value}</strong>
+              </div>
             ))}
-            {property.hotels > 0 && (
-              <div className="w-1 h-1 bg-red-600 rounded-full" />
+          </div>
+        </section>
+
+        {isOwner ? (
+          <section className="modern-board__modal-section">
+            <h4>Manage property</h4>
+            <div className="modern-board__action-grid">
+              <button
+                type="button"
+                className="modern-board__action-button"
+                onClick={() => onStructureAction?.('build_house')}
+                disabled={!isDevelopable || managementDisabled || property.hotels > 0 || property.houses >= 4}
+              >
+                Build house
+              </button>
+              <button
+                type="button"
+                className="modern-board__action-button"
+                onClick={() => onStructureAction?.('sell_house')}
+                disabled={!isDevelopable || managementDisabled || property.houses <= 0}
+              >
+                Sell house
+              </button>
+              <button
+                type="button"
+                className="modern-board__action-button"
+                onClick={() => onStructureAction?.('build_hotel')}
+                disabled={!isDevelopable || managementDisabled || property.hotels > 0 || property.houses < 4}
+              >
+                Build hotel
+              </button>
+              <button
+                type="button"
+                className="modern-board__action-button"
+                onClick={() => onStructureAction?.('sell_hotel')}
+                disabled={!isDevelopable || managementDisabled || property.hotels === 0}
+              >
+                Sell hotel
+              </button>
+            </div>
+            <div className="modern-board__modal-hint">
+              {settings?.even_build !== false ? 'Even-build enforcement is enabled for this game.' : 'Even-build rule is disabled.'}
+            </div>
+
+            <div className="modern-board__mortgage-row">
+              <button
+                type="button"
+                className="modern-board__action-button modern-board__action-button--wide"
+                onClick={onMortgageAction}
+                disabled={isActionLoading || !mortgageEnabled || (property.is_mortgaged ? false : property.houses > 0 || property.hotels > 0)}
+              >
+                {property.is_mortgaged ? `Lift mortgage for ${formatMoney(mortgagePayoff)}` : `Mortgage for ${formatMoney(mortgageValue)}`}
+              </button>
+              {!mortgageEnabled && <span className="modern-board__modal-hint">Mortgages disabled by host</span>}
+            </div>
+          </section>
+        ) : (
+          <section className="modern-board__modal-section">
+            {property.owner_id ? (
+              <div className="modern-board__modal-hint">Owned by {owner?.name || 'another traveler'}.</div>
+            ) : (
+              <div className="modern-board__modal-cta">
+                <span>Unclaimed stop. Purchase to start collecting rent.</span>
+                {property.price > 0 && (
+                  <button
+                    type="button"
+                    className="modern-board__action-button modern-board__action-button--primary"
+                    onClick={() => onBuyProperty?.(property.id)}
+                    disabled={isActionLoading || !onBuyProperty}
+                  >
+                    Buy for {formatMoney(property.price)}
+                  </button>
+                )}
+              </div>
             )}
-          </div>
+          </section>
         )}
 
-        {/* Player Pieces */}
-        {playersHere.length > 0 && (
-          <div className="absolute -bottom-1.5 md:-bottom-2 left-1/2 transform -translate-x-1/2 flex items-center gap-0.5">
-            {playersHere.slice(0, 2).map((p) => (
-              <div
-                key={p.id}
-                className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full border-2 border-white shadow-sm"
-                style={{ backgroundColor: resolvePlayerColor(p.color) }}
-                title={p.name}
-              />
-            ))}
-          </div>
-        )}
+        <footer className="modern-board__modal-footer">
+          <button type="button" className="modern-board__action-button" onClick={onClose}>
+            Close
+          </button>
+        </footer>
       </div>
-    )
+    </div>
+  )
+}
+
+function MonopolyBoard({
+  properties,
+  players,
+  currentPlayer,
+  onBuyProperty,
+  onManageStructure,
+  onToggleMortgage,
+  settings = {},
+  isPreview = false,
+  centerContent = null
+}) {
+  const [selectedPropertyId, setSelectedPropertyId] = useState(null)
+  const [isActionLoading, setIsActionLoading] = useState(false)
+
+  const boardProperties = useMemo(() => {
+    const sourceProperties = (properties && properties.length > 0) ? [...properties] : getFallbackProperties()
+
+    return sourceProperties
+      .map((prop) => {
+        const theme = MIDDLE_EAST_BOARD[prop.position] || {}
+        return {
+          ...prop,
+          position: Number(prop.position),
+          name: theme.name || prop.name,
+          displaySubtitle: theme.subtitle,
+          displayIcon: theme.icon,
+          color_group: theme.colorGroup || prop.color_group,
+          property_type: theme.type || prop.property_type,
+          price: prop.price ?? theme.price ?? 0
+        }
+      })
+      .sort((a, b) => a.position - b.position)
+  }, [properties])
+
+  const selectedProperty = useMemo(
+    () => boardProperties.find((prop) => prop.id === selectedPropertyId) || null,
+    [boardProperties, selectedPropertyId]
+  )
+
+  const handleTileClick = (property) => {
+    if (isPreview) return
+    setSelectedPropertyId(property.id)
   }
 
-  // Arrange properties for display  
-  // Standard Monopoly board: position 0 = GO (bottom right corner)
-  // Start walking clockwise: 1-9 are bottom row, 10 is bottom right corner, 11-19 are right side, etc.
-  
-  // Get properties by position to ensure correct order
-  const getPropertyAtPosition = (pos) => boardProperties.find(p => p.position === pos)
-  
-  // Bottom row left to right: positions 1-9 (skip 0 for now)
-  const bottomRow = [1, 2, 3, 4, 5, 6, 7, 8, 9].map(p => getPropertyAtPosition(p)).filter(Boolean)
-  
-  // Right side bottom to top: positions 11-19
-  const rightColumn = [11, 12, 13, 14, 15, 16, 17, 18, 19].map(p => getPropertyAtPosition(p)).filter(Boolean)
-  
-  // Top row right to left: positions 31-39  
-  const topRow = [31, 32, 33, 34, 35, 36, 37, 38, 39].map(p => getPropertyAtPosition(p)).filter(Boolean).reverse()
-  
-  // Left side top to bottom: positions 21-29
-  const leftColumn = [21, 22, 23, 24, 25, 26, 27, 28, 29].map(p => getPropertyAtPosition(p)).filter(Boolean).reverse()
-  
-  // Corners
-  const goCorner = getPropertyAtPosition(0)
-  const jailCorner = getPropertyAtPosition(10)
-  const parkingCorner = getPropertyAtPosition(20)
-  const goToJailCorner = getPropertyAtPosition(30)
+  const handleCloseModal = () => {
+    setSelectedPropertyId(null)
+    setIsActionLoading(false)
+  }
+
+  const handleStructureAction = async (property, action) => {
+    if (!onManageStructure) return
+    setIsActionLoading(true)
+    try {
+      await onManageStructure(property.id, action)
+    } finally {
+      setIsActionLoading(false)
+    }
+  }
+
+  const handleMortgageAction = async (property) => {
+    if (!onToggleMortgage) return
+    setIsActionLoading(true)
+    try {
+      const mode = property.is_mortgaged ? 'lift' : 'mortgage'
+      await onToggleMortgage(property.id, mode)
+    } finally {
+      setIsActionLoading(false)
+    }
+  }
 
   return (
     <>
       {!isPreview && selectedProperty && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-lg w-full shadow-2xl transform transition-all">
-            <div className="flex items-start gap-4 mb-4">
-              {selectedProperty.color_group && (
-                <div 
-                  className="w-16 h-20 rounded-t-lg flex-shrink-0"
-                  style={{ 
-                    background: selectedProperty.color_group === 'brown' ? '#8B4513' :
-                               selectedProperty.color_group === 'light_blue' ? 'linear-gradient(to bottom, #87CEEB, #E0F7FF)' :
-                               selectedProperty.color_group === 'pink' ? '#FF69B4' :
-                               selectedProperty.color_group === 'orange' ? '#FFA500' :
-                               selectedProperty.color_group === 'red' ? '#DC143C' :
-                               selectedProperty.color_group === 'yellow' ? '#FFD700' :
-                               selectedProperty.color_group === 'green' ? '#228B22' :
-                               selectedProperty.color_group === 'blue' ? '#191970' :
-                               '#E5E7EB'
-                  }}
-                />
-              )}
-              <div className="flex-1">
-                <h3 className="text-2xl font-bold mb-2 text-gray-800">{selectedProperty.name}</h3>
-                <div className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
-                  selectedProperty.owner_id ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
-                }`}>
-                  {selectedProperty.owner_id ? 'Owned' : 'Available'}
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 mb-6">
-              <div className="bg-gray-50 p-3 rounded-lg">
-                <div className="text-xs text-gray-600 mb-1">Purchase Price</div>
-                <div className="text-2xl font-bold text-green-600">${selectedProperty.price}</div>
-              </div>
-              <div className="bg-gray-50 p-3 rounded-lg">
-                <div className="text-xs text-gray-600 mb-1">Base Rent</div>
-                <div className="text-2xl font-bold text-red-600">${selectedProperty.rent || 0}</div>
-              </div>
-            </div>
-
-            {selectedProperty.rent_with_set > selectedProperty.rent && (
-              <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                <div className="text-xs font-semibold text-blue-800 mb-1">With Full Color Set</div>
-                <div className="text-lg font-bold text-blue-600">${selectedProperty.rent_with_set}</div>
-              </div>
-            )}
-
-            <div className="flex gap-3">
-              {!selectedProperty.owner_id && selectedProperty.price > 0 && (
-                <button
-                  onClick={() => {
-                    onBuyProperty(selectedProperty.id)
-                    setSelectedProperty(null)
-                  }}
-                  className="flex-1 px-6 py-3 bg-green-500 text-white rounded-lg font-bold text-lg hover:bg-green-600 transition-all hover:scale-105 shadow-lg"
-                >
-                  💰 Buy for ${selectedProperty.price}
-                </button>
-              )}
-              <button
-                onClick={() => setSelectedProperty(null)}
-                className="px-6 py-3 bg-gray-500 text-white rounded-lg font-semibold hover:bg-gray-600 transition-all"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
+        <PropertyModal
+          property={selectedProperty}
+          players={players}
+          onClose={handleCloseModal}
+          isOwner={currentPlayer?.id === selectedProperty.owner_id}
+          onBuyProperty={(propertyId) => onBuyProperty?.(propertyId)}
+          onStructureAction={(action) => selectedProperty && handleStructureAction(selectedProperty, action)}
+          onMortgageAction={() => selectedProperty && handleMortgageAction(selectedProperty)}
+          isActionLoading={isActionLoading}
+          settings={settings}
+        />
       )}
 
-      <div className="relative bg-[#1a0033] rounded-lg border-2 border-purple-700 shadow-xl p-1 md:p-2 h-full overflow-hidden">
-        
-        {/* Top Row: Position 31-39 (right to left) - Park Place thru Chance */}
-        <div className="flex mb-0.5 md:mb-1 justify-center flex-wrap">
-          {topRow.map((prop, idx) => prop && renderProperty(prop, idx))}
-        </div>
+      <div className={`modern-board ${isPreview ? 'modern-board--preview' : ''}`}>
+        <div className="modern-board__grid">
+          {boardProperties.map((property) => {
+            const meta = computeTileMeta(property.position)
+            const isOwned = !!property.owner_id
+            const owner = isOwned ? players.find((p) => p.id === property.owner_id) : null
+            const ownerColor = owner ? resolvePlayerColor(owner.color) : null
+            const playersHere = players.filter((p) => Number(p.position) === Number(property.position))
+            const propertyColor = getPropertyColor(property)
 
-        {/* Middle Section - Responsive height */}
-        <div className="flex gap-1 md:gap-2 flex-1 min-h-0">
-          
-          {/* Left Column: Position 21-29 (bottom to top) */}
-          <div className="flex flex-col-reverse">
-            {leftColumn.map((prop, idx) => prop && renderProperty(prop, idx))}
-          </div>
+            const tileClassNames = [
+              'modern-board__tile',
+              `modern-board__tile--${meta.orientation}`,
+              `modern-board__tile--${meta.region}`,
+              isOwned ? 'modern-board__tile--owned' : '',
+              property.is_mortgaged ? 'modern-board__tile--mortgaged' : ''
+            ].filter(Boolean).join(' ')
 
-          {/* Center Board Background */}
-          <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-[#20113c] via-[#231446] to-[#120724] rounded-xl border border-[#5d2fbf] shadow-inner min-w-0 p-2 md:p-4 relative overflow-hidden">
+            return (
+              <button
+                type="button"
+                key={property.id}
+                className={tileClassNames}
+                style={{ gridRow: meta.row, gridColumn: meta.col }}
+                onClick={() => handleTileClick(property)}
+                disabled={isPreview}
+              >
+                {property.color_group && property.property_type === 'property' && (
+                  <span
+                    className="modern-board__color-band"
+                    style={{ backgroundColor: propertyColor }}
+                  ></span>
+                )}
+
+                <div className="modern-board__tile-inner">
+                  <div className="modern-board__tile-content">
+                    {property.displayIcon && (
+                      <span className="modern-board__tile-icon">{property.displayIcon}</span>
+                    )}
+                    <span className="modern-board__tile-name">{getDisplayName(property.name)}</span>
+                    {Number(property.price) > 0 ? (
+                      <span className="modern-board__tile-price">{formatMoney(property.price)}</span>
+                    ) : (
+                      <span className="modern-board__tile-subtitle">
+                        {(property.displaySubtitle || property.property_type || '').replace(/_/g, ' ')}
+                      </span>
+                    )}
+                  </div>
+
+                  {property.houses > 0 && (
+                    <div className="modern-board__structures">
+                      {Array.from({ length: Math.min(property.houses, 4) }).map((_, idx) => (
+                        <span key={idx} className="modern-board__structure modern-board__structure--house"></span>
+                      ))}
+                    </div>
+                  )}
+                  {property.hotels > 0 && (
+                    <div className="modern-board__structures">
+                      <span className="modern-board__structure modern-board__structure--hotel"></span>
+                    </div>
+                  )}
+
+                  {isOwned && owner && (
+                    <span
+                      className="modern-board__owner-chip"
+                      style={{ backgroundColor: ownerColor }}
+                      title={`Owned by ${owner.name}`}
+                    >
+                      {owner.name.charAt(0).toUpperCase()}
+                    </span>
+                  )}
+
+                  {property.is_mortgaged && (
+                    <span className="modern-board__mortgage-tag">M</span>
+                  )}
+
+                  {playersHere.length > 0 && (
+                    <div className="modern-board__player-stack">
+                      {playersHere.slice(0, 3).map((p) => (
+                        <span
+                          key={p.id}
+                          className="modern-board__player-token"
+                          style={{ backgroundColor: resolvePlayerColor(p.color) }}
+                          title={p.name}
+                        ></span>
+                      ))}
+                      {playersHere.length > 3 && (
+                        <span className="modern-board__player-overflow">+{playersHere.length - 3}</span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </button>
+            )
+          })}
+
+          <div className="modern-board__center" style={{ gridRow: '2 / span 9', gridColumn: '2 / span 9' }}>
             {centerContent ? (
-              <div className="poordown-board-center__content">
-                {centerContent}
-              </div>
+              <div className="modern-board__center-content">{centerContent}</div>
             ) : isPreview ? (
-              <div className="poordown-preview-center">
-                <span className="text-[0.65rem] uppercase tracking-[0.45em] text-purple-200/80">Board preview</span>
-                <h4 className="text-lg font-semibold tracking-[0.3em] text-white">Middle East Route</h4>
-                <p className="text-xs text-purple-200/70 tracking-[0.3em] uppercase">Palestine • Israel • UAE • Egypt • USA</p>
+              <div className="modern-board__preview">
+                <span className="modern-board__preview-subtitle">Board preview</span>
+                <h4 className="modern-board__preview-title">Middle East Route</h4>
+                <p className="modern-board__preview-meta">Palestine · Israel · UAE · Egypt · USA</p>
               </div>
             ) : null}
           </div>
-
-          {/* Right Column: Position 11-19 (bottom to top) */}
-          <div className="flex flex-col">
-            {rightColumn.map((prop, idx) => prop && renderProperty(prop, idx))}
-          </div>
-        </div>
-
-        {/* Bottom Row: Position 1-9 (left to right) - Mediterranean thru Connecticut */}
-        <div className="flex mt-0.5 md:mt-1 justify-center flex-wrap">
-          {bottomRow.map((prop, idx) => prop && renderProperty(prop, idx))}
         </div>
       </div>
     </>
@@ -328,4 +458,3 @@ function MonopolyBoard({ properties, players, currentPlayer, onBuyProperty, isPr
 }
 
 export default MonopolyBoard
-

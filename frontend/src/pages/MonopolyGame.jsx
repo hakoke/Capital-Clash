@@ -9,7 +9,6 @@ import {
   Send,
   Users,
   Info,
-  ChevronRight,
   HelpCircle,
   Volume2,
   Search
@@ -20,15 +19,10 @@ import Notification from '../components/Notification'
 import PlayerAvatar from '../components/PlayerAvatar'
 import GameSettingToggle from '../components/GameSettingToggle'
 import AuctionPanel from '../components/AuctionPanel'
+import Dice3D from '../components/Dice3D'
 
-const DICE_PIPS = {
-  1: [4],
-  2: [0, 8],
-  3: [0, 4, 8],
-  4: [0, 2, 6, 8],
-  5: [0, 2, 4, 6, 8],
-  6: [0, 2, 3, 5, 6, 8]
-}
+const STARTING_CASH_PRESETS = [1000, 1500, 2000, 2500, 3000]
+const formatCurrency = (value) => `$${Number(value || 0).toLocaleString()}`
 
 function MonopolyGame() {
   const { gameId } = useParams()
@@ -51,8 +45,12 @@ function MonopolyGame() {
   const [linkCopied, setLinkCopied] = useState(false)
   const [maxPlayers, setMaxPlayers] = useState(4)
   const [hoveredSetting, setHoveredSetting] = useState(null)
+  const [startingCashOption, setStartingCashOption] = useState('1500')
+  const [customStartingCash, setCustomStartingCash] = useState('1500')
 
   const socketRef = useRef(null)
+  const isHost = currentPlayer?.order_in_game === 1
+  const disableSettings = !isHost
 
   const fetchGameData = async () => {
     try {
@@ -119,6 +117,19 @@ function MonopolyGame() {
   }, [gameId])
 
   useEffect(() => {
+    if (!game || game.starting_cash == null) return
+    const normalized = Math.round(Number(game.starting_cash)) || 1500
+
+    if (STARTING_CASH_PRESETS.includes(normalized)) {
+      setStartingCashOption(String(normalized))
+      setCustomStartingCash(String(normalized))
+    } else {
+      setStartingCashOption('custom')
+      setCustomStartingCash(String(normalized))
+    }
+  }, [game?.starting_cash])
+
+  useEffect(() => {
     const loadChatHistory = async () => {
       try {
         const res = await axios.get(`/api/chat/${gameId}/history`)
@@ -157,7 +168,16 @@ function MonopolyGame() {
 
         let message = `🎲 Rolled ${dice.die1} + ${dice.die2} = ${dice.total}!`
         if (rentPaid) {
-          message += ` Paid $${rentPaid} rent`
+          message += ` Paid ${formatCurrency(rentPaid)} rent`
+        }
+        if (res.data.taxPaid) {
+          message += ` Paid ${formatCurrency(res.data.taxPaid)} tax`
+        }
+        if (res.data.bonusCollected) {
+          message += ` Collected ${formatCurrency(res.data.bonusCollected)} vacation cash`
+        }
+        if (res.data.forcedAction === 'go_to_jail') {
+          message += ' Sent to customs check!'
         }
         showNotification(message, 'success')
 
@@ -219,6 +239,79 @@ function MonopolyGame() {
       console.error('Error buying property:', error)
       showNotification('Error: ' + (error.response?.data?.error || error.message), 'error')
     }
+  }
+
+  const handleManageStructure = async (propertyId, action) => {
+    if (!currentPlayer) return
+
+    const property = properties.find((p) => p.id === propertyId)
+    const propertyName = property?.name || 'property'
+
+    const actionMessages = {
+      build_house: `Built a house on ${propertyName}`,
+      sell_house: `Sold a house from ${propertyName}`,
+      build_hotel: `Constructed a hotel on ${propertyName}`,
+      sell_hotel: `Sold the hotel on ${propertyName}`
+    }
+
+    try {
+      await axios.post(`/api/player/${currentPlayer.id}/properties/${propertyId}/structures`, { action })
+      showNotification(actionMessages[action] || 'Property updated', 'success')
+      fetchGameData()
+    } catch (error) {
+      console.error('Error managing structure:', error)
+      showNotification('Unable to update property: ' + (error.response?.data?.error || error.message), 'error')
+    }
+  }
+
+  const handleToggleMortgage = async (propertyId, mode) => {
+    if (!currentPlayer) return
+
+    const property = properties.find((p) => p.id === propertyId)
+    const propertyName = property?.name || 'property'
+
+    const endpoint = mode === 'mortgage' ? 'mortgage' : 'unmortgage'
+    const successMessage = mode === 'mortgage'
+      ? `Mortgaged ${propertyName}`
+      : `Lifted mortgage on ${propertyName}`
+
+    try {
+      await axios.post(`/api/player/${currentPlayer.id}/properties/${propertyId}/${endpoint}`)
+      showNotification(successMessage, 'info')
+      fetchGameData()
+    } catch (error) {
+      console.error('Error toggling mortgage:', error)
+      showNotification('Mortgage update failed: ' + (error.response?.data?.error || error.message), 'error')
+    }
+  }
+
+  const updateStartingCashSetting = async (amount) => {
+    try {
+      await axios.post(`/api/game/${gameId}/settings`, {
+        setting: 'starting_cash',
+        value: amount
+      })
+      showNotification(`Starting money set to ${formatCurrency(amount)}`, 'info')
+      fetchGameData()
+    } catch (error) {
+      console.error('Error updating starting money:', error)
+      showNotification('Unable to update starting money: ' + (error.response?.data?.error || error.message), 'error')
+    }
+  }
+
+  const handleStartingCashPreset = (amount) => {
+    if (!game || disableSettings) return
+    setStartingCashOption(String(amount))
+    setCustomStartingCash(String(amount))
+    updateStartingCashSetting(amount)
+  }
+
+  const handleCustomStartingCashApply = () => {
+    if (!game || disableSettings) return
+    const parsed = Math.round(Number(customStartingCash) || 0)
+    const amount = Math.max(500, parsed)
+    setCustomStartingCash(String(amount))
+    updateStartingCashSetting(amount)
   }
 
   const handleStartAuction = async () => {
@@ -301,19 +394,7 @@ function MonopolyGame() {
   )
 
   const renderHubDie = (value, key) => (
-    <div className={`poordown-center-die ${value ? '' : 'poordown-center-die--idle'}`} key={key}>
-      <div className="poordown-center-die__face">
-        {Array.from({ length: 9 }).map((_, idx) => (
-          <div key={`${key}-${idx}`} className="poordown-center-die__cell">
-            <span
-              className="poordown-center-die__pip"
-              style={{ opacity: value && DICE_PIPS[value]?.includes(idx) ? 1 : 0 }}
-            ></span>
-          </div>
-        ))}
-      </div>
-      <div className="poordown-center-die__shadow" aria-hidden="true"></div>
-    </div>
+    <Dice3D key={key} value={value || null} size="lg" />
   )
 
   if (!game || !currentPlayer) {
@@ -325,8 +406,6 @@ function MonopolyGame() {
   }
 
   const isMyTurn = currentTurnPlayer && currentPlayer && currentTurnPlayer.id === currentPlayer.id
-  const isHost = currentPlayer?.order_in_game === 1
-  const disableSettings = !isHost
   const canStartGame = players.length >= 2
   const orderedPlayers = useMemo(
     () => [...players].sort((a, b) => a.order_in_game - b.order_in_game),
@@ -424,18 +503,17 @@ function MonopolyGame() {
             <div className="flex items-center justify-center gap-4 mb-4">
               {diceResult ? (
                 <>
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-3xl font-bold shadow-lg">
-                    {diceResult.die1}
-                  </div>
+                  <Dice3D value={diceResult.die1} size="xl" animate />
                   <div className="text-3xl font-semibold">+</div>
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-sky-500 to-blue-500 flex items-center justify-center text-3xl font-bold shadow-lg">
-                    {diceResult.die2}
-                  </div>
+                  <Dice3D value={diceResult.die2} size="xl" animate />
                 </>
               ) : (
-                <div className="text-lg tracking-[0.3em] uppercase text-purple-200">Rolling...</div>
+                <Dice3D value={null} size="xl" animate />
               )}
             </div>
+            {!diceResult && (
+              <div className="text-sm tracking-[0.3em] uppercase text-purple-200">Rolling…</div>
+            )}
           </div>
         </div>
       )}
@@ -532,6 +610,9 @@ function MonopolyGame() {
                   players={players}
                   currentPlayer={currentPlayer}
                   onBuyProperty={handleBuyProperty}
+                  onManageStructure={handleManageStructure}
+                  onToggleMortgage={handleToggleMortgage}
+                  settings={game}
                   centerContent={boardCenterContent}
                 />
               </div>
@@ -607,61 +688,68 @@ function MonopolyGame() {
                   </div>
                   {disableSettings && renderGuardTooltip('maxPlayers')}
                 </div>
-
-                <div className="poordown-setting-card">
-                  <div className="poordown-setting-card__body">
+                <div
+                  className="poordown-setting-card"
+                  onMouseEnter={() => disableSettings && handleGuardHover('startingCash')}
+                  onMouseLeave={() => disableSettings && handleGuardLeave()}
+                >
+                  <div className="poordown-setting-card__body poordown-setting-card__body--column">
                     <div className="poordown-setting-card__label">
                       <svg className="poordown-setting-card__icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-2.21 0-4 .895-4 2s1.79 2 4 2 4 .895 4 2-1.79 2-4 2m0-8c2.21 0 4 .895 4 2m-4-4v1m0 10v1m-6-3.5c0 1.657 2.686 3 6 3s6-1.343 6-3V8.5" />
                       </svg>
                       <div>
-                        <p>Private room</p>
-                        <span>Private rooms can be accessed using the room URL only</span>
+                        <p>Starting money</p>
+                        <span>Recommended {formatCurrency(1500)}</span>
                       </div>
                     </div>
-                    <label className="poordown-toggle">
-                      <input type="checkbox" className="sr-only" defaultChecked readOnly />
-                      <span className="poordown-toggle__track"></span>
-                    </label>
-                  </div>
-                </div>
-
-                <div className="poordown-setting-card">
-                  <div className="poordown-setting-card__body">
-                    <div className="poordown-setting-card__label">
-                      <svg className="poordown-setting-card__icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                      </svg>
-                      <div>
-                        <p>Allow bots to join <span className="poordown-setting-card__badge">Beta</span></p>
-                        <span>Bots will join the game based on availability</span>
-                      </div>
-                    </div>
-                    <label className="poordown-toggle">
-                      <input type="checkbox" className="sr-only" disabled />
-                      <span className="poordown-toggle__track"></span>
-                    </label>
-                  </div>
-                </div>
-
-                <div className="poordown-setting-card">
-                  <div className="poordown-setting-card__body">
-                    <div className="poordown-setting-card__label">
-                      <svg className="poordown-setting-card__icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                      </svg>
-                      <div>
-                        <p>Board map</p>
-                        <span>Change map tiles, properties and stacks</span>
-                      </div>
-                    </div>
-                    <div className="poordown-setting-action">
-                      <span>Classic</span>
-                      <button className="poordown-setting-action__link" disabled>
-                        Browse maps <ChevronRight className="w-3 h-3" />
+                    <div className="poordown-setting-money">
+                      {STARTING_CASH_PRESETS.map((amount) => (
+                        <button
+                          key={amount}
+                          type="button"
+                          className={`poordown-money-chip ${startingCashOption === String(amount) ? 'active' : ''}`}
+                          onClick={() => handleStartingCashPreset(amount)}
+                          disabled={disableSettings}
+                        >
+                          {formatCurrency(amount)}
+                        </button>
+                      ))}
+                      <button
+                        type="button"
+                        className={`poordown-money-chip ${startingCashOption === 'custom' ? 'active' : ''}`}
+                        onClick={() => {
+                          if (disableSettings) return
+                          setStartingCashOption('custom')
+                        }}
+                        disabled={disableSettings}
+                      >
+                        Custom
                       </button>
                     </div>
+                    {startingCashOption === 'custom' && (
+                      <div className="poordown-money-custom">
+                        <input
+                          type="number"
+                          min={500}
+                          step={50}
+                          value={customStartingCash}
+                          onChange={(e) => setCustomStartingCash(e.target.value)}
+                          disabled={disableSettings}
+                          className="poordown-money-input"
+                        />
+                        <button
+                          type="button"
+                          className="poordown-money-apply"
+                          onClick={handleCustomStartingCashApply}
+                          disabled={disableSettings}
+                        >
+                          Apply
+                        </button>
+                      </div>
+                    )}
                   </div>
+                  {disableSettings && renderGuardTooltip('startingCash')}
                 </div>
               </div>
             </div>
@@ -689,6 +777,16 @@ function MonopolyGame() {
                   title: "Don’t collect rent while in prison",
                   description: 'Rent will not be collected when landing on properties whose owners are in prison',
                   setting: 'no_rent_in_prison'
+                }, {
+                  icon: '🏦',
+                  title: 'Mortgage',
+                  description: 'Mortgage properties to receive half their cost; mortgaged titles stop paying rent',
+                  setting: 'mortgage_enabled'
+                }, {
+                  icon: '🏗️',
+                  title: 'Even build',
+                  description: 'Houses and hotels must be added or removed evenly across properties in a set',
+                  setting: 'even_build'
                 }].map(config => (
                   <GameSettingToggle
                     key={config.setting}
