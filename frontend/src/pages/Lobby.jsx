@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { io } from 'socket.io-client'
-import { Users, Copy, Check, Crown, Settings, MessageCircle, Volume2, Search, HelpCircle, X, ChevronRight, Info, Bot, Send } from 'lucide-react'
+import { Users, Copy, Check, MessageCircle, Volume2, Search, HelpCircle, ChevronRight, Info, Send } from 'lucide-react'
 import { PLAYER_COLORS } from '../utils/monopolyConstants.js'
 import GameSettingToggle from '../components/GameSettingToggle.jsx'
 import PlayerAvatar from '../components/PlayerAvatar.jsx'
@@ -13,6 +13,15 @@ const layoutVariants = {
   enter: { opacity: 0, y: 80 },
   center: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.16, 1, 0.3, 1] } },
   exit: { opacity: 0, y: -80, transition: { duration: 0.35, ease: 'easeIn' } },
+}
+
+const DICE_PIPS = {
+  1: [4],
+  2: [0, 8],
+  3: [0, 4, 8],
+  4: [0, 2, 6, 8],
+  5: [0, 2, 4, 6, 8],
+  6: [0, 2, 3, 5, 6, 8]
 }
 
 function Lobby() {
@@ -254,6 +263,101 @@ function Lobby() {
     ) : null
   )
 
+  const renderDie = (value) => (
+    <div className="poordown-die" key={`die-${value}`}>
+      <div className="poordown-die__face">
+        {Array.from({ length: 9 }).map((_, idx) => (
+          <div key={`pip-${value}-${idx}`} className="poordown-die__cell">
+            <span
+              className="poordown-die__pip"
+              style={{ opacity: DICE_PIPS[value]?.includes(idx) ? 1 : 0 }}
+            ></span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+
+  const renderLobbyStage = (variant) => {
+    const isHostView = variant === 'host'
+    const minimumPlayers = 2
+    const canStart = players.length >= minimumPlayers
+    const visiblePlayers = players.slice(0, 4)
+
+    return (
+      <div className="poordown-board-stage">
+        <div className="poordown-board-stage__board">
+          <MonopolyBoard
+            properties={properties}
+            players={[]}
+            currentPlayer={null}
+            currentTurnPlayer={null}
+            isPreview={true}
+          />
+        </div>
+        <div className="poordown-board-stage__panel">
+          <div>
+            <div className="poordown-panel-subtitle">{isHostView ? 'Host controls' : 'Lobby ready'}</div>
+            <h3>{isHostView ? 'Launch the trip' : 'Waiting to launch'}</h3>
+          </div>
+
+          <div className="poordown-dice-stack">
+            {renderDie(3)}
+            {renderDie(4)}
+          </div>
+
+          <div className="poordown-start-meta">
+            <span className="poordown-players-dot">{players.length} / {maxPlayers} players</span>
+          </div>
+
+          <div className="space-y-2">
+            {isHostView ? (
+              <>
+                <button
+                  onClick={startGame}
+                  disabled={loading || !canStart}
+                  className="poordown-start-button"
+                >
+                  <span>▶</span>
+                  <span>{loading ? 'Starting...' : 'Start Game'}</span>
+                </button>
+                <p className="poordown-start-meta">
+                  {canStart ? 'Ready when everyone is set.' : 'Need at least two players to begin.'}
+                </p>
+              </>
+            ) : (
+              <div className="poordown-status-chip">Waiting for host</div>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            {visiblePlayers.map((player) => {
+              const isYou = currentPlayerId && player.id === currentPlayerId
+              return (
+                <div
+                  key={player.id}
+                  className={`poordown-player-row ${isYou ? 'you' : ''}`}
+                >
+                  <PlayerAvatar color={player.color} size="sm" showCrown={player.order_in_game === 1} />
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-sm text-white truncate">{player.name}</div>
+                    <div className="poordown-player-meta">{player.color.replace('_', ' ')}</div>
+                  </div>
+                  <div className="poordown-player-money">${player.money || 1500}</div>
+                </div>
+              )
+            })}
+            {players.length === 0 && (
+              <div className="text-xs text-center text-purple-300 opacity-70">
+                Waiting for friends to join...
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   const emptySlots = useMemo(() => {
     if (!maxPlayersValue) return []
     const remaining = Math.max(maxPlayersValue - players.length, 0)
@@ -402,9 +506,9 @@ function Lobby() {
         }}>
           {/* Blurred board background with depth fade like RichUp */}
           <div className="absolute inset-0 pointer-events-none overflow-hidden">
-            <div className="absolute inset-0" style={{ 
-              filter: 'blur(12px)',
-              opacity: 0.6
+          <div className="absolute inset-0" style={{ 
+              filter: 'blur(9px)',
+              opacity: 0.45
             }}>
               <MonopolyBoard
                 properties={properties}
@@ -477,48 +581,16 @@ function Lobby() {
             </div>
           )}
 
-          {/* Show Start Game button when joined and waiting for host */}
+          {/* Waiting stages */}
           {isPlayerInGame && !isHost && game && game.status === 'waiting' && (
-            <div className="relative z-10 max-w-md w-full px-8">
-              <div className="text-center">
-                <div className="mb-6 flex items-center justify-center gap-4">
-                  <div className="w-16 h-16 bg-white rounded-lg shadow-lg flex items-center justify-center">
-                    <span className="text-4xl font-bold">⚀</span>
-                  </div>
-                  <div className="w-16 h-16 bg-white rounded-lg shadow-lg flex items-center justify-center">
-                    <span className="text-4xl font-bold">⚁</span>
-                  </div>
-                </div>
-                <p className="text-gray-400 mb-2">Waiting for host to start the game...</p>
-                <p className="text-sm text-purple-400">Joined room {gameId.slice(0, 8)}</p>
-              </div>
+            <div className="relative z-10 w-full flex items-center justify-center px-4">
+              {renderLobbyStage('guest')}
             </div>
           )}
 
-          {/* Show Start Game option for host */}
           {isHost && game && game.status === 'waiting' && (
-            <div className="relative z-10 max-w-md w-full px-8">
-              <div className="text-center">
-                <div className="mb-6 flex items-center justify-center gap-4">
-                  <div className="w-16 h-16 bg-white rounded-lg shadow-lg flex items-center justify-center">
-                    <span className="text-4xl font-bold">⚀</span>
-                  </div>
-                  <div className="w-16 h-16 bg-white rounded-lg shadow-lg flex items-center justify-center">
-                    <span className="text-4xl font-bold">⚁</span>
-                  </div>
-                </div>
-                <button
-                  onClick={startGame}
-                  disabled={loading || players.length < 2}
-                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-4 rounded-xl transition-all shadow-lg hover:shadow-purple-500/50 flex items-center justify-center gap-2 mb-2"
-                >
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
-                  </svg>
-                  {loading ? 'Starting...' : 'Start Game'}
-                </button>
-                <p className="text-gray-400 text-sm">{players.length} / {maxPlayers} players joined</p>
-              </div>
+            <div className="relative z-10 w-full flex items-center justify-center px-4">
+              {renderLobbyStage('host')}
             </div>
           )}
         </div>
@@ -548,22 +620,15 @@ function Lobby() {
             <div className="mb-6">
               <h3 className="text-white text-sm font-semibold mb-3">Players</h3>
               <div className="space-y-2">
-                {players.map((player, idx) => {
-                  const colorData = PLAYER_COLORS.find(c => c.name === player.color)
-                  const colorHex = colorData?.hex || '#999'
+                {players.map((player) => {
                   const isCrown = player.order_in_game === 1
-                  
                   return (
-                    <div key={player.id} className="flex items-center gap-2 text-white text-sm">
-                      <div className="relative">
-                        <PlayerAvatar color={player.color} size="md" />
-                        {isCrown && (
-                          <div className="absolute -top-1 -right-1">
-                            <Crown className="w-3 h-3 text-yellow-300" />
-                          </div>
-                        )}
+                    <div key={player.id} className="poordown-player-row">
+                      <PlayerAvatar color={player.color} size="sm" showCrown={isCrown} />
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold text-sm text-white truncate">{player.name}</div>
+                        <div className="poordown-player-meta">Slot #{player.order_in_game}</div>
                       </div>
-                      <span className="flex-1">{player.name}</span>
                     </div>
                   )
                 })}
@@ -576,23 +641,24 @@ function Lobby() {
             <div className="mb-6">
               <h3 className="text-white text-sm font-semibold mb-3">Players</h3>
               <div className="space-y-2">
-                {players.map((player, idx) => {
-                  const colorData = PLAYER_COLORS.find(c => c.name === player.color)
-                  const colorHex = colorData?.hex || '#999'
+                {players.map((player) => {
                   const isCrown = player.order_in_game === 1
-                  
+                  const isYou = currentPlayerId && player.id === currentPlayerId
+                  const isTurn = game?.status === 'active' && currentTurnPlayer?.id === player.id
+
                   return (
-                    <div key={player.id} className="flex items-center gap-2 text-white text-sm">
-                      <div className="relative">
-                        <PlayerAvatar color={player.color} size="md" />
-                        {isCrown && (
-                          <div className="absolute -top-1 -right-1">
-                            <Crown className="w-3 h-3 text-yellow-300" />
-                          </div>
-                        )}
+                    <div
+                      key={player.id}
+                      className={`poordown-player-row ${isYou ? 'you' : ''} ${isTurn ? 'turn' : ''}`.trim()}
+                    >
+                      <PlayerAvatar color={player.color} size="sm" showCrown={isCrown} />
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold text-sm text-white truncate">{player.name}</div>
+                        <div className="poordown-player-meta">
+                          {isTurn ? 'Rolling now' : `Seat #${player.order_in_game}`}
+                        </div>
                       </div>
-                      <span className="flex-1">{player.name}</span>
-                      <span className="text-green-400 font-bold text-sm">${player.money || 1500}</span>
+                      <div className="poordown-player-money">${player.money || 1500}</div>
                     </div>
                   )
                 })}
@@ -601,7 +667,7 @@ function Lobby() {
           )}
 
           {/* Action Buttons */}
-          {isPlayerInGame && (
+          {isPlayerInGame && game?.status === 'active' && (
             <div className="mb-4 space-y-2">
               <button className="w-full bg-[#5a2d8c] hover:bg-[#6a3d9c] text-white py-2 px-4 rounded-lg text-sm font-semibold transition-colors">
                 Votekick
@@ -613,7 +679,7 @@ function Lobby() {
           )}
 
           {/* Trades */}
-          {isPlayerInGame && (
+          {isPlayerInGame && game?.status === 'active' && (
             <div className="mb-4 bg-[#1a0a2e] rounded-lg p-3 border border-purple-800">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-white font-semibold text-sm">Trades</h3>
@@ -625,7 +691,7 @@ function Lobby() {
           )}
 
           {/* My Properties */}
-          {isPlayerInGame && currentPlayer && (
+          {isPlayerInGame && currentPlayer && game?.status === 'active' && (
             <div className="bg-[#1a0a2e] rounded-lg p-3 border border-purple-800">
               <h3 className="text-white font-semibold text-sm mb-2">My properties ({propertiesOwned.length})</h3>
               {propertiesOwned.length === 0 ? (

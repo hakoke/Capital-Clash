@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { COLOR_GROUPS } from '../utils/monopolyConstants.js'
+import { COLOR_GROUPS, MIDDLE_EAST_BOARD } from '../utils/monopolyConstants.js'
 
 function MonopolyBoard({ properties, players, currentPlayer, currentTurnPlayer, onBuyProperty, onRollDice, onEndTurn, purchaseProperty, isPreview = false }) {
   const [selectedProperty, setSelectedProperty] = useState(null)
@@ -7,8 +7,32 @@ function MonopolyBoard({ properties, players, currentPlayer, currentTurnPlayer, 
   const [showDiceAnimation, setShowDiceAnimation] = useState(false)
   const isMyTurn = currentTurnPlayer && currentPlayer && currentTurnPlayer.id === currentPlayer.id
 
-  // Organize properties by position (0-39)
-  const boardProperties = properties.sort((a, b) => a.position - b.position)
+  // Organize properties by position (0-39) with themed overrides
+  const sourceProperties = (properties && properties.length > 0)
+    ? [...properties]
+    : Object.entries(MIDDLE_EAST_BOARD).map(([position, meta]) => ({
+        id: `theme-${position}`,
+        position: Number(position),
+        name: meta.name,
+        price: meta.price || 0,
+        color_group: meta.colorGroup || null,
+        property_type: meta.type || 'special'
+      }))
+
+  const boardProperties = sourceProperties
+    .map((prop) => {
+      const theme = MIDDLE_EAST_BOARD[prop.position] || {}
+      return {
+        ...prop,
+        name: theme.name || prop.name,
+        displaySubtitle: theme.subtitle,
+        displayIcon: theme.icon,
+        color_group: theme.colorGroup || prop.color_group,
+        property_type: theme.type || prop.property_type,
+        price: prop.price || theme.price || 0
+      }
+    })
+    .sort((a, b) => a.position - b.position)
 
   // Get player info by ID
   const getPlayer = (playerId) => {
@@ -44,21 +68,29 @@ function MonopolyBoard({ properties, players, currentPlayer, currentTurnPlayer, 
       return name
     }
     
+    if (!property) return null
+
+    const interactive = !isPreview
+
+    const tileType = property.property_type
+    const subtitle = property.displaySubtitle
+    const tileIcon = property.displayIcon
+
     return (
       <div
         key={property.id || index}
         onClick={() => {
+          if (isPreview) return
           setSelectedProperty(property)
         }}
         className={`
           ${isCorner ? 'w-14 h-14 md:w-16 md:h-16' : 'w-8 h-10 md:w-10 md:h-12'}
           relative border-2
-          cursor-pointer
+          ${interactive ? 'cursor-pointer' : 'cursor-default'}
           transition-all duration-300
           bg-white
           ${isOwned ? 'shadow-lg' : 'shadow'}
-          hover:shadow-xl
-          hover:scale-105
+          ${interactive ? 'hover:shadow-xl hover:scale-105' : ''}
           rounded
         `}
         style={{
@@ -78,6 +110,11 @@ function MonopolyBoard({ properties, players, currentPlayer, currentTurnPlayer, 
 
         {/* Property Name */}
         <div className="px-0.5 pt-2 md:pt-3 text-center leading-tight">
+          {tileIcon && (
+            <div className="text-[8px] md:text-[10px] mb-0.5">
+              {tileIcon}
+            </div>
+          )}
           <div className={`font-bold text-white ${property.name.length > 12 ? 'text-[6px] md:text-[7px]' : 'text-[7px] md:text-[8px]'}`}>
             {getDisplayName(property.name)}
           </div>
@@ -92,7 +129,7 @@ function MonopolyBoard({ properties, players, currentPlayer, currentTurnPlayer, 
           {/* Special Space Labels */}
           {!property.price && (
             <div className="text-[6px] md:text-[7px] font-bold mt-0.5 text-purple-300">
-              {property.property_type?.replace('_', ' ').substring(0, 8).toUpperCase()}
+              {(subtitle || tileType?.replace('_', ' ')).substring(0, 20).toUpperCase()}
             </div>
           )}
         </div>
@@ -166,7 +203,7 @@ function MonopolyBoard({ properties, players, currentPlayer, currentTurnPlayer, 
 
   return (
     <>
-      {selectedProperty && (
+      {!isPreview && selectedProperty && (
         <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl p-6 max-w-lg w-full shadow-2xl transform transition-all">
             <div className="flex items-start gap-4 mb-4">
@@ -254,64 +291,72 @@ function MonopolyBoard({ properties, players, currentPlayer, currentTurnPlayer, 
 
           {/* Center Board - Dark purple theme like richup.io */}
           <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 rounded-lg border-2 border-purple-600 shadow-inner min-w-0 p-2 md:p-4 relative">
-            <div className="text-center w-full">
-              {/* Dice Display */}
-              <div className="flex items-center justify-center gap-4 mb-4">
-                <div className="w-16 h-16 bg-white rounded-xl flex items-center justify-center text-3xl font-bold shadow-lg border-2 border-gray-300">
-                  3
-                </div>
-                <div className="w-16 h-16 bg-white rounded-xl flex items-center justify-center text-3xl font-bold shadow-lg border-2 border-gray-300">
-                  3
-                </div>
+            {isPreview ? (
+              <div className="poordown-preview-center">
+                <span className="text-[0.65rem] uppercase tracking-[0.45em] text-purple-200/80">Board preview</span>
+                <h4 className="text-lg font-semibold tracking-[0.3em] text-white">Middle East Route</h4>
+                <p className="text-xs text-purple-200/70 tracking-[0.3em] uppercase">Palestine • Israel • UAE • Egypt • USA</p>
               </div>
-              
-              {/* Roll Button */}
-              <button
-                onClick={onRollDice}
-                disabled={!isMyTurn || !currentPlayer?.can_roll}
-                className="bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 px-8 rounded-lg transition-colors shadow-lg mb-3"
-              >
-                Roll the dice
-              </button>
-              
-              {/* End Turn Button */}
-              {!currentPlayer?.can_roll && isMyTurn && (
+            ) : (
+              <div className="text-center w-full">
+                {/* Dice Display */}
+                <div className="flex items-center justify-center gap-4 mb-4">
+                  <div className="w-16 h-16 bg-white rounded-xl flex items-center justify-center text-3xl font-bold shadow-lg border-2 border-gray-300">
+                    3
+                  </div>
+                  <div className="w-16 h-16 bg-white rounded-xl flex items-center justify-center text-3xl font-bold shadow-lg border-2 border-gray-300">
+                    3
+                  </div>
+                </div>
+                
+                {/* Roll Button */}
                 <button
-                  onClick={onEndTurn}
-                  className="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-6 rounded-lg transition-colors mb-3"
+                  onClick={onRollDice}
+                  disabled={!isMyTurn || !currentPlayer?.can_roll}
+                  className="bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 px-8 rounded-lg transition-colors shadow-lg mb-3"
                 >
-                  End turn
+                  Roll the dice
                 </button>
-              )}
-              
-              {/* Property Preview */}
-              {purchaseProperty && (
-                <div className="mt-4">
+                
+                {/* End Turn Button */}
+                {!currentPlayer?.can_roll && isMyTurn && (
                   <button
-                    onClick={() => onBuyProperty(purchaseProperty.id)}
-                    className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg flex items-center gap-2 mx-auto"
+                    onClick={onEndTurn}
+                    className="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-6 rounded-lg transition-colors mb-3"
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                    Buy for ${purchaseProperty.price}
+                    End turn
                   </button>
-                </div>
-              )}
-              
-              {/* Player Turn Indicator */}
-              {currentTurnPlayer && (
-                <div className="mt-4 flex items-center justify-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
-                  <span 
-                    className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold"
-                    style={{ backgroundColor: currentTurnPlayer.color }}
-                  >
-                    {currentTurnPlayer.name.charAt(0).toUpperCase()}
-                  </span>
-                  <span className="font-bold text-white">{currentTurnPlayer.name}'s Turn</span>
-                </div>
-              )}
-            </div>
+                )}
+                
+                {/* Property Preview */}
+                {purchaseProperty && (
+                  <div className="mt-4">
+                    <button
+                      onClick={() => onBuyProperty(purchaseProperty.id)}
+                      className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg flex items-center gap-2 mx-auto"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                      Buy for ${purchaseProperty.price}
+                    </button>
+                  </div>
+                )}
+                
+                {/* Player Turn Indicator */}
+                {currentTurnPlayer && (
+                  <div className="mt-4 flex items-center justify-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
+                    <span 
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold"
+                      style={{ backgroundColor: currentTurnPlayer.color }}
+                    >
+                      {currentTurnPlayer.name.charAt(0).toUpperCase()}
+                    </span>
+                    <span className="font-bold text-white">{currentTurnPlayer.name}'s Turn</span>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Right Column: Position 11-19 (bottom to top) */}
