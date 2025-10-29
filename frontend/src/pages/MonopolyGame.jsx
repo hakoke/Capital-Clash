@@ -1,39 +1,66 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useParams } from 'react-router-dom'
 import axios from 'axios'
+import { io } from 'socket.io-client'
+import {
+  Copy,
+  Check,
+  MessageCircle,
+  Send,
+  Users,
+  Info,
+  ChevronRight,
+  HelpCircle,
+  Volume2,
+  Search
+} from 'lucide-react'
+
 import MonopolyBoard from '../components/MonopolyBoard'
 import Notification from '../components/Notification'
-import PlayerInfoPanel from '../components/PlayerInfoPanel'
+import PlayerAvatar from '../components/PlayerAvatar'
+import GameSettingToggle from '../components/GameSettingToggle'
 import AuctionPanel from '../components/AuctionPanel'
+
+const DICE_PIPS = {
+  1: [4],
+  2: [0, 8],
+  3: [0, 4, 8],
+  4: [0, 2, 6, 8],
+  5: [0, 2, 4, 6, 8],
+  6: [0, 2, 3, 5, 6, 8]
+}
 
 function MonopolyGame() {
   const { gameId } = useParams()
+
   const [game, setGame] = useState(null)
   const [players, setPlayers] = useState([])
   const [properties, setProperties] = useState([])
   const [currentPlayer, setCurrentPlayer] = useState(null)
   const [currentTurnPlayer, setCurrentTurnPlayer] = useState(null)
   const [notification, setNotification] = useState(null)
-  const [diceResult, setDiceResult] = useState(null)
   const [showDiceAnimation, setShowDiceAnimation] = useState(false)
+  const [diceResult, setDiceResult] = useState(null)
+  const [lastDiceResult, setLastDiceResult] = useState(null)
   const [showPurchaseDialog, setShowPurchaseDialog] = useState(false)
   const [purchaseProperty, setPurchaseProperty] = useState(null)
   const [showAuction, setShowAuction] = useState(false)
 
-  useEffect(() => {
-    fetchGameData()
-    const interval = setInterval(fetchGameData, 2000)
-    return () => clearInterval(interval)
-  }, [])
+  const [chatMessages, setChatMessages] = useState([])
+  const [chatInput, setChatInput] = useState('')
+  const [linkCopied, setLinkCopied] = useState(false)
+  const [maxPlayers, setMaxPlayers] = useState(4)
+  const [hoveredSetting, setHoveredSetting] = useState(null)
+
+  const socketRef = useRef(null)
 
   const fetchGameData = async () => {
     try {
       const res = await axios.get(`/api/game/${gameId}`)
       setGame(res.data.game)
       setPlayers(res.data.players)
-      setProperties(res.data.properties)
-      
-      // Get current player from localStorage
+      setProperties(res.data.properties || [])
+
       const playerId = localStorage.getItem(`player_${gameId}`)
       if (playerId) {
         const player = res.data.players.find(p => p.id === playerId)
@@ -44,15 +71,67 @@ function MonopolyGame() {
         setCurrentPlayer(res.data.players[0])
       }
 
-      // Determine current turn
       if (res.data.game.current_player_turn) {
         const turnPlayer = res.data.players.find(p => p.order_in_game === res.data.game.current_player_turn)
-        setCurrentTurnPlayer(turnPlayer)
+        setCurrentTurnPlayer(turnPlayer || null)
+      } else {
+        setCurrentTurnPlayer(null)
+      }
+
+      if (res.data.game.max_players) {
+        setMaxPlayers(res.data.game.max_players)
       }
     } catch (error) {
       console.error('Error fetching game data:', error)
     }
   }
+
+  useEffect(() => {
+    fetchGameData()
+    const interval = setInterval(fetchGameData, 2000)
+    return () => clearInterval(interval)
+  }, [gameId])
+
+  useEffect(() => {
+    socketRef.current = io()
+
+    if (gameId) {
+      socketRef.current.emit('join_game', gameId)
+    }
+
+    socketRef.current.on('chat_message', (messageRecord) => {
+      setChatMessages(prev => {
+        const exists = prev.some(msg => msg.timestamp === messageRecord.timestamp && msg.playerName === messageRecord.playerName)
+        if (exists) return prev
+        return [...prev, {
+          playerName: messageRecord.playerName,
+          message: messageRecord.message,
+          timestamp: messageRecord.timestamp
+        }]
+      })
+    })
+
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect()
+      }
+    }
+  }, [gameId])
+
+  useEffect(() => {
+    const loadChatHistory = async () => {
+      try {
+        const res = await axios.get(`/api/chat/${gameId}/history`)
+        setChatMessages(res.data.messages || [])
+      } catch (error) {
+        console.error('Error loading chat history:', error)
+      }
+    }
+
+    if (gameId) {
+      loadChatHistory()
+    }
+  }, [gameId])
 
   const showNotification = (message, type = 'success') => {
     setNotification({ message, type })
@@ -60,39 +139,38 @@ function MonopolyGame() {
   }
 
   const handleRollDice = async () => {
+    if (!currentPlayer) return
+
     try {
-      // Show dice animation
       setShowDiceAnimation(true)
       setDiceResult({ die1: '?', die2: '?' })
-      
+
       const res = await axios.post(`/api/game/${gameId}/roll`, {
         playerId: currentPlayer.id
       })
-      
+
       if (res.data.success) {
-        const { dice, newPosition, property, rentPaid } = res.data
-        
-        // Show actual dice results
+        const { dice, property, rentPaid } = res.data
+
         setDiceResult({ die1: dice.die1, die2: dice.die2 })
-        
-        // Display results
+        setLastDiceResult({ die1: dice.die1, die2: dice.die2 })
+
         let message = `🎲 Rolled ${dice.die1} + ${dice.die2} = ${dice.total}!`
         if (rentPaid) {
           message += ` Paid $${rentPaid} rent`
         }
         showNotification(message, 'success')
-        
+
         setTimeout(() => {
           setShowDiceAnimation(false)
           setDiceResult(null)
-          
+
           if (property && property.price > 0 && !property.owner_id && property.property_type === 'property') {
-            // Show purchase dialog
             setPurchaseProperty(property)
             setShowPurchaseDialog(true)
           }
-        }, 2000)
-        
+        }, 1800)
+
         fetchGameData()
       }
     } catch (error) {
@@ -102,12 +180,35 @@ function MonopolyGame() {
     }
   }
 
+  const handleEndTurn = async () => {
+    try {
+      await axios.post(`/api/game/${gameId}/advance-turn`)
+      showNotification('Turn ended', 'info')
+      fetchGameData()
+    } catch (error) {
+      console.error('Error ending turn:', error)
+      showNotification('Error ending turn: ' + (error.response?.data?.error || error.message), 'error')
+    }
+  }
+
+  const handleStartGame = async () => {
+    try {
+      await axios.post(`/api/game/${gameId}/start`)
+      fetchGameData()
+    } catch (error) {
+      console.error('Error starting game:', error)
+      showNotification('Failed to start game: ' + (error.response?.data?.error || error.message), 'error')
+    }
+  }
+
   const handleBuyProperty = async (propertyId) => {
+    if (!currentPlayer) return
+
     try {
       const res = await axios.post(`/api/player/${currentPlayer.id}/buy-property`, {
         propertyId
       })
-      
+
       if (res.data.success) {
         showNotification('✓ Property purchased!', 'success')
         setShowPurchaseDialog(false)
@@ -121,25 +222,22 @@ function MonopolyGame() {
   }
 
   const handleStartAuction = async () => {
-    if (!purchaseProperty) return
-    
+    if (!purchaseProperty || !game?.auction_enabled) {
+      setShowPurchaseDialog(false)
+      setPurchaseProperty(null)
+      return
+    }
+
     try {
-      // Check if auction is enabled
-      if (game.auction_enabled) {
-        // Create auction
-        const res = await axios.post('/api/auction/create', {
-          gameId,
-          propertyId: purchaseProperty.id,
-          startingBid: Math.floor(purchaseProperty.price * 0.5)
-        })
-        
-        purchaseProperty.auctionId = res.data.auction.id
-        setShowPurchaseDialog(false)
-        setShowAuction(true)
-      } else {
-        setShowPurchaseDialog(false)
-        setPurchaseProperty(null)
-      }
+      const res = await axios.post('/api/auction/create', {
+        gameId,
+        propertyId: purchaseProperty.id,
+        startingBid: Math.floor(purchaseProperty.price * 0.5)
+      })
+
+      purchaseProperty.auctionId = res.data.auction.id
+      setShowPurchaseDialog(false)
+      setShowAuction(true)
     } catch (error) {
       console.error('Error starting auction:', error)
       showNotification('Error starting auction: ' + (error.response?.data?.error || error.message), 'error')
@@ -151,255 +249,490 @@ function MonopolyGame() {
     setPurchaseProperty(null)
   }
 
-  const handleEndTurn = async () => {
+  const copyGameLink = async () => {
+    const link = `${window.location.origin}/lobby/${gameId}`
     try {
-      const res = await axios.post(`/api/game/${gameId}/advance-turn`)
-      showNotification('Turn ended', 'info')
-      fetchGameData()
-    } catch (error) {
-      console.error('Error ending turn:', error)
-      showNotification('Error ending turn', 'error')
+      await navigator.clipboard.writeText(link)
+      setLinkCopied(true)
+      setTimeout(() => setLinkCopied(false), 2000)
+    } catch (err) {
+      const textArea = document.createElement('textarea')
+      textArea.value = link
+      document.body.appendChild(textArea)
+      textArea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textArea)
+      setLinkCopied(true)
+      setTimeout(() => setLinkCopied(false), 2000)
     }
   }
 
+  const sendChatMessage = async (e) => {
+    e.preventDefault()
+    if (!chatInput.trim() || !currentPlayer) return
+
+    try {
+      await axios.post('/api/chat/message', {
+        gameId,
+        playerId: currentPlayer.id,
+        message: chatInput,
+        messageType: 'chat'
+      })
+      setChatInput('')
+    } catch (error) {
+      console.error('Error sending message:', error)
+    }
+  }
+
+  const handleGuardHover = (id) => {
+    setHoveredSetting(id)
+  }
+
+  const handleGuardLeave = () => {
+    setHoveredSetting(null)
+  }
+
+  const renderGuardTooltip = (id) => (
+    hoveredSetting === id ? (
+      <div className="settings-guard-tooltip">
+        Host only
+      </div>
+    ) : null
+  )
+
+  const renderDie = (value, key) => (
+    <div className={`poordown-die ${value ? '' : 'poordown-die--idle'}`} key={key}>
+      <div className="poordown-die__face">
+        {Array.from({ length: 9 }).map((_, idx) => (
+          <div key={`${key}-${idx}`} className="poordown-die__cell">
+            <span
+              className="poordown-die__pip"
+              style={{ opacity: value && DICE_PIPS[value]?.includes(idx) ? 1 : 0 }}
+            ></span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+
   if (!game || !currentPlayer) {
-    return <div className="min-h-screen flex items-center justify-center"><div className="text-xl">Loading game...</div></div>
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#0b0616] text-white">
+        <div className="text-lg tracking-wide uppercase">Loading game...</div>
+      </div>
+    )
   }
 
   const isMyTurn = currentTurnPlayer && currentPlayer && currentTurnPlayer.id === currentPlayer.id
+  const isHost = currentPlayer?.order_in_game === 1
+  const disableSettings = !isHost
+  const canStartGame = players.length >= 2
+  const orderedPlayers = useMemo(
+    () => [...players].sort((a, b) => a.order_in_game - b.order_in_game),
+    [players]
+  )
 
   return (
-    <div className="h-screen overflow-hidden bg-[#1a0033]">
+    <div className="poordown-game-scene">
+      <div className="poordown-game-scene__aura" aria-hidden="true"></div>
+      <div className="poordown-game-scene__aura poordown-game-scene__aura--secondary" aria-hidden="true"></div>
+
       {notification && (
-        <Notification 
-          message={notification.message} 
+        <Notification
+          message={notification.message}
           type={notification.type}
           onClose={() => setNotification(null)}
         />
       )}
 
-      {/* Dice Animation Overlay */}
       {showDiceAnimation && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-6 md:p-8 text-center max-w-md w-full">
-            <div className="text-4xl md:text-6xl mb-4">🎲</div>
-            <div className="flex items-center justify-center gap-3 md:gap-4 mb-4">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#0f172a] text-white rounded-3xl p-8 max-w-md w-full text-center border border-white/10 shadow-2xl">
+            <div className="text-5xl mb-4">🎲</div>
+            <div className="flex items-center justify-center gap-4 mb-4">
               {diceResult ? (
                 <>
-                  <div className="w-12 h-12 md:w-16 md:h-16 bg-red-500 rounded-xl flex items-center justify-center text-2xl md:text-3xl font-bold text-white shadow-lg">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-3xl font-bold shadow-lg">
                     {diceResult.die1}
                   </div>
-                  <div className="text-2xl md:text-3xl">+</div>
-                  <div className="w-12 h-12 md:w-16 md:h-16 bg-blue-500 rounded-xl flex items-center justify-center text-2xl md:text-3xl font-bold text-white shadow-lg">
+                  <div className="text-3xl font-semibold">+</div>
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-sky-500 to-blue-500 flex items-center justify-center text-3xl font-bold shadow-lg">
                     {diceResult.die2}
                   </div>
-                  <div className="text-xl md:text-2xl">= {diceResult.die1 + diceResult.die2}</div>
                 </>
               ) : (
-                <div className="text-xl md:text-2xl">Rolling...</div>
+                <div className="text-lg tracking-[0.3em] uppercase text-purple-200">Rolling...</div>
               )}
             </div>
           </div>
         </div>
       )}
-      
-      {/* Main Game Layout - No padding to maximize space */}
-      <div className="h-full">
-        
-        {/* Top Bar - Player Info */}
-        <div className="flex items-center justify-between px-3 md:px-4 py-2 bg-[#3a1552] border-b border-purple-700 shadow-sm">
-          <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
-            <h1 className="text-base md:text-xl font-bold text-white">🎲 lazydown.oi</h1>
-            <div className="hidden md:flex items-center gap-2 text-sm min-w-0 text-white">
-              <span 
-                className="w-5 h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0"
-                style={{ backgroundColor: currentPlayer.color }}
-              >
-                {currentPlayer.name.charAt(0).toUpperCase()}
-              </span>
-              <span className="font-semibold truncate text-white">{currentPlayer.name}</span>
-              <span className="text-gray-400">•</span>
-              <span className="text-green-400 font-bold">${parseInt(currentPlayer.money || 0).toLocaleString()}</span>
-            </div>
-            <div className="md:hidden flex items-center gap-2">
-              <span className="text-green-400 font-bold text-sm">${parseInt(currentPlayer.money || 0).toLocaleString()}</span>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-2 md:gap-4 text-xs md:text-sm flex-shrink-0 text-white">
-            <div className="hidden sm:inline">
-              <span className="text-gray-300">Props: </span>
-              <span className="font-bold text-blue-400">{properties.filter(p => p.owner_id === currentPlayer.id).length}</span>
-            </div>
-            <div className="w-px h-4 bg-gray-500"></div>
-            <div>
-              <span className="text-gray-300">Pos: </span>
-              <span className="font-bold">{currentPlayer.position}/39</span>
-            </div>
-          </div>
-        </div>
 
-        {/* Main Content - Responsive Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-12 h-full overflow-hidden">
-          
-          {/* Left Sidebar - Player Info */}
-          <div className="hidden md:block md:col-span-3 h-full overflow-y-auto">
-            <div className="h-full p-2">
-              <PlayerInfoPanel 
-                gameId={gameId}
-                currentPlayer={currentPlayer}
-                allPlayers={players}
-                properties={properties}
-              />
+      <div className="poordown-game-shell">
+        <header className="poordown-game-header">
+          <div className="poordown-game-header__brand">
+            <h1 className="poordown-game-header__title">
+              poordown<span>.oi</span>
+            </h1>
+            <div className="poordown-game-header__actions">
+              <HelpCircle className="poordown-game-header__icon" />
+              <Volume2 className="poordown-game-header__icon" />
+              <Search className="poordown-game-header__icon" />
             </div>
           </div>
 
-          {/* Center - Game Board */}
-          <div className="col-span-12 md:col-span-6 h-full overflow-hidden p-1 md:p-2">
-            <div className="h-full">
-              <MonopolyBoard
-                properties={properties}
-                players={players}
-                currentPlayer={currentPlayer}
-                currentTurnPlayer={currentTurnPlayer}
-                onBuyProperty={handleBuyProperty}
-                onRollDice={handleRollDice}
-                onEndTurn={handleEndTurn}
-                purchaseProperty={purchaseProperty}
-              />
+          <div className="poordown-game-header__player">
+            <PlayerAvatar color={currentPlayer.color} size="sm" showCrown={currentPlayer.order_in_game === 1} />
+            <div className="poordown-game-header__player-meta">
+              <span className="poordown-game-header__player-name">{currentPlayer.name}</span>
+              <span className="poordown-game-header__player-money">${(parseInt(currentPlayer.money || 0)).toLocaleString()}</span>
             </div>
           </div>
+        </header>
 
-          {/* Right Sidebar - Game Actions */}
-          <div className="hidden md:block md:col-span-3 h-full overflow-y-auto">
-            <div className="h-full p-2">
-              <div className="bg-[#3a1552] rounded-lg shadow-lg p-4 min-h-full border border-purple-700">
-                <h3 className="text-lg font-bold mb-4 text-white">🎮 Actions</h3>
-                
-                {isMyTurn && currentPlayer.can_roll && (
-                  <button
-                    onClick={handleRollDice}
-                    className="w-full py-4 bg-green-500 text-white rounded-lg font-bold text-lg hover:bg-green-600 transition-all hover:scale-105 shadow-lg"
-                  >
-                    🎲 Roll Dice
-                  </button>
-                )}
-                
-                {isMyTurn && !currentPlayer.can_roll && (
-                  <div className="space-y-3">
-                    <button
-                      onClick={handleEndTurn}
-                      className="w-full py-4 bg-blue-500 text-white rounded-lg font-bold text-lg hover:bg-blue-600 transition-all"
-                    >
-                      ✅ End Turn
-                    </button>
+        <div className="poordown-game-body">
+          <aside className="poordown-game-sidebar">
+            <div className="poordown-game-card">
+              <div className="poordown-game-card__heading">
+                <span className="poordown-game-card__title">Share this game</span>
+                <Info className="poordown-game-card__icon" />
+              </div>
+              <div className="poordown-game-share">
+                <input
+                  type="text"
+                  readOnly
+                  value={`https://poordown.oi/room/${gameId}`}
+                  className="poordown-game-share__field"
+                />
+                <button
+                  onClick={copyGameLink}
+                  className={`poordown-game-share__button ${linkCopied ? 'copied' : ''}`}
+                >
+                  {linkCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                  {linkCopied ? 'Copied' : 'Copy'}
+                </button>
+              </div>
+            </div>
+
+            <div className="poordown-game-card poordown-game-card--chat">
+              <div className="poordown-game-card__heading">
+                <MessageCircle className="poordown-game-card__icon" />
+                <span className="poordown-game-card__title">Chat</span>
+                <ChevronRight className="poordown-game-card__icon" />
+              </div>
+              <div className="poordown-chat-window">
+                {chatMessages.length === 0 ? (
+                  <div className="poordown-chat-empty">
+                    <MessageCircle className="w-6 h-6 text-purple-400/50" />
+                    <p>No messages yet</p>
+                  </div>
+                ) : (
+                  <div className="poordown-chat-feed">
+                    {chatMessages.map((msg, idx) => (
+                      <div key={idx} className="poordown-chat-line">
+                        <span className="poordown-chat-name">{msg.playerName}:</span>
+                        <span className="poordown-chat-text">{msg.message}</span>
+                      </div>
+                    ))}
                   </div>
                 )}
+              </div>
+              <form onSubmit={sendChatMessage} className="poordown-chat-form">
+                <input
+                  type="text"
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  placeholder="Say something..."
+                  className="poordown-chat-input"
+                />
+                <button type="submit" className="poordown-chat-send">
+                  <Send className="w-4 h-4" />
+                </button>
+              </form>
+            </div>
+          </aside>
 
-                {!isMyTurn && currentTurnPlayer && (
-                  <div className="bg-[#2a0f3f] rounded-lg p-4 text-center border border-purple-700">
-                    <div className="text-sm text-gray-300 mb-2">Current Turn</div>
-                    <div className="flex items-center justify-center gap-2">
-                      <span 
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold"
-                        style={{ backgroundColor: currentTurnPlayer.color }}
+          <main className="poordown-game-center">
+            <div className="poordown-game-stage">
+              <div className="poordown-game-stage__board">
+                <MonopolyBoard
+                  properties={properties}
+                  players={players}
+                  currentPlayer={currentPlayer}
+                  onBuyProperty={handleBuyProperty}
+                />
+              </div>
+
+              <div className="poordown-game-stage__overlay">
+                {game.status === 'waiting' ? (
+                  <div className="poordown-game-overlay-card">
+                    <span className="poordown-game-overlay-card__subtitle">Host controls</span>
+                    <h3 className="poordown-game-overlay-card__title">Launch the trip</h3>
+
+                    <div className="poordown-dice-stack">
+                      {renderDie(3, 'wait-1')}
+                      {renderDie(4, 'wait-2')}
+                    </div>
+
+                    <div className="poordown-game-overlay-card__meta">
+                      {players.length} / {maxPlayers} players
+                    </div>
+
+                    {isHost ? (
+                      <button
+                        onClick={handleStartGame}
+                        disabled={!canStartGame}
+                        className="poordown-start-button"
                       >
-                        {currentTurnPlayer.name.charAt(0).toUpperCase()}
-                      </span>
-                      <span className="text-lg font-bold text-white">{currentTurnPlayer.name}</span>
+                        <span>▶</span>
+                        <span>{canStartGame ? 'Start game' : 'Need 2 players'}</span>
+                      </button>
+                    ) : (
+                      <div className="poordown-game-overlay-card__chip">Waiting for host</div>
+                    )}
+
+                    <p className="poordown-game-overlay-card__hint">
+                      Need at least two players to begin.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="poordown-game-overlay-card poordown-game-overlay-card--active">
+                    <span className="poordown-game-overlay-card__subtitle">Current turn</span>
+                    {currentTurnPlayer ? (
+                      <div className="poordown-game-overlay-player">
+                        <PlayerAvatar color={currentTurnPlayer.color} size="md" showCrown={currentTurnPlayer.order_in_game === 1} />
+                        <div className="poordown-game-overlay-player__meta">
+                          <span className="poordown-game-overlay-player__name">{currentTurnPlayer.name}</span>
+                          <span className="poordown-game-overlay-player__seat">Seat #{currentTurnPlayer.order_in_game}</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="poordown-game-overlay-player__waiting">Waiting for turn assignment...</div>
+                    )}
+
+                    <div className="poordown-dice-stack">
+                      {renderDie(lastDiceResult?.die1 || 0, 'play-1')}
+                      {renderDie(lastDiceResult?.die2 || 0, 'play-2')}
                     </div>
+
+                    {isMyTurn ? (
+                      <div className="poordown-game-overlay-actions">
+                        {currentPlayer.can_roll ? (
+                          <button onClick={handleRollDice} className="poordown-game-overlay-action-primary">
+                            Roll dice
+                          </button>
+                        ) : (
+                          <button onClick={handleEndTurn} className="poordown-game-overlay-action-secondary">
+                            End turn
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="poordown-game-overlay-card__chip">
+                        {currentTurnPlayer ? `Waiting for ${currentTurnPlayer.name}` : 'Waiting for players'}
+                      </div>
+                    )}
                   </div>
                 )}
+              </div>
+            </div>
+          </main>
 
-                <div className="mt-6 bg-[#2a0f3f] border border-purple-700 rounded-lg p-3">
-                  <div className="text-xs font-semibold text-purple-300 mb-2">💡 How to Play</div>
-                  <ul className="text-xs text-gray-300 space-y-1">
-                    <li>🎲 <b>Roll Dice</b> to move</li>
-                    <li>💰 <b>Buy</b> unowned properties</li>
-                    <li>🏠 <b>Pay rent</b> on owned spaces</li>
-                    <li>🏁 <b>Collect $200</b> passing GO</li>
-                    <li>🏘️ <b>Monopolies</b> earn double rent</li>
-                  </ul>
+          <aside className="poordown-game-sidebar poordown-game-sidebar--right">
+            <div className="poordown-game-card">
+              <div className="poordown-game-card__heading">
+                <Users className="poordown-game-card__icon" />
+                <span className="poordown-game-card__title">Players</span>
+              </div>
+              <div className="poordown-player-list">
+                {orderedPlayers.map((player) => {
+                  const isYou = currentPlayer.id === player.id
+                  const isTurn = currentTurnPlayer && currentTurnPlayer.id === player.id
+
+                  return (
+                    <div
+                      key={player.id}
+                      className={`poordown-player-row ${isYou ? 'you' : ''} ${isTurn ? 'turn' : ''}`.trim()}
+                    >
+                      <PlayerAvatar color={player.color} size="sm" showCrown={player.order_in_game === 1} />
+                      <div className="poordown-player-row__meta">
+                        <span className="poordown-player-row__name">{player.name}</span>
+                        <span className="poordown-player-row__seat">Seat #{player.order_in_game}</span>
+                      </div>
+                      <div className="poordown-player-money">${(parseInt(player.money || 0)).toLocaleString()}</div>
+                    </div>
+                  )
+                })}
+
+                {orderedPlayers.length === 0 && (
+                  <div className="poordown-player-empty">Waiting for friends to join…</div>
+                )}
+              </div>
+            </div>
+
+            <div className="poordown-game-card">
+              <h3 className="poordown-game-card__title">Game settings</h3>
+              <div className="poordown-game-settings">
+                <div
+                  className="poordown-setting-card"
+                  onMouseEnter={() => disableSettings && handleGuardHover('maxPlayers')}
+                  onMouseLeave={() => disableSettings && handleGuardLeave()}
+                >
+                  <div className="poordown-setting-card__body">
+                    <div className="poordown-setting-card__label">
+                      <Users className="poordown-setting-card__icon" />
+                      <div>
+                        <p>Maximum players</p>
+                        <span>How many players can join the game</span>
+                      </div>
+                    </div>
+                    <select
+                      value={maxPlayers}
+                      onChange={(e) => {
+                        if (disableSettings) return
+                        const value = parseInt(e.target.value)
+                        setMaxPlayers(value)
+                        axios.post(`/api/game/${gameId}/settings`, {
+                          setting: 'max_players',
+                          value
+                        }).catch(err => console.error('Error saving max players:', err))
+                      }}
+                      disabled={disableSettings}
+                      className="poordown-setting-select"
+                    >
+                      {[2, 3, 4, 5, 6].map(num => (
+                        <option key={num} value={num}>{num}</option>
+                      ))}
+                    </select>
+                  </div>
+                  {disableSettings && renderGuardTooltip('maxPlayers')}
                 </div>
 
-                <div className="mt-3 bg-[#2a0f3f] border border-purple-700 rounded-lg p-3">
-                  <div className="text-xs font-semibold text-purple-300 mb-2">📊 Quick Stats</div>
-                  <div className="text-xs text-gray-300 space-y-1">
-                    <div className="flex justify-between">
-                      <span>Net Worth:</span>
-                      <b>${(parseInt(currentPlayer.money || 0) + 
-                        properties.filter(p => p.owner_id === currentPlayer.id)
-                        .reduce((sum, p) => sum + (parseFloat(p.price) || 0), 0)).toLocaleString()}</b>
+                <div className="poordown-setting-card">
+                  <div className="poordown-setting-card__body">
+                    <div className="poordown-setting-card__label">
+                      <svg className="poordown-setting-card__icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                      </svg>
+                      <div>
+                        <p>Private room</p>
+                        <span>Private rooms can be accessed using the room URL only</span>
+                      </div>
                     </div>
-                    <div className="flex justify-between">
-                      <span>Properties:</span>
-                      <b>{properties.filter(p => p.owner_id === currentPlayer.id).length}</b>
+                    <label className="poordown-toggle">
+                      <input type="checkbox" className="sr-only" defaultChecked readOnly />
+                      <span className="poordown-toggle__track"></span>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="poordown-setting-card">
+                  <div className="poordown-setting-card__body">
+                    <div className="poordown-setting-card__label">
+                      <svg className="poordown-setting-card__icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                      <div>
+                        <p>Allow bots to join <span className="poordown-setting-card__badge">Beta</span></p>
+                        <span>Bots will join the game based on availability</span>
+                      </div>
                     </div>
-                    <div className="flex justify-between">
-                      <span>Position:</span>
-                      <b>{currentPlayer.position}/39</b>
+                    <label className="poordown-toggle">
+                      <input type="checkbox" className="sr-only" disabled />
+                      <span className="poordown-toggle__track"></span>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="poordown-setting-card">
+                  <div className="poordown-setting-card__body">
+                    <div className="poordown-setting-card__label">
+                      <svg className="poordown-setting-card__icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                      </svg>
+                      <div>
+                        <p>Board map</p>
+                        <span>Change map tiles, properties and stacks</span>
+                      </div>
+                    </div>
+                    <div className="poordown-setting-action">
+                      <span>Classic</span>
+                      <button className="poordown-setting-action__link" disabled>
+                        Browse maps <ChevronRight className="w-3 h-3" />
+                      </button>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Mobile Action Bar */}
-          <div className="md:hidden fixed bottom-0 left-0 right-0 bg-[#3a1552] border-t border-purple-700 shadow-lg p-4">
-            {isMyTurn && currentPlayer.can_roll && (
-              <button
-                onClick={handleRollDice}
-                className="w-full py-4 bg-green-500 text-white rounded-lg font-bold text-lg shadow-lg"
-              >
-                🎲 Roll Dice
-              </button>
-            )}
-            {isMyTurn && !currentPlayer.can_roll && (
-              <button
-                onClick={handleEndTurn}
-                className="w-full py-4 bg-blue-500 text-white rounded-lg font-bold text-lg"
-              >
-                ✅ End Turn
-              </button>
-            )}
-            {!isMyTurn && (
-              <div className="text-center py-2 text-gray-300">
-                {currentTurnPlayer?.name}'s turn
+            <div className="poordown-game-card">
+              <h3 className="poordown-game-card__title">Gameplay rules</h3>
+              <div className="poordown-game-settings">
+                {[{
+                  icon: '💰',
+                  title: 'x2 rent on full-set properties',
+                  description: 'If a player owns a full property set, the base rent payment will be doubled',
+                  setting: 'double_rent_on_full_set'
+                }, {
+                  icon: '🏖️',
+                  title: 'Vacation cash',
+                  description: 'If a player lands on Vacation, all collected money from taxes and bank payments will be earned',
+                  setting: 'vacation_cash'
+                }, {
+                  icon: '🔨',
+                  title: 'Auction',
+                  description: 'If someone skips purchasing the property landed on, it will be sold to the highest bidder',
+                  setting: 'auction_enabled'
+                }, {
+                  icon: '⚖️',
+                  title: "Don’t collect rent while in prison",
+                  description: 'Rent will not be collected when landing on properties whose owners are in prison',
+                  setting: 'no_rent_in_prison'
+                }].map(config => (
+                  <GameSettingToggle
+                    key={config.setting}
+                    icon={config.icon}
+                    title={config.title}
+                    description={config.description}
+                    setting={config.setting}
+                    gameId={gameId}
+                    game={game}
+                    disabled={disableSettings}
+                  />
+                ))}
               </div>
-            )}
-          </div>
+            </div>
+          </aside>
         </div>
       </div>
 
-      {/* Purchase Dialog */}
       {showPurchaseDialog && purchaseProperty && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4">
-          <div className="bg-[#3a1552] rounded-2xl p-6 max-w-md w-full shadow-2xl border border-purple-700">
-            <h2 className="text-2xl font-bold text-white mb-4">Purchase Property</h2>
-            <div className="bg-[#2a0f3f] rounded-lg p-4 mb-4">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#1c1430] border border-purple-700 rounded-3xl p-8 max-w-lg w-full shadow-2xl">
+            <h2 className="text-2xl font-bold text-white mb-6">Purchase property</h2>
+            <div className="bg-[#2a1f47] border border-purple-600 rounded-2xl p-5 mb-6">
               <h3 className="text-xl font-semibold text-white mb-2">{purchaseProperty.name}</h3>
-              <p className="text-purple-400 text-2xl font-bold">${purchaseProperty.price}</p>
+              <p className="text-purple-300 text-lg font-bold">${purchaseProperty.price}</p>
             </div>
-            
-            <div className="flex gap-3">
+            <div className="flex flex-col md:flex-row gap-4">
               <button
                 onClick={() => handleBuyProperty(purchaseProperty.id)}
-                className="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-lg transition-colors"
+                className="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl transition-all"
               >
                 💰 Buy for ${purchaseProperty.price}
               </button>
               {game?.auction_enabled && (
                 <button
                   onClick={handleStartAuction}
-                  className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-lg transition-colors"
+                  className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-xl transition-all"
                 >
-                  🔨 Start Auction
+                  🔨 Start auction
                 </button>
               )}
               <button
                 onClick={handleSkipProperty}
-                className="px-6 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 rounded-lg transition-colors"
+                className="px-6 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 rounded-xl transition-all"
               >
                 Skip
               </button>
@@ -408,7 +741,6 @@ function MonopolyGame() {
         </div>
       )}
 
-      {/* Auction Panel */}
       {showAuction && purchaseProperty && (
         <AuctionPanel
           gameId={gameId}

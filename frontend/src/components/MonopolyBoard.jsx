@@ -1,11 +1,18 @@
 import { useState } from 'react'
-import { COLOR_GROUPS, MIDDLE_EAST_BOARD } from '../utils/monopolyConstants.js'
+import { COLOR_GROUPS, MIDDLE_EAST_BOARD, PLAYER_COLORS } from '../utils/monopolyConstants.js'
 
-function MonopolyBoard({ properties, players, currentPlayer, currentTurnPlayer, onBuyProperty, onRollDice, onEndTurn, purchaseProperty, isPreview = false }) {
+const PLAYER_COLOR_MAP = new Map(PLAYER_COLORS.map(entry => [entry.name, entry.hex]))
+
+const resolvePlayerColor = (color) => {
+  if (!color) return '#60a5fa'
+  if (PLAYER_COLOR_MAP.has(color)) {
+    return PLAYER_COLOR_MAP.get(color)
+  }
+  return color
+}
+
+function MonopolyBoard({ properties, players, currentPlayer, onBuyProperty, isPreview = false }) {
   const [selectedProperty, setSelectedProperty] = useState(null)
-  const [diceRoll, setDiceRoll] = useState(null)
-  const [showDiceAnimation, setShowDiceAnimation] = useState(false)
-  const isMyTurn = currentTurnPlayer && currentPlayer && currentTurnPlayer.id === currentPlayer.id
 
   // Organize properties by position (0-39) with themed overrides
   const sourceProperties = (properties && properties.length > 0)
@@ -49,6 +56,7 @@ function MonopolyBoard({ properties, players, currentPlayer, currentTurnPlayer, 
   const renderProperty = (property, index) => {
     const isOwned = !!property.owner_id
     const owner = isOwned ? getPlayer(property.owner_id) : null
+    const ownerColorHex = owner ? resolvePlayerColor(owner.color) : null
     const isMyProperty = owner && currentPlayer && owner.id === currentPlayer.id
     
     // Check if current player is at this position
@@ -94,8 +102,8 @@ function MonopolyBoard({ properties, players, currentPlayer, currentTurnPlayer, 
           rounded
         `}
         style={{
-          backgroundColor: isOwned ? (isMyProperty ? '#2a0f3f' : '#1a0033') : '#3a1552',
-          borderColor: isOwned && owner ? owner.color : property.property_type === 'property' ? propertyColor : '#374151',
+          backgroundColor: isOwned ? (isMyProperty ? '#281046' : '#17092d') : '#26113f',
+          borderColor: isOwned && owner ? ownerColorHex : property.property_type === 'property' ? propertyColor : '#374151',
           borderWidth: isOwned ? '3px' : '2px'
         }}
         title={property.name + (property.price > 0 ? ` - $${property.price}` : '')}
@@ -139,7 +147,7 @@ function MonopolyBoard({ properties, players, currentPlayer, currentTurnPlayer, 
           <div className="absolute bottom-0.5 md:bottom-1 left-1/2 transform -translate-x-1/2">
             <div 
               className="w-3 h-3 md:w-4 md:h-4 rounded-full flex items-center justify-center text-white text-[6px] md:text-[8px] font-bold shadow-md border border-white"
-              style={{ backgroundColor: owner.color }}
+              style={{ backgroundColor: ownerColorHex }}
               title={`Owned by ${owner.name}`}
             >
               {owner.name.charAt(0).toUpperCase()}
@@ -166,7 +174,7 @@ function MonopolyBoard({ properties, players, currentPlayer, currentTurnPlayer, 
               <div
                 key={p.id}
                 className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full border-2 border-white shadow-sm"
-                style={{ backgroundColor: p.color }}
+                style={{ backgroundColor: resolvePlayerColor(p.color) }}
                 title={p.name}
               />
             ))}
@@ -289,8 +297,8 @@ function MonopolyBoard({ properties, players, currentPlayer, currentTurnPlayer, 
             {leftColumn.map((prop, idx) => prop && renderProperty(prop, idx))}
           </div>
 
-          {/* Center Board - Dark purple theme like richup.io */}
-          <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 rounded-lg border-2 border-purple-600 shadow-inner min-w-0 p-2 md:p-4 relative">
+          {/* Center Board Background */}
+          <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-[#20113c] via-[#231446] to-[#120724] rounded-xl border border-[#5d2fbf] shadow-inner min-w-0 p-2 md:p-4 relative overflow-hidden">
             {isPreview ? (
               <div className="poordown-preview-center">
                 <span className="text-[0.65rem] uppercase tracking-[0.45em] text-purple-200/80">Board preview</span>
@@ -298,63 +306,10 @@ function MonopolyBoard({ properties, players, currentPlayer, currentTurnPlayer, 
                 <p className="text-xs text-purple-200/70 tracking-[0.3em] uppercase">Palestine • Israel • UAE • Egypt • USA</p>
               </div>
             ) : (
-              <div className="text-center w-full">
-                {/* Dice Display */}
-                <div className="flex items-center justify-center gap-4 mb-4">
-                  <div className="w-16 h-16 bg-white rounded-xl flex items-center justify-center text-3xl font-bold shadow-lg border-2 border-gray-300">
-                    3
-                  </div>
-                  <div className="w-16 h-16 bg-white rounded-xl flex items-center justify-center text-3xl font-bold shadow-lg border-2 border-gray-300">
-                    3
-                  </div>
-                </div>
-                
-                {/* Roll Button */}
-                <button
-                  onClick={onRollDice}
-                  disabled={!isMyTurn || !currentPlayer?.can_roll}
-                  className="bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 px-8 rounded-lg transition-colors shadow-lg mb-3"
-                >
-                  Roll the dice
-                </button>
-                
-                {/* End Turn Button */}
-                {!currentPlayer?.can_roll && isMyTurn && (
-                  <button
-                    onClick={onEndTurn}
-                    className="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-6 rounded-lg transition-colors mb-3"
-                  >
-                    End turn
-                  </button>
-                )}
-                
-                {/* Property Preview */}
-                {purchaseProperty && (
-                  <div className="mt-4">
-                    <button
-                      onClick={() => onBuyProperty(purchaseProperty.id)}
-                      className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg flex items-center gap-2 mx-auto"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                      </svg>
-                      Buy for ${purchaseProperty.price}
-                    </button>
-                  </div>
-                )}
-                
-                {/* Player Turn Indicator */}
-                {currentTurnPlayer && (
-                  <div className="mt-4 flex items-center justify-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
-                    <span 
-                      className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold"
-                      style={{ backgroundColor: currentTurnPlayer.color }}
-                    >
-                      {currentTurnPlayer.name.charAt(0).toUpperCase()}
-                    </span>
-                    <span className="font-bold text-white">{currentTurnPlayer.name}'s Turn</span>
-                  </div>
-                )}
+              <div className="poordown-board-center">
+                <span className="poordown-board-center__subtitle">poordown route</span>
+                <h4 className="poordown-board-center__title">Middle East Board</h4>
+                <span className="poordown-board-center__tagline">Palestine • Israel • UAE • Egypt • USA</span>
               </div>
             )}
           </div>
