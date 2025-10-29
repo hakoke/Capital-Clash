@@ -5,7 +5,7 @@
 I **cannot** directly push to your GitHub, but here's EXACTLY what to do:
 
 ### Option A: Using GitHub Desktop (Easiest)
-1. Download GitHub Desktop: https://desktop.github.com/
+1. Download GitHub Desktop: dhttps://desktop.github.com/
 2. Open GitHub Desktop
 3. Click "Add" → "Add Existing Repository"
 4. Select your `C:\Users\ynkk4\OneDrive\Desktop\Game` folder
