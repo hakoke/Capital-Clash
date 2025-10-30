@@ -877,7 +877,7 @@ input:focus, textarea:focus, select:focus {
 }
 
 .poordown-main-stage__board {
-  width: min(92vh, 1040px);
+  width: min(96vh, 1280px);
   aspect-ratio: 1 / 1;
   filter: blur(8px) saturate(130%) brightness(0.86);
   transform: translateY(16px) scale(1.14);
