@@ -2399,7 +2399,7 @@ input:focus, textarea:focus, select:focus {
   /* Edge tile thickness for TOP/BOTTOM rows only (taller, not wider) */
   --tile-thickness: clamp(75px, 13.5vmin, 165px);
   /* Side column thickness (left/right). Increase slightly to match perception */
-  --side-thickness: calc(var(--tile-thickness) * 1.15);
+  --side-thickness: calc(var(--tile-thickness) * 1.35);
   max-width: 100%;
   max-height: 100%;
   aspect-ratio: 1;
