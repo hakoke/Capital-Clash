@@ -508,18 +508,7 @@ function Lobby() {
 
         {/* Center - Conditional Display */}
         <div className="flex-1 relative overflow-hidden flex items-center justify-center poordown-main-stage">
-          {/* Blurred board background with depth fade like RichUp */}
-          <div className="poordown-main-stage__backdrop" aria-hidden="true">
-            <div className="poordown-main-stage__board">
-              <MonopolyBoard
-                properties={properties}
-                players={players}
-                currentPlayer={null}
-                currentTurnPlayer={null}
-                isPreview={true}
-              />
-            </div>
-          </div>
+          {/* Backdrop board removed to avoid double-board effect */}
 
           {/* Show color selection in center if not joined yet */}
           {showColorSelection && !isPlayerInGame && (
