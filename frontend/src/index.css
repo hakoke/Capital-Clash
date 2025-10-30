@@ -2531,21 +2531,22 @@ input:focus, textarea:focus, select:focus {
   gap: 6px;
 }
 
-/* Outward-facing orientation for side tiles */
-.modern-board__tile--left .modern-board__tile-content > *,
-.modern-board__tile--left .modern-board__tile-name,
-.modern-board__tile--left .modern-board__tile-price,
-.modern-board__tile--left .modern-board__tile-subtitle {
-  writing-mode: vertical-rl;
-  text-orientation: upright;
+/* Inward-facing rotation for side tiles so top edge points to board center */
+.modern-board__tile--left .modern-board__tile-content {
+  transform: rotate(90deg);
+  transform-origin: center;
 }
 
-.modern-board__tile--right .modern-board__tile-content > *,
-.modern-board__tile--right .modern-board__tile-name,
-.modern-board__tile--right .modern-board__tile-price,
-.modern-board__tile--right .modern-board__tile-subtitle {
-  writing-mode: vertical-lr;
-  text-orientation: upright;
+.modern-board__tile--right .modern-board__tile-content {
+  transform: rotate(-90deg);
+  transform-origin: center;
+}
+
+/* Reset text writing mode for rotated content so it renders horizontally */
+.modern-board__tile--left .modern-board__tile-content *,
+.modern-board__tile--right .modern-board__tile-content * {
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
 }
 
 .modern-board__tile--vertical .modern-board__tile-content > * {
