@@ -2400,6 +2400,8 @@ input:focus, textarea:focus, select:focus {
   --tile-thickness: clamp(75px, 13.5vmin, 165px);
   /* Side column thickness (left/right). Increase slightly to match perception */
   --side-thickness: calc(var(--tile-thickness) * 1.35);
+  /* Make side tiles wider along the board edge by giving rows larger fr units */
+  --row-fr: 1.25fr;
   max-width: 100%;
   max-height: 100%;
   aspect-ratio: 1;
@@ -2431,9 +2433,9 @@ input:focus, textarea:focus, select:focus {
 .modern-board__grid {
   position: relative;
   display: grid;
-  /* Use slightly larger side columns */
+  /* Use slightly larger side columns and wider row tracks */
   grid-template-columns: var(--side-thickness) repeat(9, 1fr) var(--side-thickness);
-  grid-template-rows: var(--tile-thickness) repeat(9, 1fr) var(--tile-thickness);
+  grid-template-rows: var(--tile-thickness) repeat(9, var(--row-fr)) var(--tile-thickness);
   width: 100%;
   height: 100%;
   gap: 1px;
