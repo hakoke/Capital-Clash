@@ -2396,6 +2396,8 @@ input:focus, textarea:focus, select:focus {
   position: relative;
   width: 100%;
   height: 100%;
+  /* Edge tile thickness; increase this to make tiles extend further into the board */
+  --tile-thickness: clamp(60px, 9.5vmin, 120px);
   max-width: 100%;
   max-height: 100%;
   aspect-ratio: 1;
@@ -2427,8 +2429,9 @@ input:focus, textarea:focus, select:focus {
 .modern-board__grid {
   position: relative;
   display: grid;
-  grid-template-columns: repeat(11, minmax(0, 1fr));
-  grid-template-rows: repeat(11, minmax(0, 1fr));
+  /* Make edge tiles deeper into the center while keeping overall board size */
+  grid-template-columns: var(--tile-thickness) repeat(9, 1fr) var(--tile-thickness);
+  grid-template-rows: var(--tile-thickness) repeat(9, 1fr) var(--tile-thickness);
   width: 100%;
   height: 100%;
   gap: 1px;
@@ -2582,21 +2585,18 @@ input:focus, textarea:focus, select:focus {
 }
 
 .modern-board__tile-name {
-  font-weight: 800;
-  font-size: clamp(1rem, 1.8vw, 1.4rem);
+  font-weight: 600;
+  font-size: clamp(0.6rem, 0.9vw, 0.85rem);
   letter-spacing: 0.02em;
-  line-height: 1.3;
-  color: rgba(255, 255, 255, 1);
-  text-shadow: 
-    0 2px 4px rgba(0, 0, 0, 0.9),
-    0 0 12px rgba(0, 0, 0, 0.6),
-    0 1px 2px rgba(0, 0, 0, 0.8);
+  line-height: 1.2;
+  color: #FFFFFF;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.6);
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   margin: auto 0;
-  white-space: normal;
-  word-break: break-word;
+  white-space: nowrap;
+  word-break: normal;
   text-align: center;
 }
 
@@ -2605,18 +2605,15 @@ input:focus, textarea:focus, select:focus {
   text-orientation: upright;
   max-height: 100%;
   letter-spacing: 0;
-  font-size: clamp(0.7rem, 1.2vw, 0.95rem);
+  font-size: clamp(0.55rem, 0.8vw, 0.75rem);
 }
 
 .modern-board__tile-price {
-  font-size: clamp(0.9rem, 1.5vw, 1.1rem);
-  font-weight: 900;
-  color: rgba(255, 255, 255, 1);
+  font-size: clamp(0.65rem, 1vw, 0.85rem);
+  font-weight: 600;
+  color: #FFFFFF;
   letter-spacing: 0.02em;
-  text-shadow: 
-    0 2px 5px rgba(0, 0, 0, 0.95),
-    0 0 10px rgba(0, 0, 0, 0.8),
-    0 1px 3px rgba(0, 0, 0, 0.9);
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.6);
   white-space: nowrap;
   margin-top: 0;
   margin-bottom: auto;
@@ -2627,7 +2624,7 @@ input:focus, textarea:focus, select:focus {
   writing-mode: vertical-rl;
   text-orientation: upright;
   letter-spacing: 0;
-  font-size: clamp(0.65rem, 1.1vw, 0.8rem);
+  font-size: clamp(0.6rem, 0.9vw, 0.75rem);
 }
 
 .modern-board__tile-subtitle {
