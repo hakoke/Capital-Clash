@@ -399,8 +399,8 @@ function Lobby() {
       }}></div>
 
       {/* Compact Header - Top-left only */}
-      <div className="fixed top-3 left-4 z-30 bg-[#1a0a2e] border border-purple-800 rounded-xl px-3 py-2 flex items-center gap-3 shadow-xl">
-        <h1 className="text-xl font-bold text-white">poordown.oi</h1>
+      <div className="fixed top-3 left-4 z-30 bg-[#1a0a2e] border border-purple-800 rounded-xl px-3 py-2 flex items-center gap-3 shadow-xl w-56 overflow-hidden">
+        <h1 className="text-lg font-bold text-white truncate">poordown.oi</h1>
         <div className="flex items-center gap-2">
           <a href="https://discord.gg" className="text-white hover:opacity-80 transition-opacity">
             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M13.545 2.907a13.227 13.227 0 0 0-3.257 1.053A11.89 11.89 0 0 0 5.647 2.216 14.031 14.031 0 0 0 2.9 9.084c.88-.53 1.87-.915 2.93-1.153a9.908 9.908 0 0 1-2.93-1.85A8.84 8.84 0 0 0 1.77 9.073a12.105 12.105 0 0 0 3.592 5.503 10.614 10.614 0 0 1-2.94 1.18 12.343 12.343 0 0 0 7.272 2.631 12.024 12.024 0 0 0 8.718-3.897 13.213 13.213 0 0 1-2.93 1.85 10.073 10.073 0 0 0 5.3-7.514 8.84 8.84 0 0 0 .849-7.588 9.908 9.908 0 0 1-2.93 1.85 10.853 10.853 0 0 0 .877-3.01c.157-1.459-.909-2.602-2.758-3.636z"/></svg>
