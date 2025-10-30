@@ -72,6 +72,25 @@ const getDisplayName = (name = '') => {
   return name || ''
 }
 
+// Fallback: derive a flag emoji from well-known city/airport names
+const NAME_TO_FLAG = [
+  [/gaza|ramallah|ps\b|palestin/i, '🇵🇸'],
+  [/tel\s*aviv|jerusalem|haifa|tlv|il\b|israel/i, '🇮🇱'],
+  [/riyadh|jeddah|mecca|sa\b|saudi/i, '🇸🇦'],
+  [/doha|qa\b|qatar/i, '🇶🇦'],
+  [/cairo|eg\b|egypt/i, '🇪🇬'],
+  [/beirut|tripoli|sidon|byblos|lb\b|lebanon/i, '🇱🇧'],
+  [/dubai|abu\s*dhabi|ae\b|uae|united arab emirates/i, '🇦🇪'],
+  [/new\s*york|los\s*angeles|chicago|washington|usa|us\b/i, '🇺🇸']
+]
+
+const getFlagForName = (name = '') => {
+  for (const [regex, flag] of NAME_TO_FLAG) {
+    if (regex.test(name)) return flag
+  }
+  return null
+}
+
 const getFallbackProperties = () => {
   return Object.entries(MIDDLE_EAST_BOARD).map(([position, meta]) => ({
     id: `theme-${position}`,
@@ -283,13 +302,14 @@ function MonopolyBoard({
     return sourceProperties
       .map((prop) => {
         const theme = MIDDLE_EAST_BOARD[prop.position] || {}
+        const derivedFlag = theme.flag || getFlagForName(theme.name || prop.name)
         return {
           ...prop,
           position: Number(prop.position),
           name: theme.name || prop.name,
           displaySubtitle: theme.subtitle,
           displayIcon: theme.icon,
-          flag: theme.flag || null,
+          flag: derivedFlag,
           color_group: theme.colorGroup || prop.color_group,
           property_type: theme.type || prop.property_type,
           price: prop.price ?? theme.price ?? 0
