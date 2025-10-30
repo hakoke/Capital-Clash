@@ -2411,9 +2411,9 @@ input:focus, textarea:focus, select:focus {
   /* Edge tile thickness for TOP/BOTTOM rows only (taller, not wider) */
   --tile-thickness: clamp(75px, 13.5vmin, 165px);
   /* Side column thickness (left/right) a bit smaller to give center more space */
-  --side-thickness: calc(var(--tile-thickness) * 0.8);
+  --side-thickness: calc(var(--tile-thickness) * 0.6);
   /* Make side tiles wider along the board edge by giving rows larger fr units */
-  --row-fr: 6fr;
+  --row-fr: 9fr;
   max-width: 100%;
   max-height: 100%;
   aspect-ratio: 1;

@@ -414,7 +414,7 @@ function Lobby() {
       {/* Main content - use full height since header is overlay */}
       <div className="relative z-10 flex h-screen">
         {/* Left Panel - Share and Chat */}
-        <div className="w-64 p-6 border-r overflow-y-auto" style={{
+        <div className="w-56 p-6 border-r overflow-y-auto" style={{
           background: '#1A102B',
           borderColor: 'rgba(100, 200, 255, 0.1)',
           boxShadow: 'inset -1px 0 10px rgba(0, 0, 0, 0.3)',
@@ -588,7 +588,7 @@ function Lobby() {
         </div>
 
         {/* Right Panel - Game Settings */}
-        <div className="w-64 p-6 border-l overflow-y-auto relative" style={{
+        <div className="w-56 p-6 border-l overflow-y-auto relative" style={{
           background: 'rgba(34, 23, 53, 0.95)',
           borderColor: 'rgba(100, 200, 255, 0.1)',
           boxShadow: 'inset 1px 0 10px rgba(0, 0, 0, 0.3)'
