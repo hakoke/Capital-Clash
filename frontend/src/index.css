@@ -2398,6 +2398,8 @@ input:focus, textarea:focus, select:focus {
   height: 100%;
   /* Edge tile thickness for TOP/BOTTOM rows only (taller, not wider) */
   --tile-thickness: clamp(75px, 13.5vmin, 165px);
+  /* Side column thickness (left/right). Increase slightly to match perception */
+  --side-thickness: calc(var(--tile-thickness) * 1.15);
   max-width: 100%;
   max-height: 100%;
   aspect-ratio: 1;
@@ -2429,8 +2431,8 @@ input:focus, textarea:focus, select:focus {
 .modern-board__grid {
   position: relative;
   display: grid;
-  /* Edge tiles thick on all sides so left/right match top/bottom */
-  grid-template-columns: var(--tile-thickness) repeat(9, 1fr) var(--tile-thickness);
+  /* Use slightly larger side columns */
+  grid-template-columns: var(--side-thickness) repeat(9, 1fr) var(--side-thickness);
   grid-template-rows: var(--tile-thickness) repeat(9, 1fr) var(--tile-thickness);
   width: 100%;
   height: 100%;
@@ -2547,6 +2549,33 @@ input:focus, textarea:focus, select:focus {
 .modern-board__tile--right .modern-board__tile-content * {
   writing-mode: horizontal-tb !important;
   text-orientation: mixed !important;
+}
+
+/* Keep a neat vertical stack after rotation: icon (top), name (middle), price (bottom) */
+.modern-board__tile--left .modern-board__tile-content,
+.modern-board__tile--right .modern-board__tile-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modern-board__tile--left .modern-board__tile-icon,
+.modern-board__tile--right .modern-board__tile-icon {
+  margin-top: 0;
+  margin-bottom: 4px;
+}
+
+.modern-board__tile--left .modern-board__tile-name,
+.modern-board__tile--right .modern-board__tile-name {
+  order: 0;
+}
+
+.modern-board__tile--left .modern-board__tile-price,
+.modern-board__tile--right .modern-board__tile-price {
+  order: 1;
+  margin-top: 4px;
+  margin-bottom: 0;
 }
 
 .modern-board__tile--vertical .modern-board__tile-content > * {
