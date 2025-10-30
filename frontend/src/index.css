@@ -2429,8 +2429,8 @@ input:focus, textarea:focus, select:focus {
 .modern-board__grid {
   position: relative;
   display: grid;
-  /* Rows get thicker (taller). Columns stay the same width. */
-  grid-template-columns: repeat(11, minmax(0, 1fr));
+  /* Edge tiles thick on all sides so left/right match top/bottom */
+  grid-template-columns: var(--tile-thickness) repeat(9, 1fr) var(--tile-thickness);
   grid-template-rows: var(--tile-thickness) repeat(9, 1fr) var(--tile-thickness);
   width: 100%;
   height: 100%;
@@ -2529,6 +2529,23 @@ input:focus, textarea:focus, select:focus {
   flex-direction: row;
   writing-mode: horizontal-tb;
   gap: 6px;
+}
+
+/* Outward-facing orientation for side tiles */
+.modern-board__tile--left .modern-board__tile-content > *,
+.modern-board__tile--left .modern-board__tile-name,
+.modern-board__tile--left .modern-board__tile-price,
+.modern-board__tile--left .modern-board__tile-subtitle {
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+}
+
+.modern-board__tile--right .modern-board__tile-content > *,
+.modern-board__tile--right .modern-board__tile-name,
+.modern-board__tile--right .modern-board__tile-price,
+.modern-board__tile--right .modern-board__tile-subtitle {
+  writing-mode: vertical-lr;
+  text-orientation: upright;
 }
 
 .modern-board__tile--vertical .modern-board__tile-content > * {
