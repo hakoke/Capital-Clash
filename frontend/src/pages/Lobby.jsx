@@ -418,7 +418,8 @@ function Lobby() {
           background: '#1A102B',
           borderColor: 'rgba(100, 200, 255, 0.1)',
           boxShadow: 'inset -1px 0 10px rgba(0, 0, 0, 0.3)',
-          boxShadowInner: '0 0 8px rgba(255,255,255,0.03)'
+          boxShadowInner: '0 0 8px rgba(255,255,255,0.03)',
+          paddingTop: '96px'
         }}>
           {/* Share this game */}
           <div className="mb-4">
