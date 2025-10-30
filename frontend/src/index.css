@@ -3,6 +3,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* helper: subtle text shadow to keep tiny text readable over gradients */
+.text-glow { text-shadow: 0 1px 0 rgba(0,0,0,.4); }
+
 @keyframes slide-in {
   from {
     transform: translateX(100%);

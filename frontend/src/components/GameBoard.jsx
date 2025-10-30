@@ -228,52 +228,88 @@ function PropertyTile({
   isAffordable, onBuyTile, currentPlayer, onConfirm, displayName, tileColor, icon, orientation 
 }) {
   const isCurrentPlayerTile = currentPlayer && tile.owner_id === currentPlayer.id
-  
+
+  const isTreasure = (tile?.type === 'community') || /treasure/i.test(tile?.name || '')
+
+  const sizeClass = orientation === 'vertical' ? 'w-14 h-18' : 'w-18 h-14'
+
+  const canInteract = !isOwned && isAffordable && currentPlayer && !isTreasure
+
+  const handleClick = () => {
+    if (canInteract) {
+      onConfirm(tile.id, `Buy ${displayName} for $${parseInt(tile.purchase_price).toLocaleString()}?`)
+    }
+  }
+
+  if (isTreasure) {
+    return (
+      <div
+        onClick={undefined}
+        className={`relative ${orientation === 'vertical' ? 'w-12 h-14' : 'w-14 h-12'} flex-shrink-0 rounded-lg border-2 border-amber-600 bg-gradient-to-b from-amber-400 via-orange-400 to-amber-500 shadow-[0_2px_6px_rgba(0,0,0,0.35)] px-0.5 py-0.5`}
+        title="Treasure"
+      >
+        <div className="absolute top-0.5 left-1/2 -translate-x-1/2 text-[7px] font-bold text-amber-900 tracking-wide">Treasure</div>
+        <div className="w-full h-full flex items-center justify-center">
+          <span className="text-[14px]">💰</span>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div
-      onClick={() => {
-        if (!isOwned && isAffordable && currentPlayer) {
-          onConfirm(tile.id, `Buy ${displayName} for $${parseInt(tile.purchase_price).toLocaleString()}?`)
-        }
-      }}
+      onClick={handleClick}
       className={`relative ${
-        orientation === 'vertical' ? 'w-12 h-14' : 'h-12 w-14'
-      } rounded border-2 flex flex-col items-center justify-between p-0.5 flex-shrink-0 ${
+        orientation === 'vertical' ? 'w-12 h-14' : 'w-14 h-12'
+      } rounded-lg border-2 flex flex-col p-0.5 flex-shrink-0 ${
         isOwned 
-          ? `border-4 ${ownerColor} opacity-95 cursor-pointer hover:shadow-xl` 
-          : isAffordable && currentPlayer
-            ? 'border-gray-700 hover:border-green-500 hover:shadow-xl cursor-pointer transform hover:scale-105 transition-all'
-            : 'border-gray-800 opacity-50 cursor-not-allowed'
-      } ${tileColor} text-white`}
+          ? `border-4 ${ownerColor}` 
+          : canInteract
+            ? 'border-gray-700 hover:border-green-500 hover:shadow-xl cursor-pointer transition-transform hover:scale-105'
+            : 'border-gray-800 opacity-70'
+      } bg-gradient-to-b from-gray-800 to-gray-900 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_2px_6px_rgba(0,0,0,0.35)]`}
       title={isOwned ? `Owned by ${ownerName}` : `${displayName} - $${parseInt(tile.purchase_price).toLocaleString()}`}
     >
-      {/* District Icon */}
-      <div className="absolute top-0.5 left-0.5 opacity-75">
+      {/* price badges */}
+      {!isOwned && (
+        <>
+          <div className="absolute top-0.5 left-0.5 bg-gray-700/60 text-[6px] px-1 py-[1px] rounded-sm font-bold">${parseInt(tile.purchase_price).toLocaleString().slice(0, -3)}k</div>
+          <div className="absolute top-0.5 right-0.5 bg-gray-700/60 text-[6px] px-1 py-[1px] rounded-sm font-bold">${parseInt(tile.purchase_price).toLocaleString().slice(0, -3)}k</div>
+        </>
+      )}
+
+      {/* top icon */}
+      <div className="absolute top-0.5 left-1/2 -translate-x-1/2 opacity-80">
         {icon}
       </div>
-      
-      {/* Property Name */}
-      <div className={`text-white font-bold text-center leading-tight mt-2 px-0.5 ${
-        orientation === 'vertical' ? 'text-[7px]' : 'text-[7px]'
-      }`}>
+
+      {/* name */}
+      <div className={`mt-3 text-center w-full px-1 whitespace-nowrap truncate text-[7px] font-bold text-glow`} title={displayName}>
         {displayName}
       </div>
-      
-      {/* Price or Owner Info */}
-      {isOwned ? (
-        <div className="flex flex-col items-center gap-0.5 mt-auto mb-1">
-          <div className={`${ownerAvatarColor} text-white w-3.5 h-3.5 rounded-full flex items-center justify-center text-[6px] font-bold`}>
-            {ownerInitial}
-          </div>
-          {isCurrentPlayerTile && (
-            <span className="text-[6px] text-yellow-300 font-bold">MINE</span>
+
+      {/* flag + owner/price footer */}
+      <div className="mt-auto mb-0.5 flex items-center justify-between px-0.5 gap-0.5">
+        {/* flag placeholder: use tile.flag emoji if present, else small icon dot */}
+        <div className="flex items-center gap-0.5">
+          {tile?.flag ? (
+            <div className="w-3.5 h-3.5 rounded-full bg-gray-700/40 flex items-center justify-center text-[8px]">{tile.flag}</div>
+          ) : (
+            <div className="w-3.5 h-3.5 rounded-full bg-gray-700/40 flex items-center justify-center">{icon}</div>
           )}
         </div>
-      ) : (
-        <div className="text-white text-[7px] font-bold text-center mt-auto mb-0.5">
-          ${parseInt(tile.purchase_price).toLocaleString().slice(0, -3)}k
-        </div>
-      )}
+
+        {isOwned ? (
+          <div className="flex items-center gap-0.5">
+            <div className={`${ownerAvatarColor} text-white w-3.5 h-3.5 rounded-full flex items-center justify-center text-[6px] font-bold`}>
+              {ownerInitial}
+            </div>
+            {isCurrentPlayerTile && <span className="text-[6px] text-yellow-300 font-bold">MINE</span>}
+          </div>
+        ) : (
+          <div className="text-[7px] font-bold text-gray-200">${parseInt(tile.purchase_price).toLocaleString().slice(0, -3)}k</div>
+        )}
+      </div>
     </div>
   )
 }
