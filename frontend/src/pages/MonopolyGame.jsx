@@ -519,7 +519,7 @@ function MonopolyGame() {
       )}
 
       <div className="poordown-game-shell">
-        <header className="poordown-game-header">
+        <header className="poordown-game-header poordown-game-header--compact">
           <div className="poordown-game-header__brand">
             <h1 className="poordown-game-header__title">
               poordown<span>.oi</span>
@@ -528,14 +528,6 @@ function MonopolyGame() {
               <HelpCircle className="poordown-game-header__icon" />
               <Volume2 className="poordown-game-header__icon" />
               <Search className="poordown-game-header__icon" />
-            </div>
-          </div>
-
-          <div className="poordown-game-header__player">
-            <PlayerAvatar color={currentPlayer.color} size="sm" showCrown={currentPlayer.order_in_game === 1} />
-            <div className="poordown-game-header__player-meta">
-              <span className="poordown-game-header__player-name">{currentPlayer.name}</span>
-              <span className="poordown-game-header__player-money">${(parseInt(currentPlayer.money || 0)).toLocaleString()}</span>
             </div>
           </div>
         </header>

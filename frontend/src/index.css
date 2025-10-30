@@ -1820,7 +1820,7 @@ input:focus, textarea:focus, select:focus {
 .poordown-game-shell {
   position: relative;
   z-index: 10;
-  padding: 24px 28px 32px;
+  padding: 16px 20px 24px;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -1835,6 +1835,18 @@ input:focus, textarea:focus, select:focus {
   border-radius: 24px;
   padding: 18px 26px;
   backdrop-filter: blur(22px) saturate(160%);
+}
+
+/* Compact header pinned to top-left only */
+.poordown-game-header--compact {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: auto;
+  width: auto;
+  padding: 10px 14px;
+  border-radius: 14px;
+  gap: 12px;
 }
 
 .poordown-game-header__brand {
@@ -1899,7 +1911,7 @@ input:focus, textarea:focus, select:focus {
   grid-template-columns: 300px 1fr 300px;
   gap: 24px;
   align-items: stretch;
-  min-height: calc(100vh - 160px);
+  min-height: calc(100vh - 96px);
 }
 
 .poordown-game-sidebar {
@@ -2401,7 +2413,7 @@ input:focus, textarea:focus, select:focus {
   /* Side column thickness (left/right) matches top/bottom depth */
   --side-thickness: var(--tile-thickness);
   /* Make side tiles wider along the board edge by giving rows larger fr units */
-  --row-fr: 1.4fr;
+  --row-fr: 1.55fr;
   max-width: 100%;
   max-height: 100%;
   aspect-ratio: 1;
